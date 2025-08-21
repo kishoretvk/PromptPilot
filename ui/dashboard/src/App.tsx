@@ -1,5 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import PromptManager from "./components/PromptManager/PromptManager";
+import PromptHistory from "./components/PromptHistory/PromptHistory";
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -27,8 +29,8 @@ function App() {
         </nav>
         <main style={{ flex: 1, background: "#f5f5f5" }}>
           <Routes>
-            <Route path="/" element={<Placeholder title="Prompt Management" />} />
-            <Route path="/history" element={<Placeholder title="Prompt Iteration & History" />} />
+            <Route path="/" element={<PromptManager />} />
+            <Route path="/history" element={<PromptHistory />} />
             <Route path="/pipeline" element={<Placeholder title="Pipeline Builder" />} />
             <Route path="/analytics" element={<Placeholder title="Analytics & Dashboard" />} />
             <Route path="/settings" element={<Placeholder title="Settings" />} />
