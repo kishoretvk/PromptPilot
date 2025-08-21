@@ -1,8 +1,8 @@
 import argparse
-from model.prompt import Prompt
-from storage.file import FileStorage
-from storage.inmemory import InMemoryStorage
-from storage.git import GitStorage
+from prompt.core import Prompt
+from prompt.storage.file_backend import FileStorage
+from prompt.storage.memory_backend import InMemoryStorage
+from prompt.storage.git_backend import GitStorage
 
 def main():
     parser = argparse.ArgumentParser(description="PromptPilot CLI")

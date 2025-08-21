@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
-from model.prompt import Prompt
+from prompt.core import Prompt
 
 class StorageBackend(ABC):
     @abstractmethod

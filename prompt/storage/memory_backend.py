@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional
-from model.prompt import Prompt
+from prompt.core import Prompt
 from .base import StorageBackend
 
 class InMemoryStorage(StorageBackend):

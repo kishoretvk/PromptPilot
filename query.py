@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
-from model.prompt import Prompt
-from llm import LLMRegistry
+from prompt.core import Prompt
+from llm.provider import LLMRegistry
 
 def render_prompt(prompt: Prompt, variables: Dict[str, Any]) -> str:
     # Simple variable injection for user message content

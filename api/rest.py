@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
-from model.prompt import Prompt
-from storage.file import FileStorage
+from prompt.core import Prompt
+from prompt.storage.file_backend import FileStorage
 
 app = FastAPI()
 storage = FileStorage()
