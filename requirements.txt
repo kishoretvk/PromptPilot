@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+requests
+pytest
+flake8
+pydantic
+faker
