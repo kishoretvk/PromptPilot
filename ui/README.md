@@ -1,6 +1,21 @@
-# PromptPilot Web UI (Dashboard)
+# PromptPilot Web UI
 
 This directory will contain the source code for the PromptPilot web dashboard.
+
+## Getting Started
+
+1. Install Node.js and npm if not already installed.
+2. Scaffold the frontend app (e.g., with Create React App or Vite):
+
+   ```sh
+   cd ui
+   npx create-react-app dashboard
+   cd dashboard
+   npm install
+   npm start
+   ```
+
+3. Connect the frontend to the PromptPilot API (see `api/rest.py`).
 
 ## Planned Features
 
@@ -9,15 +24,11 @@ This directory will contain the source code for the PromptPilot web dashboard.
 - LLM pipeline builder and visualization
 - Integration with API and storage backends
 
-## Tech Stack (suggested)
+## Tech Stack
 
-- Frontend: React or Vue.js
+- Frontend: React (recommended), or Vue.js
 - API: Connects to FastAPI backend
 
-## Getting Started
-
-1. Scaffold the frontend app (e.g., with Create React App or Vite).
-2. Implement core components for prompt listing, editing, and analytics.
-3. Connect to the backend API for data and actions.
+---
 
 This is a placeholder for future UI development.
