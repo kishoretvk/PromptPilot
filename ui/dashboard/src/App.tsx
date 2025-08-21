@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import PromptManager from "./components/PromptManager/PromptManager";
 import PromptHistory from "./components/PromptHistory/PromptHistory";
+import PipelineBuilder from "./components/PipelineBuilder/PipelineBuilder";
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -31,7 +32,7 @@ function App() {
           <Routes>
             <Route path="/" element={<PromptManager />} />
             <Route path="/history" element={<PromptHistory />} />
-            <Route path="/pipeline" element={<Placeholder title="Pipeline Builder" />} />
+            <Route path="/pipeline" element={<PipelineBuilder />} />
             <Route path="/analytics" element={<Placeholder title="Analytics & Dashboard" />} />
             <Route path="/settings" element={<Placeholder title="Settings" />} />
             <Route path="/integrations" element={<Placeholder title="Integrations" />} />
