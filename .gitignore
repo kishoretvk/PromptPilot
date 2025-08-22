@@ -68,3 +68,4 @@ Desktop.ini
 # UI build artifacts
 ui/dist/
 ui/build/
+node_modules
