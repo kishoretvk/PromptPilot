@@ -74,18 +74,18 @@ const PromptList: React.FC<PromptListProps> = ({
   const { data: prompts, isLoading, error } = usePrompts(page + 1, rowsPerPage, searchTerm);
 
   const filteredPrompts = useMemo(() => {
-    if (!prompts?.data) return [];
+    if (!prompts?.items) return [];
     
-    if (!searchTerm.trim()) return prompts.data;
+    if (!searchTerm.trim()) return prompts.items;
     
     const term = searchTerm.toLowerCase();
-    return prompts.data.filter(prompt =>
+    return prompts.items.filter((prompt: Prompt) =>
       prompt.name.toLowerCase().includes(term) ||
       prompt.description.toLowerCase().includes(term) ||
       prompt.task_type.toLowerCase().includes(term) ||
-      prompt.tags.some(tag => tag.toLowerCase().includes(term))
+      prompt.tags.some((tag: string) => tag.toLowerCase().includes(term))
     );
-  }, [prompts?.data, searchTerm]);
+  }, [prompts?.items, searchTerm]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, prompt: Prompt) => {
     event.stopPropagation();
@@ -213,7 +213,7 @@ const PromptList: React.FC<PromptListProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredPrompts.map((prompt) => (
+              {filteredPrompts.map((prompt: Prompt) => (
                 <TableRow
                   key={prompt.id}
                   hover
@@ -253,7 +253,7 @@ const PromptList: React.FC<PromptListProps> = ({
                       label={prompt.version_info.status}
                       size="small"
                       sx={{
-                        backgroundColor: getStatusColor(prompt.version_info.status),
+                        backgroundColor: getStatusColor(prompt.version_info.status || 'DRAFT'),
                         color: theme.palette.common.white,
                         textTransform: 'capitalize',
                       }}
@@ -262,7 +262,7 @@ const PromptList: React.FC<PromptListProps> = ({
                   
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', maxWidth: 200 }}>
-                      {prompt.tags.slice(0, 2).map((tag, index) => (
+                      {prompt.tags.slice(0, 2).map((tag: string, index: number) => (
                         <Chip
                           key={index}
                           label={tag}
@@ -303,7 +303,7 @@ const PromptList: React.FC<PromptListProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Schedule fontSize="small" color="disabled" />
                       <Typography variant="body2" color="text.secondary">
-                        {formatDate(prompt.version_info.updated_at)}
+                        {formatDate(prompt.version_info.updated_at || prompt.version_info.created_at)}
                       </Typography>
                     </Box>
                   </TableCell>

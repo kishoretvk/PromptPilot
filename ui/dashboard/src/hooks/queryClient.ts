@@ -73,6 +73,7 @@ export const queryKeys = {
   // Analytics
   analytics: {
     all: ['analytics'] as const,
+    dashboard: (timeRange: string) => [...queryKeys.analytics.all, 'dashboard', timeRange] as const,
     usage: (filters: Record<string, any>) => [...queryKeys.analytics.all, 'usage', filters] as const,
     performance: (filters: Record<string, any>) => [...queryKeys.analytics.all, 'performance', filters] as const,
     costs: (filters: Record<string, any>) => [...queryKeys.analytics.all, 'costs', filters] as const,

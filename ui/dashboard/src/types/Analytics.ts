@@ -8,6 +8,9 @@ export interface UsageMetrics {
   usage_by_day: DailyUsage[];
   top_prompts: TopPrompt[];
   top_providers: TopProvider[];
+  total_tokens?: number;
+  success_rate?: number;
+  average_response_time?: number;
 }
 
 export interface DailyUsage {

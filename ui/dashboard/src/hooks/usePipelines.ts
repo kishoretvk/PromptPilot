@@ -22,7 +22,7 @@ export const usePipelines = (
   return useQuery({
     queryKey: queryKeys.pipelines.list(filters),
     queryFn: () => pipelineService.getPipelines(page, limit, search, tags),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };

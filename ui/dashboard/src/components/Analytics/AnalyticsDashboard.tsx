@@ -176,8 +176,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               justifyContent: 'center',
             }}
           >
-            {React.cloneElement(icon as React.ReactElement, { 
-              sx: { color, fontSize: 32 } 
+            {React.cloneElement(icon as React.ReactElement<any>, { 
+              sx: { color, fontSize: 32 } as any
             })}
           </Box>
         </Box>

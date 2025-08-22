@@ -62,11 +62,15 @@ class PipelineService {
     return response.data;
   }
 
+  async getPipelineExecutions(id: string, page = 1, limit = 10): Promise<PaginatedResponse<PipelineResult>> {
+    return this.getExecutionHistory(id, page, limit);
+  }
+
   async cancelExecution(executionId: string): Promise<void> {
     await apiClient.post(`${this.basePath}/executions/${executionId}/cancel`);
   }
 
-  async validatePipeline(pipeline: Pipeline): Promise<ValidationResult> {
+  async validatePipeline(pipeline: Partial<Pipeline>): Promise<ValidationResult> {
     const response = await apiClient.post<ValidationResult>(`${this.basePath}/validate`, pipeline);
     return response.data;
   }

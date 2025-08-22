@@ -16,7 +16,7 @@ import {
 import {
   Settings as SettingsIcon,
   Key as KeyIcon,
-  Integration as IntegrationIcon,
+  IntegrationInstructions as IntegrationIcon,
   Palette as ThemeIcon,
   Notifications as NotificationIcon,
   Security as SecurityIcon,

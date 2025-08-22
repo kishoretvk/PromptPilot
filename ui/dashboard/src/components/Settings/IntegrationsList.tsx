@@ -414,7 +414,7 @@ const IntegrationsList: React.FC = () => {
                             label={integration.status}
                             size="small"
                             color={getStatusColor(integration.status)}
-                            icon={getStatusIcon(integration.status)}
+                            icon={getStatusIcon(integration.status) || undefined}
                           />
                         </Box>
                         

@@ -43,7 +43,7 @@ class ApiClient {
         const apiError: ApiError = {
           message: error.message || 'An unexpected error occurred',
           code: error.code || 'UNKNOWN_ERROR',
-          details: error.response?.data,
+          details: (error.response?.data as Record<string, any>) || undefined,
           timestamp: new Date().toISOString(),
         };
 

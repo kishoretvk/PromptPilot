@@ -38,7 +38,7 @@ import {
   Visibility,
   Edit,
   Delete,
-  Branch,
+  CallSplit,
   Merge,
   Tag,
   Person,
@@ -113,7 +113,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
     try {
       await restoreVersionMutation.mutateAsync({
         promptId: currentPromptId,
-        versionId: versionToRestore.version,
+        version: versionToRestore.version,
       });
       setRestoreDialogOpen(false);
       setVersionToRestore(null);
@@ -147,7 +147,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
   const sortedVersions = useMemo(() => {
     if (!versions) return [];
     return [...versions].sort((a, b) => 
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
     );
   }, [versions]);
 
@@ -277,7 +277,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
             <Card sx={{ height: 'fit-content' }}>
               <CardHeader
                 title="Version Timeline"
-                avatar={<Branch color="primary" />}
+                avatar={<CallSplit color="primary" />}
                 action={
                   <Chip
                     label={`${sortedVersions.length} versions`}
@@ -338,10 +338,10 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
                               v{version.version}
                             </Typography>
                             <Chip
-                              label={version.status}
+                              label={version.status || 'DRAFT'}
                               size="small"
                               sx={{
-                                backgroundColor: getStatusColor(version.status),
+                                backgroundColor: getStatusColor(version.status || 'DRAFT'),
                                 color: theme.palette.common.white,
                               }}
                             />
@@ -350,14 +350,14 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                             <Person fontSize="small" sx={{ mr: 1 }} />
                             <Typography variant="body2" color="text.secondary">
-                              {version.author}
+                              {version.author || version.created_by}
                             </Typography>
                           </Box>
 
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <Schedule fontSize="small" sx={{ mr: 1 }} />
                             <Typography variant="body2" color="text.secondary">
-                              {new Date(version.updated_at).toLocaleString()}
+                              {new Date(version.updated_at || version.created_at).toLocaleString()}
                             </Typography>
                           </Box>
 
@@ -427,13 +427,13 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
           {versionToRestore && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                <strong>Author:</strong> {versionToRestore.author}
+                <strong>Author:</strong> {versionToRestore.author || versionToRestore.created_by}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 <strong>Created:</strong> {new Date(versionToRestore.created_at).toLocaleString()}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Status:</strong> {versionToRestore.status}
+                <strong>Status:</strong> {versionToRestore.status || 'DRAFT'}
               </Typography>
             </Box>
           )}
@@ -445,9 +445,9 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
           <Button
             onClick={confirmRestore}
             variant="contained"
-            disabled={restoreVersionMutation.isLoading}
+            disabled={restoreVersionMutation.isPending}
           >
-            {restoreVersionMutation.isLoading ? 'Restoring...' : 'Restore'}
+            {restoreVersionMutation.isPending ? 'Restoring...' : 'Restore'}
           </Button>
         </DialogActions>
       </Dialog>

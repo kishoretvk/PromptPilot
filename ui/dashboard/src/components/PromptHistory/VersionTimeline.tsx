@@ -67,7 +67,7 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
       return <CheckCircle sx={{ color: theme.palette.success.main }} />;
     }
     
-    switch (version.status) {
+    switch (version.status || 'DRAFT') {
       case 'PUBLISHED':
         return <Circle sx={{ color: theme.palette.success.main }} />;
       case 'STAGING':
@@ -130,10 +130,10 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
               color="text.secondary"
             >
               <Typography variant="caption" display="block">
-                {formatRelativeTime(version.updated_at)}
+                {formatRelativeTime(version.updated_at || version.created_at)}
               </Typography>
               <Typography variant="caption" display="block">
-                {new Date(version.updated_at).toLocaleTimeString()}
+                {new Date(version.updated_at || version.created_at).toLocaleTimeString()}
               </Typography>
             </TimelineOppositeContent>
 
@@ -201,10 +201,10 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
                     </Box>
 
                     <Chip
-                      label={version.status}
+                      label={version.status || 'DRAFT'}
                       size="small"
                       sx={{
-                        backgroundColor: getStatusColor(version.status),
+                        backgroundColor: getStatusColor(version.status || 'DRAFT'),
                         color: theme.palette.common.white,
                         textTransform: 'capitalize',
                       }}
@@ -216,7 +216,7 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <Person fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                       <Typography variant="body2" color="text.secondary">
-                        {version.author}
+                        {version.author || version.created_by}
                       </Typography>
                     </Box>
 
@@ -289,11 +289,8 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
                               parameters: {},
                               test_cases: [],
                               evaluation_metrics: {},
-                              execution_order: [],
-                              fallback_prompts: [],
-                              rate_limits: {},
-                              deployment_targets: [],
-                              custom_fields: {},
+                              created_at: new Date().toISOString(),
+                              updated_at: new Date().toISOString(),
                             };
                             onEditVersion(promptForEdit);
                           }}

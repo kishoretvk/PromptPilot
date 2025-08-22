@@ -24,7 +24,7 @@ export const usePrompts = (
   return useQuery({
     queryKey: queryKeys.prompts.list(filters),
     queryFn: () => promptService.getPrompts(page, limit, search, tags),
-    keepPreviousData: true, // Keep previous data while fetching new page
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new page
     staleTime: 2 * 60 * 1000, // 2 minutes for list data
   });
 };

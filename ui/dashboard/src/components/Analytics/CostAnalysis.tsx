@@ -270,7 +270,9 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
                     Average Cost per Request
                   </Typography>
                   <Typography variant="h4" color="secondary.main" fontWeight="bold">
-                    ${data.average_cost_per_request ? data.average_cost_per_request.toFixed(3) : '0.198'}
+                    ${data.cost_by_prompt && data.cost_by_prompt.length > 0 ? 
+                      (data.cost_by_prompt.reduce((sum, p) => sum + (p.cost_per_execution || 0), 0) / data.cost_by_prompt.length).toFixed(3) 
+                      : '0.198'}
                   </Typography>
                   <Typography variant="body2" color="error.main">
                     +3% from last {timeRange}
@@ -282,7 +284,9 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
                     Cost per 1K Tokens
                   </Typography>
                   <Typography variant="h4" color="warning.main" fontWeight="bold">
-                    ${data.cost_per_1k_tokens ? data.cost_per_1k_tokens.toFixed(4) : '0.0234'}
+                    ${data.cost_by_prompt && data.cost_by_prompt.length > 0 ? 
+                      (data.total_cost / data.cost_by_prompt.reduce((sum, p) => sum + p.executions, 1) * 1000).toFixed(4) 
+                      : '0.0234'}
                   </Typography>
                   <Typography variant="body2" color="success.main">
                     -2% from last {timeRange}
@@ -294,7 +298,7 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
                     Projected Monthly
                   </Typography>
                   <Typography variant="h4" color="info.main" fontWeight="bold">
-                    ${data.projected_monthly ? data.projected_monthly.toFixed(0) : '3,340'}
+                    ${data.projected_monthly_cost ? data.projected_monthly_cost.toFixed(0) : '3,340'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Based on current usage

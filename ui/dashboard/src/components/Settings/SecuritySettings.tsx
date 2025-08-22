@@ -67,7 +67,7 @@ const SecuritySettings: React.FC = () => {
     },
   });
 
-  const { fields: domainFields, append: appendDomain, remove: removeDomain } = useFieldArray({
+  const { fields: domainFields, append: appendDomain, remove: removeDomain } = useFieldArray<SecurityFormData, 'allowed_domains', 'id'>({
     control,
     name: 'allowed_domains',
   });

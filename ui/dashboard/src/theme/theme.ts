@@ -186,13 +186,13 @@ const getComponentOverrides = (mode: PaletteMode) => ({
         textTransform: 'none',
         fontWeight: 500,
         padding: '8px 16px',
-      },
+      } as any,
       contained: {
         boxShadow: 'none',
         '&:hover': {
           boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
         },
-      },
+      } as any,
     },
   },
   MuiCard: {

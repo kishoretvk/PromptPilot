@@ -135,10 +135,10 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
               Version {version.version}
             </Typography>
             <Chip
-              label={version.status}
+              label={version.status || 'DRAFT'}
               size="small"
               sx={{
-                backgroundColor: getStatusColor(version.status),
+                backgroundColor: getStatusColor(version.status || 'DRAFT'),
                 color: theme.palette.common.white,
               }}
             />
@@ -147,7 +147,7 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
         subheader={
           <Box>
             <Typography variant="body2" color="text.secondary">
-              By {version.author} • {new Date(version.updated_at).toLocaleString()}
+              By {version.author || version.created_by} • {new Date(version.updated_at || version.created_at).toLocaleString()}
             </Typography>
             {version.commit_ref && (
               <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>

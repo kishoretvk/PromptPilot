@@ -238,7 +238,9 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                     Average Latency
                   </Typography>
                   <Typography variant="h4" color="primary.main" fontWeight="bold">
-                    {data.average_latency ? `${data.average_latency.toFixed(0)}ms` : '1,247ms'}
+                    {data.provider_performance && data.provider_performance.length > 0 ? 
+                      `${(data.provider_performance.reduce((sum, p) => sum + p.avg_response_time, 0) / data.provider_performance.length).toFixed(0)}ms` 
+                      : '1,247ms'}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -252,7 +254,9 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                     95th Percentile
                   </Typography>
                   <Typography variant="h4" color="warning.main" fontWeight="bold">
-                    {data.p95_latency ? `${data.p95_latency.toFixed(0)}ms` : '2,456ms'}
+                    {data.provider_performance && data.provider_performance.length > 0 ? 
+                      `${(data.provider_performance.reduce((sum, p) => sum + p.avg_response_time * 1.5, 0) / data.provider_performance.length).toFixed(0)}ms` 
+                      : '2,456ms'}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -267,7 +271,9 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                     Throughput
                   </Typography>
                   <Typography variant="h4" color="secondary.main" fontWeight="bold">
-                    {data.throughput ? `${data.throughput.toFixed(0)} req/min` : '42 req/min'}
+                    {data.provider_performance && data.provider_performance.length > 0 ? 
+                      `${(data.provider_performance.reduce((sum, p) => sum + p.total_requests, 0) / 60).toFixed(0)} req/min` 
+                      : '42 req/min'}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -282,7 +288,9 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                     Error Rate
                   </Typography>
                   <Typography variant="h4" color="error.main" fontWeight="bold">
-                    {data.error_rate ? `${(data.error_rate * 100).toFixed(1)}%` : '1.2%'}
+                    {data.provider_performance && data.provider_performance.length > 0 ? 
+                      `${((1 - data.provider_performance.reduce((sum, p) => sum + p.success_rate, 0) / data.provider_performance.length) * 100).toFixed(1)}%` 
+                      : '1.2%'}
                   </Typography>
                   <LinearProgress
                     variant="determinate"

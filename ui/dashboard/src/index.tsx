@@ -3,13 +3,13 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider, CssBaseline, StyledEngineProvider } from '@mui/material';
-import { ToastContainer } from 'react-toastify';
+// import { ToastContainer } from 'react-toastify';
 import { ErrorBoundary } from 'react-error-boundary';
 import App from './App';
-import theme from './theme/theme';
+import { lightPromptPilotTheme } from './theme/theme';
 import reportWebVitals from './reportWebVitals';
 import ErrorFallback from './components/common/ErrorFallback';
-import 'react-toastify/dist/ReactToastify.css';
+// import 'react-toastify/dist/ReactToastify.css';
 import './index.css';
 
 // Configure React Query client with production-ready settings
@@ -37,7 +37,7 @@ const queryClient = new QueryClient({
 });
 
 // Error handler for React Error Boundary
-function handleError(error: Error, errorInfo: { componentStack: string }) {
+function handleError(error: Error, errorInfo: { componentStack?: string | null }) {
   console.error('Application Error:', error);
   console.error('Component Stack:', errorInfo.componentStack);
   
@@ -60,7 +60,7 @@ function AppWithProviders() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback} onError={handleError}>
       <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={lightPromptPilotTheme}>
           <CssBaseline />
           <QueryClientProvider client={queryClient}>
             <App />
@@ -68,7 +68,7 @@ function AppWithProviders() {
               <ReactQueryDevtools initialIsOpen={false} />
             )}
           </QueryClientProvider>
-          <ToastContainer
+          {/* <ToastContainer
             position="top-right"
             autoClose={5000}
             hideProgressBar={false}
@@ -79,7 +79,7 @@ function AppWithProviders() {
             draggable
             pauseOnHover
             theme="light"
-          />
+          /> */}
         </ThemeProvider>
       </StyledEngineProvider>
     </ErrorBoundary>

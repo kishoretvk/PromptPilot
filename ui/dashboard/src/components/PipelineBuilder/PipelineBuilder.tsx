@@ -214,18 +214,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           id: node.id,
           type: node.data.type,
           name: node.data.label,
-          config: node.data.config || {},
+          configuration: node.data.config || {},
           position: node.position,
         })),
-      connections: edges.map(edge => ({
-        source: edge.source,
-        target: edge.target,
-        source_handle: edge.sourceHandle,
-        target_handle: edge.targetHandle,
-      })),
       error_strategy: 'fail_fast',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      version: '1.0.0',
+      tags: [],
     };
 
     try {

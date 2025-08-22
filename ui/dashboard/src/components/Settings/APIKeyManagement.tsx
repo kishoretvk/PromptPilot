@@ -165,7 +165,7 @@ const APIKeyDialog: React.FC<APIKeyDialogProps> = ({
                           onClick={() => setShowKey(!showKey)}
                           edge="end"
                         >
-                          {showKey ? <VisibilityOff /> : <Visibility />}
+                          {showKey ? <HideIcon /> : <ViewIcon />}
                         </IconButton>
                       ),
                     }}
@@ -371,7 +371,7 @@ const APIKeyManagement: React.FC = () => {
                       label={apiKey.is_active ? 'Active' : 'Inactive'}
                       size="small"
                       color={getStatusColor(apiKey)}
-                      icon={getStatusIcon(apiKey)}
+                      icon={getStatusIcon(apiKey) || undefined}
                     />
                   </TableCell>
                   <TableCell>

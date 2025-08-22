@@ -27,12 +27,12 @@ import {
   AccountTree,
   Analytics,
   Settings,
-  Integration,
+  IntegrationInstructions,
   Home,
   ChevronLeft,
 } from '@mui/icons-material';
 import { ErrorBoundary } from 'react-error-boundary';
-import { toast } from 'react-toastify';
+// import { toast } from 'react-toastify';
 import ErrorFallback from './components/common/ErrorFallback';
 
 // Lazy load components for better performance
@@ -84,7 +84,7 @@ const navigationItems: NavigationItem[] = [
   {
     path: '/integrations',
     label: 'Integrations',
-    icon: <Integration />,
+    icon: <IntegrationInstructions />,
     component: SettingsIntegrations,
   },
 ];
@@ -128,7 +128,7 @@ function AppBreadcrumbs() {
       </MuiLink>
       {currentItem && (
         <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-          {currentItem.icon && React.cloneElement(currentItem.icon as React.ReactElement, { sx: { mr: 0.5 }, fontSize: 'inherit' })}
+          {currentItem.icon && React.cloneElement(currentItem.icon as React.ReactElement<any>, { sx: { mr: 0.5 } as any, fontSize: 'inherit' })}
           {currentItem.label}
         </Typography>
       )}
@@ -284,7 +284,7 @@ function AppLayout() {
             FallbackComponent={ErrorFallback}
             onError={(error, errorInfo) => {
               console.error('Route Error:', error, errorInfo);
-              toast.error('An error occurred while loading this page');
+              // toast.error('An error occurred while loading this page');
             }}
           >
             <Suspense fallback={<LoadingFallback />}>

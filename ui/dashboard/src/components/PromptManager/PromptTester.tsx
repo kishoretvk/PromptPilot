@@ -143,9 +143,12 @@ const PromptTester: React.FC<PromptTesterProps> = ({
 
   const handleTestCaseSelect = useCallback((testCaseId: string) => {
     setSelectedTestCase(testCaseId);
-    
-    if (testCaseId === 'manual') {
-      // Reset to manual input
+  }, []);
+
+  // Load test case inputs when test case changes
+  useEffect(() => {
+    if (selectedTestCase === 'manual') {
+      // Reset to empty values for manual input
       const initialValues: Record<string, string> = {};
       inputVariables.forEach(variable => {
         initialValues[variable] = '';
@@ -153,16 +156,16 @@ const PromptTester: React.FC<PromptTesterProps> = ({
       setInputValues(initialValues);
     } else {
       // Load test case data
-      const testCase = prompt.test_cases.find(tc => tc.name === testCaseId);
+      const testCase = prompt.test_cases.find(tc => tc.name === selectedTestCase);
       if (testCase) {
         const testInputs: Record<string, string> = {};
-        Object.entries(testCase.inputs).forEach(([key, value]) => {
+        Object.entries(testCase.inputs || testCase.input_variables || {}).forEach(([key, value]) => {
           testInputs[key] = String(value);
         });
         setInputValues(testInputs);
       }
     }
-  }, [inputVariables, prompt.test_cases]);
+  }, [inputVariables, prompt.test_cases, selectedTestCase]);
 
   const executePrompt = useCallback(async () => {
     try {
@@ -183,9 +186,11 @@ const PromptTester: React.FC<PromptTesterProps> = ({
       const startTime = Date.now();
       
       const result = await testPromptMutation.mutateAsync({
-        promptId: prompt.id,
-        inputs: inputValues,
-        parameters: prompt.parameters,
+        id: prompt.id,
+        testData: {
+          prompt_id: prompt.id,
+          input_variables: inputValues,
+        }
       });
 
       const endTime = Date.now();
@@ -198,8 +203,8 @@ const PromptTester: React.FC<PromptTesterProps> = ({
         output: result.output,
         metadata: {
           execution_time: executionTime,
-          token_count: result.metadata?.token_count || 0,
-          cost: result.metadata?.cost || 0,
+          token_count: 0,
+          cost: result.cost || 0,
           model_used: prompt.model_name,
         },
         status: 'success',
@@ -238,23 +243,28 @@ const PromptTester: React.FC<PromptTesterProps> = ({
     for (const testCase of prompt.test_cases) {
       try {
         const result = await testPromptMutation.mutateAsync({
-          promptId: prompt.id,
-          inputs: testCase.inputs,
-          parameters: prompt.parameters,
+          id: prompt.id,
+          testData: {
+            prompt_id: prompt.id,
+            input_variables: testCase.inputs || testCase.input_variables || {},
+            test_case_id: testCase.id,
+          }
         });
         
         results.push({
-          ...result,
-          test_case: testCase.name,
-          passed: result.output === testCase.expected_outputs,
+          test_case_id: testCase.id,
+          output: result.output,
+          execution_time: result.execution_time,
+          success: result.success,
+          cost: result.cost,
         });
       } catch (error: any) {
         results.push({
-          test_case: testCase.name,
+          test_case_id: testCase.id,
           output: '',
+          execution_time: 0,
+          success: false,
           error: error.message,
-          passed: false,
-          metadata: {},
         });
       }
     }
@@ -282,7 +292,7 @@ const PromptTester: React.FC<PromptTesterProps> = ({
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
-  const isExecuting = testPromptMutation.isLoading;
+  const isExecuting = testPromptMutation.isPending;
   const hasInputVariables = inputVariables.length > 0;
 
   return (
@@ -388,7 +398,7 @@ const PromptTester: React.FC<PromptTesterProps> = ({
                       }}
                     >
                       {prompt.messages
-                        .sort((a, b) => a.priority - b.priority)
+                        .sort((a, b) => (a.priority || 1) - (b.priority || 1))
                         .map(msg => {
                           let content = msg.content;
                           Object.entries(inputValues).forEach(([key, value]) => {
@@ -397,6 +407,7 @@ const PromptTester: React.FC<PromptTesterProps> = ({
                           return `${msg.role.toUpperCase()}: ${content}`;
                         })
                         .join('\n\n')}
+
                     </Typography>
                   </Paper>
                 </Box>

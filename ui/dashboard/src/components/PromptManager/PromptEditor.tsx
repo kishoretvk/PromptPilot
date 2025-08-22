@@ -101,6 +101,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const [previewPrompt, setPreviewPrompt] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Read-only mode when editing certain prompts
+  const isReadOnly = false; // Can be controlled by props or prompt status
+
   const createPromptMutation = useCreatePrompt();
   const updatePromptMutation = useUpdatePrompt();
 
@@ -176,10 +179,11 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
 
   const addTestCase = useCallback(() => {
     const newTestCase: TestCase = {
+      id: `test_${Date.now()}`,
       name: `Test Case ${(formData.test_cases?.length || 0) + 1}`,
-      inputs: {},
-      expected_outputs: '',
-      test_type: 'functional',
+      input_variables: {},
+      expected_output: '',
+      status: 'pending',
     };
     
     updateFormData('test_cases', [...(formData.test_cases || []), newTestCase]);
@@ -202,7 +206,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const generatePreview = useCallback(() => {
     const messages = formData.messages || [];
     const preview = messages
-      .sort((a, b) => a.priority - b.priority)
+      .sort((a, b) => (a.priority || 0) - (b.priority || 0))
       .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
       .join('\n\n');
     
@@ -222,31 +226,29 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
         developer_notes: formData.developer_notes,
         version_info: prompt?.version_info || {
           version: '1.0.0',
-          status: 'DRAFT',
-          author: 'Current User',
+          created_by: 'Current User',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          is_active: true,
         },
         messages: formData.messages!,
         input_variables: formData.input_variables!,
-        final_prompt_structure: previewPrompt,
         model_provider: formData.model_provider!,
         model_name: formData.model_name!,
         parameters: formData.parameters!,
         test_cases: formData.test_cases || [],
         evaluation_metrics: {},
-        execution_order: [],
-        fallback_prompts: [],
-        rate_limits: {},
-        deployment_targets: [],
-        custom_fields: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       if (isCreating) {
         await createPromptMutation.mutateAsync(promptData);
         onPromptCreated?.(promptData);
       } else {
-        await updatePromptMutation.mutateAsync(promptData);
+        await updatePromptMutation.mutateAsync({
+          id: prompt!.id,
+          data: promptData
+        });
         onPromptUpdated?.(promptData);
       }
     } catch (error) {
@@ -254,7 +256,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     }
   };
 
-  const isLoading = createPromptMutation.isLoading || updatePromptMutation.isLoading;
+  const isLoading = createPromptMutation.isPending || updatePromptMutation.isPending;
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -420,7 +422,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
               <Accordion key={index} defaultExpanded>
                 <AccordionSummary expandIcon={<ExpandMore />}>
                   <Typography>
-                    {message.role.toUpperCase()} - Priority {message.priority}
+                    {message.role.toUpperCase()} - Priority {message.priority || 1}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
@@ -445,7 +447,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                         fullWidth
                         label="Priority"
                         type="number"
-                        value={message.priority}
+                        value={message.priority || 1}
                         onChange={(e) => updateMessage(index, 'priority', parseInt(e.target.value))}
                         disabled={isReadOnly}
                       />

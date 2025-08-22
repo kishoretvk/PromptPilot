@@ -17,6 +17,7 @@ import ReactFlow, {
   BackgroundVariant,
   NodeChange,
   EdgeChange,
+  MarkerType,
 } from 'reactflow';
 
 interface PipelineCanvasProps {
@@ -132,7 +133,7 @@ const PipelineCanvas: React.FC<PipelineCanvasProps> = ({
             strokeWidth: 2,
           },
           markerEnd: {
-            type: 'arrowclosed',
+            type: MarkerType.ArrowClosed,
             color: theme.palette.primary.main,
           },
         }}

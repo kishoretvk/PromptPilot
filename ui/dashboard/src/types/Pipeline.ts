@@ -84,3 +84,16 @@ export interface ValidationWarning {
   field: string;
   message: string;
 }
+
+export interface PipelineExecution {
+  id: string;
+  pipeline_id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  start_time: string;
+  end_time?: string;
+  input_data: Record<string, any>;
+  output_data?: Record<string, any>;
+  error?: string;
+  created_at: string;
+  updated_at: string;
+}
