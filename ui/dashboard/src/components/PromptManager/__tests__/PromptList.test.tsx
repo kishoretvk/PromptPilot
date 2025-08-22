@@ -15,59 +15,61 @@ jest.mock('../../../hooks/usePrompts', () => ({
 const mockUsePrompts = require('../../../hooks/usePrompts').usePrompts;
 
 // Mock data
-const mockPrompts = {
-  items: [
-    {
-      id: '1',
-      name: 'Test Prompt 1',
-      description: 'Test description 1',
-      task_type: 'text_generation',
-      tags: ['test', 'example'],
-      version_info: {
-        version: '1.0.0',
-        created_at: '2024-01-01T00:00:00Z',
-        created_by: 'test-user',
-        is_active: true,
-        status: 'PUBLISHED',
-        author: 'Test User',
-        updated_at: '2024-01-01T00:00:00Z',
-      },
-      messages: [],
-      input_variables: {},
-      model_provider: 'openai',
-      model_name: 'gpt-3.5-turbo',
-      parameters: {},
-      test_cases: [],
-      evaluation_metrics: {},
+const mockPromptItems: Prompt[] = [
+  {
+    id: '1',
+    name: 'Test Prompt 1',
+    description: 'Test description 1',
+    task_type: 'text_generation',
+    tags: ['test', 'example'],
+    version_info: {
+      version: '1.0.0',
       created_at: '2024-01-01T00:00:00Z',
+      created_by: 'test-user',
+      is_active: true,
+      status: 'PUBLISHED',
+      author: 'Test User',
       updated_at: '2024-01-01T00:00:00Z',
     },
-    {
-      id: '2',
-      name: 'Test Prompt 2',
-      description: 'Test description 2',
-      task_type: 'summarization',
-      tags: ['summary'],
-      version_info: {
-        version: '2.0.0',
-        created_at: '2024-01-02T00:00:00Z',
-        created_by: 'test-user-2',
-        is_active: true,
-        status: 'DRAFT',
-        author: 'Test User 2',
-        updated_at: '2024-01-02T00:00:00Z',
-      },
-      messages: [],
-      input_variables: {},
-      model_provider: 'anthropic',
-      model_name: 'claude-3',
-      parameters: {},
-      test_cases: [],
-      evaluation_metrics: {},
+    messages: [],
+    input_variables: {},
+    model_provider: 'openai',
+    model_name: 'gpt-3.5-turbo',
+    parameters: {},
+    test_cases: [],
+    evaluation_metrics: {},
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'Test Prompt 2',
+    description: 'Test description 2',
+    task_type: 'summarization',
+    tags: ['summary'],
+    version_info: {
+      version: '2.0.0',
       created_at: '2024-01-02T00:00:00Z',
+      created_by: 'test-user-2',
+      is_active: true,
+      status: 'DRAFT',
+      author: 'Test User 2',
       updated_at: '2024-01-02T00:00:00Z',
     },
-  ] as Prompt[],
+    messages: [],
+    input_variables: {},
+    model_provider: 'anthropic',
+    model_name: 'claude-3',
+    parameters: {},
+    test_cases: [],
+    evaluation_metrics: {},
+    created_at: '2024-01-02T00:00:00Z',
+    updated_at: '2024-01-02T00:00:00Z',
+  },
+];
+
+const mockPrompts = {
+  items: mockPromptItems,
   total: 2,
   page: 1,
   size: 10,
@@ -176,7 +178,7 @@ describe('PromptList Component', () => {
     const promptRow = screen.getByText('Test Prompt 1').closest('tr');
     fireEvent.click(promptRow!);
 
-    expect(mockProps.onPromptSelect).toHaveBeenCalledWith(mockPrompts.items[0]);
+    expect(mockProps.onPromptSelect).toHaveBeenCalledWith(mockPromptItems[0]);
   });
 
   it('opens context menu when more actions button is clicked', async () => {
@@ -212,7 +214,7 @@ describe('PromptList Component', () => {
       fireEvent.click(editButton);
     });
 
-    expect(mockProps.onEditPrompt).toHaveBeenCalledWith(mockPrompts.items[0]);
+    expect(mockProps.onEditPrompt).toHaveBeenCalledWith(mockPromptItems[0]);
   });
 
   it('displays loading state', () => {

@@ -5,10 +5,15 @@ import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, expectElementToBeVisible, expectElementToHaveText } from '../../utils/testUtils';
-import ErrorBoundary from '../../../src/components/ErrorBoundary';
+import ErrorBoundary from '../ErrorBoundary';
+
+interface ThrowErrorProps {
+  shouldThrow?: boolean;
+  errorMessage?: string;
+}
 
 // Mock error component that throws an error
-const ThrowError: React.FC<{ shouldThrow?: boolean; errorMessage?: string }> = ({ 
+const ThrowError: React.FC<ThrowErrorProps> = ({ 
   shouldThrow = true, 
   errorMessage = 'Test error' 
 }) => {
