@@ -16,20 +16,10 @@ import {
   DialogActions,
   Alert,
   Paper,
-  Divider,
   Tooltip,
   useTheme,
   alpha,
 } from '@mui/material';
-import {
-  Timeline,
-  TimelineItem,
-  TimelineOppositeContent,
-  TimelineSeparator,
-  TimelineDot,
-  TimelineConnector,
-  TimelineContent,
-} from '@mui/lab';
 import {
   History,
   Compare,
@@ -37,10 +27,7 @@ import {
   Download,
   Visibility,
   Edit,
-  Delete,
   CallSplit,
-  Merge,
-  Tag,
   Person,
   Schedule,
   Code,

@@ -24,7 +24,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Line, Bar, Scatter } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 import { PerformanceData } from '../../types';
 
 ChartJS.register(

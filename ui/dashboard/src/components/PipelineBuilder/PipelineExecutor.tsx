@@ -85,7 +85,7 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
       }));
   }, [nodes]);
 
-  const simulateStepExecution = async (step: ExecutionStep, stepIndex: number): Promise<ExecutionStep> => {
+  const simulateStepExecution = useCallback(async (step: ExecutionStep, stepIndex: number): Promise<ExecutionStep> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         // Simulate different outcomes
@@ -105,7 +105,7 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
         resolve(completedStep);
       }, Math.floor(Math.random() * 2000) + 1000); // 1-3 seconds delay
     });
-  };
+  }, [inputData]);
 
   const executeStep = useCallback(async (step: ExecutionStep, stepIndex: number) => {
     // Update step to running
@@ -130,7 +130,7 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
     });
 
     return completedStep;
-  }, [inputData]);
+  }, [simulateStepExecution]);
 
   const handleExecute = useCallback(async () => {
     if (executionSteps.length === 0) {

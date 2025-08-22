@@ -3,10 +3,7 @@ import {
   Box,
   Container,
   Typography,
-  Grid,
   Card,
-  CardContent,
-  CardHeader,
   Button,
   Tabs,
   Tab,
@@ -16,17 +13,13 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Chip,
   useTheme,
   alpha,
   Paper,
-  Divider,
 } from '@mui/material';
 import {
-  Add as AddIcon,
   Save as SaveIcon,
   PlayArrow as RunIcon,
-  Settings as SettingsIcon,
   Code as CodeIcon,
   ViewList as ViewListIcon,
   AccountTree as TreeIcon,
@@ -39,7 +32,6 @@ import {
 } from '@mui/icons-material';
 import ReactFlow, {
   Node,
-  Edge,
   Controls,
   Background,
   useNodesState,
@@ -51,9 +43,9 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { Pipeline, PipelineStep } from '../../types';
-import { usePipelines, usePipelineOperations } from '../../hooks/usePipelines';
-import PipelineCanvas from './PipelineCanvas';
+import { Pipeline } from '../../types';
+import { usePipelineOperations } from '../../hooks/usePipelines';
+// import PipelineCanvas from './PipelineCanvas';
 import StepConfigPanel from './StepConfigPanel';
 import PipelineExecutor from './PipelineExecutor';
 
@@ -127,7 +119,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const [activeTab, setActiveTab] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [pipeline, setPipeline] = useState<Pipeline | null>(null);
+  // const [pipeline, setPipeline] = useState<Pipeline | null>(null);
 
   // ReactFlow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -206,8 +198,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const handleSavePipeline = useCallback(async () => {
     const pipelineData: Pipeline = {
       id: pipelineId || `pipeline_${Date.now()}`,
-      name: pipeline?.name || 'New Pipeline',
-      description: pipeline?.description || '',
+      name: 'New Pipeline',
+      description: '',
       steps: nodes
         .filter(node => node.type === 'default')
         .map(node => ({
@@ -233,7 +225,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     } catch (error) {
       console.error('Failed to save pipeline:', error);
     }
-  }, [pipelineId, pipeline, nodes, edges, pipelineOperations]);
+  }, [pipelineId, nodes, pipelineOperations]);
 
   const handleRunPipeline = useCallback(() => {
     setActiveTab(2); // Switch to executor tab

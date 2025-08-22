@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
-  CardContent,
-  CardHeader,
   Typography,
   TextField,
   Button,
@@ -23,10 +21,7 @@ import {
   Paper,
   Tab,
   Tabs,
-  Switch,
-  FormControlLabel,
   Slider,
-  Tooltip,
 } from '@mui/material';
 import {
   ExpandMore,
@@ -41,7 +36,7 @@ import {
   Psychology,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import { Prompt, Message, TestCase, PromptVersion } from '../../types';
+import { Prompt, Message, TestCase } from '../../types';
 import { useCreatePrompt, useUpdatePrompt } from '../../hooks/usePrompts';
 
 interface PromptEditorProps {

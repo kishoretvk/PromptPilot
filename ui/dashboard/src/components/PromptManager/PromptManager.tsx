@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import {
   Box,
   Container,
-  Grid,
   Typography,
   Button,
   Tabs,
@@ -18,7 +17,6 @@ import {
   Edit as EditIcon,
   PlayArrow as TestIcon,
 } from '@mui/icons-material';
-import { usePrompts, usePromptOperations } from '../../hooks/usePrompts';
 import { Prompt } from '../../types';
 import PromptList from './PromptList';
 import PromptEditor from './PromptEditor';

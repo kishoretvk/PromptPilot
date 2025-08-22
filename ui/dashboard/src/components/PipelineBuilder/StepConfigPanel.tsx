@@ -22,14 +22,12 @@ import {
   AccordionDetails,
   useTheme,
   alpha,
-  Paper,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   ExpandMore,
   Save as SaveIcon,
   Settings as SettingsIcon,
-  Code as CodeIcon,
   Psychology,
   Transform,
   FilterAlt,

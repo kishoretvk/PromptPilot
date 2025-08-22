@@ -10,7 +10,6 @@ import {
   Button,
   Chip,
   Paper,
-  Divider,
   Tabs,
   Tab,
   IconButton,
@@ -113,18 +112,18 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
     return colors[status as keyof typeof colors] || theme.palette.grey[500];
   };
 
-  const getDifferenceIcon = (type: 'added' | 'removed' | 'modified') => {
-    switch (type) {
-      case 'added':
-        return <CheckCircle sx={{ color: theme.palette.success.main }} />;
-      case 'removed':
-        return <Cancel sx={{ color: theme.palette.error.main }} />;
-      case 'modified':
-        return <ChangeCircle sx={{ color: theme.palette.warning.main }} />;
-      default:
-        return null;
-    }
-  };
+  // const getDifferenceIcon = (type: 'added' | 'removed' | 'modified') => {
+  //   switch (type) {
+  //     case 'added':
+  //       return <CheckCircle sx={{ color: theme.palette.success.main }} />;
+  //     case 'removed':
+  //       return <Cancel sx={{ color: theme.palette.error.main }} />;
+  //     case 'modified':
+  //       return <ChangeCircle sx={{ color: theme.palette.warning.main }} />;
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   const renderVersionCard = (version: PromptVersion, side: 'left' | 'right') => (
     <Card sx={{ height: '100%', border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>

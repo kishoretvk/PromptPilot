@@ -46,7 +46,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
-import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
+import { Bar, Doughnut } from 'react-chartjs-2';
 
 import { useAnalytics } from '../../hooks/useAnalytics';
 import UsageCharts from './UsageCharts';
@@ -96,13 +96,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange);
-  const [selectedPrompts, setSelectedPrompts] = useState<string[]>(promptFilter);
+  // const [selectedPrompts, setSelectedPrompts] = useState<string[]>(promptFilter);
 
   // Fetch analytics data
   const { data: usageData, isLoading: usageLoading } = useAnalytics().useUsageMetrics(selectedTimeRange);
   const { data: performanceData, isLoading: performanceLoading } = useAnalytics().usePerformanceData(selectedTimeRange);
   const { data: costData, isLoading: costLoading } = useAnalytics().useCostData(selectedTimeRange);
-  const { data: dashboardData, isLoading: dashboardLoading } = useAnalytics().useDashboardData(selectedTimeRange);
+  const { data: dashboardData } = useAnalytics().useDashboardData(selectedTimeRange);
 
   // Calculate summary metrics
   const summaryMetrics = useMemo(() => {
