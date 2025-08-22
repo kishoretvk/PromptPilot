@@ -1,46 +1,314 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import PromptManager from "./components/PromptManager/PromptManager";
-import PromptHistory from "./components/PromptHistory/PromptHistory";
-import PipelineBuilder from "./components/PipelineBuilder/PipelineBuilder";
-import AnalyticsDashboard from "./components/Analytics/AnalyticsDashboard";
-import SettingsIntegrations from "./components/Settings/SettingsIntegrations";
+import React, { Suspense, useState, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  List,
+  Typography,
+  Divider,
+  IconButton,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  CircularProgress,
+  Container,
+  useTheme,
+  useMediaQuery,
+  Breadcrumbs,
+  Link as MuiLink,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Dashboard,
+  History,
+  AccountTree,
+  Analytics,
+  Settings,
+  Integration,
+  Home,
+  ChevronLeft,
+} from '@mui/icons-material';
+import { ErrorBoundary } from 'react-error-boundary';
+import { toast } from 'react-toastify';
+import ErrorFallback from './components/common/ErrorFallback';
 
-function Placeholder({ title }: { title: string }) {
+// Lazy load components for better performance
+const PromptManager = React.lazy(() => import('./components/PromptManager/PromptManager'));
+const PromptHistory = React.lazy(() => import('./components/PromptHistory/PromptHistory'));
+const PipelineBuilder = React.lazy(() => import('./components/PipelineBuilder/PipelineBuilder'));
+const AnalyticsDashboard = React.lazy(() => import('./components/Analytics/AnalyticsDashboard'));
+const SettingsIntegrations = React.lazy(() => import('./components/Settings/SettingsIntegrations'));
+
+// Navigation configuration
+interface NavigationItem {
+  path: string;
+  label: string;
+  icon: React.ReactNode;
+  component: React.ComponentType;
+}
+
+const navigationItems: NavigationItem[] = [
+  {
+    path: '/',
+    label: 'Prompt Management',
+    icon: <Dashboard />,
+    component: PromptManager,
+  },
+  {
+    path: '/history',
+    label: 'Prompt History',
+    icon: <History />,
+    component: PromptHistory,
+  },
+  {
+    path: '/pipeline',
+    label: 'Pipeline Builder',
+    icon: <AccountTree />,
+    component: PipelineBuilder,
+  },
+  {
+    path: '/analytics',
+    label: 'Analytics',
+    icon: <Analytics />,
+    component: AnalyticsDashboard,
+  },
+  {
+    path: '/settings',
+    label: 'Settings',
+    icon: <Settings />,
+    component: SettingsIntegrations,
+  },
+  {
+    path: '/integrations',
+    label: 'Integrations',
+    icon: <Integration />,
+    component: SettingsIntegrations,
+  },
+];
+
+const drawerWidth = 280;
+
+// Loading component
+function LoadingFallback() {
   return (
-    <div style={{ padding: 40 }}>
-      <h1>{title}</h1>
-      <p>This is a placeholder for the {title} screen.</p>
-    </div>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="400px"
+      flexDirection="column"
+      gap={2}
+    >
+      <CircularProgress size={48} />
+      <Typography variant="body1" color="text.secondary">
+        Loading...
+      </Typography>
+    </Box>
+  );
+}
+
+// Breadcrumb component
+function AppBreadcrumbs() {
+  const location = useLocation();
+  const currentItem = navigationItems.find(item => item.path === location.pathname);
+  
+  return (
+    <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
+      <MuiLink
+        underline="hover"
+        color="inherit"
+        href="/"
+        sx={{ display: 'flex', alignItems: 'center' }}
+      >
+        <Home sx={{ mr: 0.5 }} fontSize="inherit" />
+        Home
+      </MuiLink>
+      {currentItem && (
+        <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
+          {currentItem.icon && React.cloneElement(currentItem.icon as React.ReactElement, { sx: { mr: 0.5 }, fontSize: 'inherit' })}
+          {currentItem.label}
+        </Typography>
+      )}
+    </Breadcrumbs>
+  );
+}
+
+// Sidebar navigation component
+function NavigationDrawer({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate: (path: string) => void }) {
+  const location = useLocation();
+  const theme = useTheme();
+  
+  return (
+    <Drawer
+      variant="persistent"
+      anchor="left"
+      open={open}
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+          backgroundColor: theme.palette.background.paper,
+        },
+      }}
+    >
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          PromptPilot
+        </Typography>
+        <IconButton onClick={onClose}>
+          <ChevronLeft />
+        </IconButton>
+      </Toolbar>
+      <Divider />
+      <List>
+        {navigationItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <ListItem key={item.path} disablePadding>
+              <ListItemButton
+                selected={isActive}
+                onClick={() => onNavigate(item.path)}
+                sx={{
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.light + '20',
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.light + '30',
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    color: isActive ? theme.palette.primary.main : 'inherit',
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  sx={{
+                    color: isActive ? theme.palette.primary.main : 'inherit',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+    </Drawer>
+  );
+}
+
+// Main app layout component
+function AppLayout() {
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  const handleDrawerToggle = useCallback(() => {
+    setDrawerOpen(prev => !prev);
+  }, []);
+  
+  const handleNavigate = useCallback((path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setDrawerOpen(false);
+    }
+  }, [navigate, isMobile]);
+  
+  React.useEffect(() => {
+    if (isMobile) {
+      setDrawerOpen(false);
+    } else {
+      setDrawerOpen(true);
+    }
+  }, [isMobile]);
+  
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: theme.zIndex.drawer + 1,
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+          boxShadow: theme.shadows[1],
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={handleDrawerToggle}
+            edge="start"
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            PromptPilot Dashboard
+          </Typography>
+        </Toolbar>
+      </AppBar>
+      
+      <NavigationDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onNavigate={handleNavigate}
+      />
+      
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          transition: theme.transitions.create('margin', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
+          marginLeft: drawerOpen ? 0 : `-${drawerWidth}px`,
+          ...(isMobile && {
+            marginLeft: 0,
+          }),
+        }}
+      >
+        <Toolbar />
+        <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
+          <AppBreadcrumbs />
+          <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onError={(error, errorInfo) => {
+              console.error('Route Error:', error, errorInfo);
+              toast.error('An error occurred while loading this page');
+            }}
+          >
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {navigationItems.map((item) => (
+                  <Route
+                    key={item.path}
+                    path={item.path}
+                    element={<item.component />}
+                  />
+                ))}
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </Container>
+      </Box>
+    </Box>
   );
 }
 
 function App() {
   return (
     <Router>
-      <div style={{ display: "flex", minHeight: "100vh" }}>
-        <nav style={{ width: 220, background: "#222", color: "#fff", padding: 24 }}>
-          <h2>PromptPilot</h2>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li><Link to="/" style={{ color: "#fff" }}>Prompt Management</Link></li>
-            <li><Link to="/history" style={{ color: "#fff" }}>Prompt Iteration</Link></li>
-            <li><Link to="/pipeline" style={{ color: "#fff" }}>Pipeline Builder</Link></li>
-            <li><Link to="/analytics" style={{ color: "#fff" }}>Analytics</Link></li>
-            <li><Link to="/settings" style={{ color: "#fff" }}>Settings</Link></li>
-            <li><Link to="/integrations" style={{ color: "#fff" }}>Integrations</Link></li>
-          </ul>
-        </nav>
-        <main style={{ flex: 1, background: "#f5f5f5" }}>
-          <Routes>
-            <Route path="/" element={<PromptManager />} />
-            <Route path="/history" element={<PromptHistory />} />
-            <Route path="/pipeline" element={<PipelineBuilder />} />
-            <Route path="/analytics" element={<AnalyticsDashboard />} />
-            <Route path="/settings" element={<SettingsIntegrations />} />
-            <Route path="/integrations" element={<SettingsIntegrations />} />
-          </Routes>
-        </main>
-      </div>
+      <AppLayout />
     </Router>
   );
 }

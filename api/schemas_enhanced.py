@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
@@ -60,7 +60,8 @@ class TimestampMixin(BaseModel):
 class IDMixin(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique identifier")
     
-    @validator('id')
+    @field_validator('id')
+    @classmethod
     def validate_id(cls, v):
         try:
             uuid.UUID(v)
@@ -75,7 +76,8 @@ class PromptMessage(BaseModel):
     priority: int = Field(default=1, ge=1, le=100, description="Message priority for ordering")
     variables: Optional[Dict[str, str]] = Field(default_factory=dict, description="Template variables")
     
-    @validator('content')
+    @field_validator('content')
+    @classmethod
     def validate_content(cls, v):
         if not v.strip():
             raise ValueError("Message content cannot be empty or whitespace only")
@@ -97,7 +99,8 @@ class CreatePromptRequest(BaseModel):
     model_name: str = Field(..., min_length=1, max_length=100, description="Specific model name")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Model parameters")
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def validate_name(cls, v):
         if not v.strip():
             raise ValueError("Prompt name cannot be empty")
@@ -106,7 +109,8 @@ class CreatePromptRequest(BaseModel):
             raise ValueError("Prompt name contains invalid characters")
         return v.strip()
     
-    @validator('tags')
+    @field_validator('tags')
+    @classmethod
     def validate_tags(cls, v):
         if not v:
             return v
@@ -127,7 +131,8 @@ class CreatePromptRequest(BaseModel):
         # Remove duplicates while preserving order
         return list(dict.fromkeys(validated_tags))
     
-    @validator('parameters')
+    @field_validator('parameters')
+    @classmethod
     def validate_parameters(cls, v):
         if not v:
             return v
@@ -150,9 +155,9 @@ class CreatePromptRequest(BaseModel):
         
         return v
     
-    @root_validator
-    def validate_messages_consistency(cls, values):
-        messages = values.get('messages', [])
+    @model_validator(mode='after')
+    def validate_messages_consistency(self):
+        messages = self.messages
         if not messages:
             raise ValueError("At least one message is required")
         
@@ -166,7 +171,7 @@ class CreatePromptRequest(BaseModel):
         if system_messages and messages[0].role != MessageRole.SYSTEM:
             raise ValueError("System message must be the first message if present")
         
-        return values
+        return self
 
 class UpdatePromptRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
@@ -182,15 +187,27 @@ class UpdatePromptRequest(BaseModel):
     status: Optional[PromptStatus] = None
     
     # Apply same validators as CreatePromptRequest
-    _validate_name = validator('name', allow_reuse=True)(CreatePromptRequest.validate_name)
-    _validate_tags = validator('tags', allow_reuse=True)(CreatePromptRequest.validate_tags)
-    _validate_parameters = validator('parameters', allow_reuse=True)(CreatePromptRequest.validate_parameters)
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        return CreatePromptRequest.validate_name(v)
+    
+    @field_validator('tags')
+    @classmethod
+    def validate_tags(cls, v):
+        return CreatePromptRequest.validate_tags(v)
+    
+    @field_validator('parameters')
+    @classmethod
+    def validate_parameters(cls, v):
+        return CreatePromptRequest.validate_parameters(v)
 
 class TestPromptRequest(BaseModel):
     input_variables: Dict[str, Any] = Field(default_factory=dict, description="Variables to test with")
     model_overrides: Optional[Dict[str, Any]] = Field(None, description="Override model parameters for this test")
     
-    @validator('input_variables')
+    @field_validator('input_variables')
+    @classmethod
     def validate_input_variables(cls, v):
         if not isinstance(v, dict):
             raise ValueError("Input variables must be a dictionary")
@@ -268,26 +285,26 @@ class PaginatedResponse(BaseModel):
     has_next: bool
     has_prev: bool
     
-    @root_validator
-    def validate_pagination(cls, values):
-        page = values.get('page', 1)
-        per_page = values.get('per_page', 10)
-        total = values.get('total', 0)
+    @model_validator(mode='after')
+    def validate_pagination(self):
+        page = self.page
+        per_page = self.per_page
+        total = self.total
         
         total_pages = (total + per_page - 1) // per_page if total > 0 else 0
-        values['total_pages'] = total_pages
-        values['has_next'] = page < total_pages
-        values['has_prev'] = page > 1
+        self.total_pages = total_pages
+        self.has_next = page < total_pages
+        self.has_prev = page > 1
         
-        return values
+        return self
 
 # Settings schemas
 class ThemeSettings(BaseModel):
-    mode: str = Field(..., regex="^(light|dark|auto)$")
-    primary_color: str = Field(..., regex="^#[0-9A-Fa-f]{6}$")
-    secondary_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    mode: str = Field(..., pattern="^(light|dark|auto)$")
+    primary_color: str = Field(..., pattern="^#[0-9A-Fa-f]{6}$")
+    secondary_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     font_family: Optional[str] = Field(None, max_length=100)
-    font_size: str = Field(default="medium", regex="^(small|medium|large)$")
+    font_size: str = Field(default="medium", pattern="^(small|medium|large)$")
     compact_mode: bool = False
 
 class NotificationSettings(BaseModel):
@@ -296,7 +313,8 @@ class NotificationSettings(BaseModel):
     webhook_url: Optional[str] = Field(None, max_length=500)
     notification_types: Dict[str, bool] = Field(default_factory=dict)
     
-    @validator('webhook_url')
+    @field_validator('webhook_url')
+    @classmethod
     def validate_webhook_url(cls, v):
         if v and not re.match(r'^https?://', v):
             raise ValueError("Webhook URL must start with http:// or https://")
@@ -309,7 +327,8 @@ class SecuritySettings(BaseModel):
     allowed_domains: List[str] = Field(default_factory=list, max_items=100)
     cors_enabled: bool = True
     
-    @validator('allowed_domains')
+    @field_validator('allowed_domains')
+    @classmethod
     def validate_domains(cls, v):
         domain_pattern = r'^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$'
         for domain in v:
@@ -333,7 +352,8 @@ class PipelineStep(BaseModel):
     parameters: Dict[str, Any] = Field(default_factory=dict)
     position: Dict[str, float] = Field(default_factory=dict)  # For visual editor
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def validate_step_name(cls, v):
         if not v.strip():
             raise ValueError("Step name cannot be empty")
@@ -344,15 +364,16 @@ class CreatePipelineRequest(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     steps: List[PipelineStep] = Field(..., min_items=1, max_items=100)
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def validate_pipeline_name(cls, v):
         if not v.strip():
             raise ValueError("Pipeline name cannot be empty")
         return v.strip()
     
-    @root_validator
-    def validate_pipeline_steps(cls, values):
-        steps = values.get('steps', [])
+    @model_validator(mode='after')
+    def validate_pipeline_steps(self):
+        steps = self.steps
         if not steps:
             raise ValueError("Pipeline must have at least one step")
         
@@ -361,7 +382,7 @@ class CreatePipelineRequest(BaseModel):
         if len(step_ids) != len(set(step_ids)):
             raise ValueError("Step IDs must be unique")
         
-        return values
+        return self
 
 class PipelineResponse(IDMixin, TimestampMixin):
     name: str
@@ -393,7 +414,7 @@ class CostAnalysis(BaseModel):
 
 # Health check schema
 class HealthResponse(BaseModel):
-    status: str = Field(..., regex="^(healthy|degraded|unhealthy)$")
+    status: str = Field(..., pattern="^(healthy|degraded|unhealthy)$")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: str
     uptime_seconds: float = Field(ge=0)
