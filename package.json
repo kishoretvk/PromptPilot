@@ -14,6 +14,7 @@
     "reactflow": "^11.11.4"
   },
   "devDependencies": {
-    "@types/react-router-dom": "^5.3.3"
+    "@types/react-router-dom": "^5.3.3",
+    "ts-jest": "^27.1.5"
   }
 }
