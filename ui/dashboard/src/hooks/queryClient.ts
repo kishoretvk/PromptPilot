@@ -39,14 +39,11 @@ interface QueryProviderProps {
 }
 
 export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      {/* Show React Query DevTools in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
-    </QueryClientProvider>
+  return React.createElement(
+    QueryClientProvider,
+    { client: queryClient },
+    children,
+    process.env.NODE_ENV === 'development' ? React.createElement(ReactQueryDevtools, { initialIsOpen: false }) : null
   );
 };
 

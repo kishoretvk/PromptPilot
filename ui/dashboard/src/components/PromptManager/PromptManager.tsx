@@ -35,7 +35,7 @@ function TabPanel(props: TabPanelProps) {
 
   return (
     <div
-      role=\"tabpanel\"
+      role="tabpanel"
       hidden={value !== index}
       id={`prompt-manager-tabpanel-${index}`}
       aria-labelledby={`prompt-manager-tab-${index}`}
@@ -141,13 +141,13 @@ const PromptManager: React.FC<PromptManagerProps> = ({
   }, []);
 
   return (
-    <Container maxWidth=\"xl\">
+    <Container maxWidth="xl">
       <Box sx={{ py: 3 }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Typography
-            variant=\"h4\"
-            component=\"h1\"
+            variant="h4"
+            component="h1"
             gutterBottom
             sx={{
               fontWeight: 700,
@@ -159,14 +159,14 @@ const PromptManager: React.FC<PromptManagerProps> = ({
           >
             Prompt Management
           </Typography>
-          <Typography variant=\"subtitle1\" color=\"text.secondary\" sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2 }}>
             Create, edit, test, and manage your LLM prompts
           </Typography>
           
           {/* Action Buttons */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
-              variant=\"contained\"
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={handleCreateNew}
               sx={{
@@ -199,8 +199,8 @@ const PromptManager: React.FC<PromptManagerProps> = ({
           <Tabs
             value={getTabIndex(currentView)}
             onChange={handleTabChange}
-            aria-label=\"prompt manager tabs\"
-            variant=\"fullWidth\"
+            aria-label="prompt manager tabs"
+            variant="fullWidth"
             sx={{
               '& .MuiTab-root': {
                 minHeight: 64,
@@ -219,21 +219,21 @@ const PromptManager: React.FC<PromptManagerProps> = ({
           >
             <Tab
               icon={<ListIcon />}
-              label=\"Prompt Library\"
-              iconPosition=\"start\"
+              label="Prompt Library"
+              iconPosition="start"
               {...a11yProps(0)}
             />
             <Tab
               icon={<EditIcon />}
-              label={isCreating ? \"Create Prompt\" : \"Edit Prompt\"}
-              iconPosition=\"start\"
+              label={isCreating ? "Create Prompt" : "Edit Prompt"}
+              iconPosition="start"
               {...a11yProps(1)}
               disabled={!isCreating && !selectedPrompt}
             />
             <Tab
               icon={<TestIcon />}
-              label=\"Test Prompt\"
-              iconPosition=\"start\"
+              label="Test Prompt"
+              iconPosition="start"
               {...a11yProps(2)}
               disabled={!selectedPrompt}
             />
@@ -275,10 +275,10 @@ const PromptManager: React.FC<PromptManagerProps> = ({
       {/* Floating Action Button */}
       {currentView === 'list' && (
         <Fab
-          color=\"primary\"
-          aria-label=\"create new prompt\"
+          color="primary"
+          aria-label="create new prompt"
           onClick={handleCreateNew}
-          sx={
+          sx={{
             position: 'fixed',
             bottom: 24,
             right: 24,
@@ -287,7 +287,7 @@ const PromptManager: React.FC<PromptManagerProps> = ({
             '&:hover': {
               boxShadow: theme.shadows[8],
             },
-          }
+          }}
         >
           <AddIcon />
         </Fab>
