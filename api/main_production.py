@@ -10,6 +10,7 @@ import time
 import uuid
 from datetime import datetime, timedelta
 import uvicorn
+from pydantic import BaseModel, Field
 
 # Enhanced imports
 from schemas_enhanced import (
@@ -213,6 +214,23 @@ settings_store = {
     "api_keys": [],
     "integrations": []
 }
+
+# Frontend error logging storage and models
+frontend_error_logs = []
+MAX_FRONTEND_ERROR_LOGS = 10000
+
+class FrontendErrorLog(BaseModel):
+    """Schema for frontend error logs"""
+    level: str = Field(..., description="Error level: error, warning, info")
+    message: str = Field(..., description="Error message")
+    code: Optional[str] = Field(None, description="Error code")
+    status: Optional[int] = Field(None, description="HTTP status code if applicable")
+    details: Optional[dict] = Field(None, description="Additional error details")
+    context: Optional[dict] = Field(None, description="Error context information")
+    stackTrace: Optional[str] = Field(None, description="JavaScript stack trace")
+    userAgent: Optional[str] = Field(None, description="User agent string")
+    url: Optional[str] = Field(None, description="URL where error occurred")
+    timestamp: str = Field(..., description="Timestamp when error occurred")
 
 # Root endpoint with enhanced information
 @app.get("/", tags=["Root"])
@@ -613,6 +631,157 @@ async def test_prompt(
     except Exception as e:
         logger.error("Error testing prompt", error=str(e), exc_info=True)
         raise ExternalServiceError(prompt.get("model_provider", "unknown"), str(e))
+
+# Frontend Error Logging Endpoints
+@app.post("/api/logs/frontend-error", tags=["Logging"])
+async def log_frontend_error(
+    error_log: FrontendErrorLog,
+    background_tasks: BackgroundTasks,
+    request: Request
+):
+    """Log a single frontend error"""
+    
+    try:
+        # Process error log
+        client_ip = request.client.host if request.client else "unknown"
+        session_id = request.headers.get("X-Session-ID")
+        user_id = request.headers.get("X-User-ID")
+        
+        # Create log entry
+        log_entry = {
+            "id": str(uuid.uuid4()),
+            "created_at": datetime.utcnow().isoformat(),
+            "session_id": session_id,
+            "user_id": user_id,
+            "client_ip": client_ip,
+            **error_log.dict()
+        }
+        
+        # Add to storage
+        frontend_error_logs.append(log_entry)
+        if len(frontend_error_logs) > MAX_FRONTEND_ERROR_LOGS:
+            frontend_error_logs.pop(0)
+        
+        # Log using appropriate level
+        log_level = error_log.level.lower()
+        log_data = {
+            "frontend_error": True,
+            "level": log_level,
+            "message": error_log.message,
+            "error_code": error_log.code,
+            "http_status": error_log.status,
+            "client_ip": client_ip,
+            "session_id": session_id,
+            "user_id": user_id
+        }
+        
+        if log_level == "error":
+            logger.error("Frontend error reported", **log_data)
+        elif log_level == "warning":
+            logger.warning("Frontend warning reported", **log_data)
+        else:
+            logger.info("Frontend info reported", **log_data)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Error logged successfully",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        
+    except Exception as e:
+        logger.error("Failed to process frontend error log", error=str(e), exc_info=True)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Error received but processing failed",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+
+@app.get("/api/logs/frontend-errors", tags=["Logging"])
+async def get_frontend_errors(
+    level: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None
+):
+    """Get frontend error logs with filtering"""
+    
+    try:
+        # Filter error logs
+        filtered_logs = frontend_error_logs.copy()
+        
+        if level:
+            filtered_logs = [log for log in filtered_logs if log.get("level") == level.lower()]
+        
+        if session_id:
+            filtered_logs = [log for log in filtered_logs if log.get("session_id") == session_id]
+        
+        if user_id:
+            filtered_logs = [log for log in filtered_logs if log.get("user_id") == user_id]
+        
+        # Sort by timestamp (newest first)
+        filtered_logs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        
+        # Apply pagination
+        paginated_logs = filtered_logs[offset:offset + limit]
+        
+        return {
+            "logs": paginated_logs,
+            "total": len(filtered_logs),
+            "limit": limit,
+            "offset": offset
+        }
+        
+    except Exception as e:
+        logger.error("Failed to retrieve frontend error logs", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve error logs")
+
+@app.get("/api/logs/frontend-errors/stats", tags=["Logging"])
+async def get_frontend_error_stats():
+    """Get frontend error statistics"""
+    
+    try:
+        # Calculate statistics
+        total_errors = len(frontend_error_logs)
+        
+        level_counts = {}
+        code_counts = {}
+        recent_errors = 0
+        
+        cutoff_time = datetime.utcnow().replace(hour=datetime.utcnow().hour - 1)
+        
+        for log in frontend_error_logs:
+            # Count by level
+            level = log.get("level", "unknown")
+            level_counts[level] = level_counts.get(level, 0) + 1
+            
+            # Count by error code
+            code = log.get("code", "unknown")
+            code_counts[code] = code_counts.get(code, 0) + 1
+            
+            # Count recent errors (last hour)
+            try:
+                log_time = datetime.fromisoformat(log.get("created_at", ""))
+                if log_time > cutoff_time:
+                    recent_errors += 1
+            except:
+                pass
+        
+        return {
+            "total_errors": total_errors,
+            "recent_errors": recent_errors,
+            "level_breakdown": level_counts,
+            "top_error_codes": dict(sorted(code_counts.items(), key=lambda x: x[1], reverse=True)[:10]),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error("Failed to calculate frontend error stats", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to calculate error statistics")
 
 # Startup and shutdown events
 @app.on_event("startup")
