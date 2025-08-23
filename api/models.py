@@ -1,5 +1,4 @@
 from sqlalchemy import (
-from sqlalchemy import (
     Column, Integer, String, Text, Boolean, DateTime, JSON, 
     ForeignKey, Float, Enum, Index, UniqueConstraint
 )
@@ -65,7 +64,7 @@ class APIKey(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(255), nullable=False)
     key_hash = Column(String(255), nullable=False, unique=True)
-    user_id = Column(String, ForeignKey(\"users.id\"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
     is_active = Column(Boolean, default=True)
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -127,7 +126,7 @@ class PromptVersion(Base):
     __tablename__ = "prompt_versions"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    prompt_id = Column(String, ForeignKey(\"prompts.id\"), nullable=False)
+    prompt_id = Column(String, ForeignKey("prompts.id"), nullable=False)
     version = Column(String(50), nullable=False)
     changelog = Column(Text)
     content_snapshot = Column(JSON, nullable=False)  # Full prompt content
@@ -148,7 +147,7 @@ class TestCase(Base):
     __tablename__ = "test_cases"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    prompt_id = Column(String, ForeignKey(\"prompts.id\"), nullable=False)
+    prompt_id = Column(String, ForeignKey("prompts.id"), nullable=False)
     name = Column(String(255), nullable=False)
     input_data = Column(JSON, nullable=False)
     expected_output = Column(Text)
@@ -206,9 +205,9 @@ class Pipeline(Base):
     total_cost = Column(Float, default=0.0)
     
     # Relationships
-    owner = relationship(\"User\", back_populates=\"pipelines\")
-    steps = relationship(\"PipelineStep\", back_populates=\"pipeline\", order_by=\"PipelineStep.order\")
-    executions = relationship(\"PipelineExecution\", back_populates=\"pipeline\")
+    owner = relationship("User", back_populates="pipelines")
+    steps = relationship("PipelineStep", back_populates="pipeline", order_by="PipelineStep.order")
+    executions = relationship("PipelineExecution", back_populates="pipeline")
     
     # Indexes
     __table_args__ = (
@@ -217,16 +216,16 @@ class Pipeline(Base):
     )
 
 class PipelineStep(Base):
-    __tablename__ = \"pipeline_steps\"
+    __tablename__ = "pipeline_steps"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    pipeline_id = Column(String, ForeignKey(\"pipelines.id\"), nullable=False)
+    pipeline_id = Column(String, ForeignKey("pipelines.id"), nullable=False)
     name = Column(String(255), nullable=False)
     step_type = Column(String(50), nullable=False)  # prompt, transform, condition, etc.
     order = Column(Integer, nullable=False)
     
     # Configuration
-    prompt_id = Column(String, ForeignKey(\"prompts.id\"))
+    prompt_id = Column(String, ForeignKey("prompts.id"))
     configuration = Column(JSON, default=dict)
     input_mapping = Column(JSON, default=dict)
     output_mapping = Column(JSON, default=dict)
@@ -237,8 +236,8 @@ class PipelineStep(Base):
     position_y = Column(Float, default=0)
     
     # Relationships
-    pipeline = relationship(\"Pipeline\", back_populates=\"steps\")
-    prompt = relationship(\"Prompt\", back_populates=\"pipeline_steps\")
+    pipeline = relationship("Pipeline", back_populates="steps")
+    prompt = relationship("Prompt", back_populates="pipeline_steps")
     
     # Indexes
     __table_args__ = (
@@ -246,11 +245,11 @@ class PipelineStep(Base):
     )
 
 class PipelineExecution(Base):
-    __tablename__ = \"pipeline_executions\"
+    __tablename__ = "pipeline_executions"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    pipeline_id = Column(String, ForeignKey(\"pipelines.id\"), nullable=False)
-    user_id = Column(String, ForeignKey(\"users.id\"), nullable=False)
+    pipeline_id = Column(String, ForeignKey("pipelines.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
     status = Column(Enum(ExecutionStatus), default=ExecutionStatus.PENDING)
     
     # Execution data
@@ -267,16 +266,16 @@ class PipelineExecution(Base):
     total_cost = Column(Float, default=0.0)
     
     # Relationships
-    pipeline = relationship(\"Pipeline\", back_populates=\"executions\")
-    user = relationship(\"User\")
-    step_executions = relationship(\"StepExecution\", back_populates=\"pipeline_execution\")
+    pipeline = relationship("Pipeline", back_populates="executions")
+    user = relationship("User")
+    step_executions = relationship("StepExecution", back_populates="pipeline_execution")
 
 class StepExecution(Base):
-    __tablename__ = \"step_executions\"
+    __tablename__ = "step_executions"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    pipeline_execution_id = Column(String, ForeignKey(\"pipeline_executions.id\"), nullable=False)
-    step_id = Column(String, ForeignKey(\"pipeline_steps.id\"), nullable=False)
+    pipeline_execution_id = Column(String, ForeignKey("pipeline_executions.id"), nullable=False)
+    step_id = Column(String, ForeignKey("pipeline_steps.id"), nullable=False)
     status = Column(Enum(ExecutionStatus), default=ExecutionStatus.PENDING)
     
     # Execution data
@@ -293,15 +292,15 @@ class StepExecution(Base):
     cost = Column(Float, default=0.0)
     
     # Relationships
-    pipeline_execution = relationship(\"PipelineExecution\", back_populates=\"step_executions\")
+    pipeline_execution = relationship("PipelineExecution", back_populates="step_executions")
 
 # Execution and Analytics Models
 class Execution(Base):
-    __tablename__ = \"executions\"
+    __tablename__ = "executions"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    prompt_id = Column(String, ForeignKey(\"prompts.id\"))
-    user_id = Column(String, ForeignKey(\"users.id\"), nullable=False)
+    prompt_id = Column(String, ForeignKey("prompts.id"))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
     
     # Execution data
     input_data = Column(JSON, nullable=False)
@@ -326,9 +325,9 @@ class Execution(Base):
     total_tokens = Column(Integer)
     
     # Relationships
-    prompt = relationship(\"Prompt\", back_populates=\"executions\")
-    user = relationship(\"User\", back_populates=\"executions\")
-    test_results = relationship(\"TestResult\", back_populates=\"execution\")
+    prompt = relationship("Prompt", back_populates="executions")
+    user = relationship("User", back_populates="executions")
+    test_results = relationship("TestResult", back_populates="execution")
     
     # Indexes
     __table_args__ = (
@@ -339,13 +338,13 @@ class Execution(Base):
 
 # Settings and Configuration Models
 class Setting(Base):
-    __tablename__ = \"settings\"
+    __tablename__ = "settings"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     key = Column(String(255), unique=True, nullable=False)
     value = Column(JSON, nullable=False)
     description = Column(Text)
-    category = Column(String(100), default=\"general\")
+    category = Column(String(100), default="general")
     is_public = Column(Boolean, default=False)  # Can be read by non-admin users
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -356,7 +355,7 @@ class Setting(Base):
     )
 
 class LLMProvider(Base):
-    __tablename__ = \"llm_providers\"
+    __tablename__ = "llm_providers"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(100), unique=True, nullable=False)
@@ -372,10 +371,10 @@ class LLMProvider(Base):
 
 # Audit and Logging Models
 class AuditLog(Base):
-    __tablename__ = \"audit_logs\"
+    __tablename__ = "audit_logs"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey(\"users.id\"))
+    user_id = Column(String, ForeignKey("users.id"))
     action = Column(String(100), nullable=False)
     resource_type = Column(String(100), nullable=False)
     resource_id = Column(String)
@@ -393,7 +392,7 @@ class AuditLog(Base):
 
 # System monitoring
 class SystemMetric(Base):
-    __tablename__ = \"system_metrics\"
+    __tablename__ = "system_metrics"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     metric_name = Column(String(255), nullable=False)

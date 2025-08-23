@@ -9,21 +9,25 @@ import {
 class AnalyticsService {
   private basePath = '/analytics';
 
-  async getUsageMetrics(timeRange = '30d', filters?: AnalyticsFilter): Promise<UsageMetrics> {
-    const params: any = { time_range: timeRange };
-    if (filters) {
-      if (filters.prompt_ids?.length) params.prompt_ids = filters.prompt_ids.join(',');
-      if (filters.providers?.length) params.providers = filters.providers.join(',');
-      if (filters.tags?.length) params.tags = filters.tags.join(',');
-      if (filters.date_range) {
-        params.start_date = filters.date_range.start;
-        params.end_date = filters.date_range.end;
+  async getUsageMetrics(filters?: AnalyticsFilter): Promise<UsageMetrics> {
+    try {
+      const params = new URLSearchParams();
+      if (filters) {
+        if (filters.prompt_ids?.length) params.set('prompt_ids', filters.prompt_ids.join(','));
+        if (filters.providers?.length) params.set('providers', filters.providers.join(','));
+        if (filters.tags?.length) params.set('tags', filters.tags.join(','));
+        if (filters.date_range) {
+          params.set('start_date', filters.date_range.start);
+          params.set('end_date', filters.date_range.end);
+        }
       }
-    }
 
-    const response = await apiClient.get<UsageMetrics>(`${this.basePath}/usage`, params);
-    return response.data;
-  }
+      const response = await apiClient.get<UsageMetrics>(`${this.basePath}/usage`, params);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch usage metrics: ${error}`);
+    }
+  };
 
   async getPerformanceData(timeRange = '30d', promptIds?: string[]): Promise<PerformanceData> {
     const params: any = { time_range: timeRange };

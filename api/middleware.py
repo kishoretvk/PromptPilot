@@ -20,7 +20,7 @@ RESPONSE_SIZE = Histogram('http_response_size_bytes', 'HTTP response size')
 logger = structlog.get_logger(__name__)
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    \"\"\"Middleware for structured request/response logging\"\"\"
+    """Middleware for structured request/response logging"""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Generate request ID
@@ -33,12 +33,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Get request info
         method = request.method
         url = str(request.url)
-        client_ip = request.client.host if request.client else \"unknown\"
-        user_agent = request.headers.get(\"user-agent\", \"unknown\")
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
         
         # Log request
         logger.info(
-            \"HTTP request started\",
+            "HTTP request started",
             request_id=request_id,
             method=method,
             url=url,
@@ -56,7 +56,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             
             # Log response
             logger.info(
-                \"HTTP request completed\",
+                "HTTP request completed",
                 request_id=request_id,
                 method=method,
                 url=url,
@@ -66,7 +66,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             )
             
             # Add request ID to response headers
-            response.headers[\"X-Request-ID\"] = request_id
+            response.headers["X-Request-ID"] = request_id
             
             return response
             
@@ -76,7 +76,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             
             # Log error
             logger.error(
-                \"HTTP request failed\",
+                "HTTP request failed",
                 request_id=request_id,
                 method=method,
                 url=url,
@@ -89,16 +89,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=500,
                 content={
-                    \"error\": \"Internal Server Error\",
-                    \"message\": \"An unexpected error occurred\",
-                    \"request_id\": request_id,
-                    \"timestamp\": datetime.utcnow().isoformat()
+                    "error": "Internal Server Error",
+                    "message": "An unexpected error occurred",
+                    "request_id": request_id,
+                    "timestamp": datetime.utcnow().isoformat()
                 },
-                headers={\"X-Request-ID\": request_id}
+                headers={"X-Request-ID": request_id}
             )
 
 class MetricsMiddleware(BaseHTTPMiddleware):
-    \"\"\"Middleware for collecting Prometheus metrics\"\"\"
+    """Middleware for collecting Prometheus metrics"""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Start time for duration measurement
@@ -161,7 +161,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             raise e
     
     def _normalize_path(self, path: str) -> str:
-        \"\"\"Normalize path for metrics (remove IDs, etc.)\"\"\"
+        """Normalize path for metrics (remove IDs, etc.)"""
         # Replace UUIDs and IDs with placeholders
         import re
         
@@ -169,12 +169,12 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         path = re.sub(r'/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', '/{id}', path)
         
         # Replace numeric IDs
-        path = re.sub(r'/\\d+', '/{id}', path)
+        path = re.sub(r'/\d+', '/{id}', path)
         
         return path
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    \"\"\"Middleware for rate limiting\"\"\"
+    """Middleware for rate limiting"""
     
     def __init__(self, app: ASGIApp, requests_per_minute: int = 60):
         super().__init__(app)
@@ -183,16 +183,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Get client identifier
-        client_ip = request.client.host if request.client else \"unknown\"
+        client_ip = request.client.host if request.client else "unknown"
         
         # Check authorization header for user-specific limits
-        auth_header = request.headers.get(\"authorization\")
+        auth_header = request.headers.get("authorization")
         if auth_header:
             # Use token-based rate limiting
-            client_key = f\"token_{auth_header[:20]}\"
+            client_key = f"token_{auth_header[:20]}"
         else:
             # Use IP-based rate limiting
-            client_key = f\"ip_{client_ip}\"
+            client_key = f"ip_{client_ip}"
         
         # Check rate limit
         current_time = time.time()
@@ -211,7 +211,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         if current_requests >= self.requests_per_minute:
             logger.warning(
-                \"Rate limit exceeded\",
+                "Rate limit exceeded",
                 client_key=client_key,
                 requests=current_requests,
                 limit=self.requests_per_minute
@@ -220,12 +220,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=429,
                 content={
-                    \"error\": \"Rate limit exceeded\",
-                    \"message\": f\"Maximum {self.requests_per_minute} requests per minute\",
-                    \"retry_after\": 60,
-                    \"timestamp\": datetime.utcnow().isoformat()
+                    "error": "Rate limit exceeded",
+                    "message": f"Maximum {self.requests_per_minute} requests per minute",
+                    "retry_after": 60,
+                    "timestamp": datetime.utcnow().isoformat()
                 },
-                headers={\"Retry-After\": \"60\"}
+                headers={"Retry-After": "60"}
             )
         
         # Increment counter
@@ -235,20 +235,20 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         # Add rate limit headers
-        response.headers[\"X-RateLimit-Limit\"] = str(self.requests_per_minute)
-        response.headers[\"X-RateLimit-Remaining\"] = str(
+        response.headers["X-RateLimit-Limit"] = str(self.requests_per_minute)
+        response.headers["X-RateLimit-Remaining"] = str(
             max(0, self.requests_per_minute - self.requests[client_key][minute_key])
         )
-        response.headers[\"X-RateLimit-Reset\"] = str(int((minute_key + 1) * 60))
+        response.headers["X-RateLimit-Reset"] = str(int((minute_key + 1) * 60))
         
         return response
 
 class RequestTrackingMiddleware(BaseHTTPMiddleware):
-    \"\"\"Middleware for request tracking and correlation\"\"\"
+    """Middleware for request tracking and correlation"""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Get or generate correlation ID
-        correlation_id = request.headers.get(\"X-Correlation-ID\") or str(uuid.uuid4())
+        correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
         request.state.correlation_id = correlation_id
         
         # Get or generate request ID
@@ -264,9 +264,9 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             
             # Add tracking headers
-            response.headers[\"X-Correlation-ID\"] = correlation_id
-            response.headers[\"X-Request-ID\"] = request_id
-            response.headers[\"X-Response-Time\"] = str(
+            response.headers["X-Correlation-ID"] = correlation_id
+            response.headers["X-Request-ID"] = request_id
+            response.headers["X-Response-Time"] = str(
                 int((time.time() - request.state.start_time) * 1000)
             )
             
@@ -274,7 +274,7 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
             
         except Exception as e:
             logger.error(
-                \"Request processing failed\",
+                "Request processing failed",
                 correlation_id=correlation_id,
                 request_id=request_id,
                 error=str(e),
@@ -284,24 +284,24 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
             raise
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    \"\"\"Middleware for adding security headers\"\"\"
+    """Middleware for adding security headers"""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
         
         # Add security headers
-        response.headers[\"X-Content-Type-Options\"] = \"nosniff\"
-        response.headers[\"X-Frame-Options\"] = \"DENY\"
-        response.headers[\"X-XSS-Protection\"] = \"1; mode=block\"
-        response.headers[\"Strict-Transport-Security\"] = \"max-age=31536000; includeSubDomains\"
-        response.headers[\"Content-Security-Policy\"] = \"default-src 'self'\"
-        response.headers[\"Referrer-Policy\"] = \"strict-origin-when-cross-origin\"
-        response.headers[\"Permissions-Policy\"] = \"geolocation=(), microphone=(), camera=()\"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         
         return response
 
 class CacheControlMiddleware(BaseHTTPMiddleware):
-    \"\"\"Middleware for cache control headers\"\"\"
+    """Middleware for cache control headers"""
     
     def __init__(self, app: ASGIApp, default_max_age: int = 300):
         super().__init__(app)
@@ -313,18 +313,18 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         # Add cache control based on endpoint
         path = request.url.path
         
-        if path.startswith(\"/api/v1/\"):
-            if request.method == \"GET\":
+        if path.startswith("/api/v1/"):
+            if request.method == "GET":
                 # Cache GET requests for API
-                response.headers[\"Cache-Control\"] = f\"private, max-age={self.default_max_age}\"
+                response.headers["Cache-Control"] = f"private, max-age={self.default_max_age}"
             else:
                 # Don't cache mutations
-                response.headers[\"Cache-Control\"] = \"no-cache, no-store, must-revalidate\"
-        elif path in [\"/health\", \"/metrics\"]:
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        elif path in ["/health", "/metrics"]:
             # Don't cache system endpoints
-            response.headers[\"Cache-Control\"] = \"no-cache\"
+            response.headers["Cache-Control"] = "no-cache"
         else:
             # Default caching
-            response.headers[\"Cache-Control\"] = f\"public, max-age={self.default_max_age}\"
+            response.headers["Cache-Control"] = f"public, max-age={self.default_max_age}"
         
         return response

@@ -410,6 +410,154 @@ async def test_prompt(
     
     return result
 
+# Prompt Version Management Endpoints
+@app.get("/api/v1/prompts/{prompt_id}/versions", response_model=List[PromptVersion], tags=["Prompt Versions"])
+async def get_prompt_versions(
+    prompt_id: str,
+    include_branches: bool = True,
+    limit: int = 50,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all versions of a prompt"""
+    logger.info("Fetching prompt versions", user_id=current_user.id, prompt_id=prompt_id)
+    
+    versions = await prompt_service.get_prompt_versions(prompt_id, include_branches, limit)
+    return versions
+
+@app.post("/api/v1/prompts/{prompt_id}/versions", response_model=PromptVersion, status_code=201, tags=["Prompt Versions"])
+async def create_prompt_version(
+    prompt_id: str,
+    version_data: dict,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new version of a prompt"""
+    logger.info("Creating prompt version", user_id=current_user.id, prompt_id=prompt_id)
+    
+    version = await prompt_service.create_version(
+        prompt_id, 
+        version_data.get("version"), 
+        version_data.get("commit_message", ""), 
+        current_user.id,
+        version_data.get("parent_version_id")
+    )
+    
+    logger.info("Prompt version created", user_id=current_user.id, prompt_id=prompt_id, version_id=version.id)
+    return version
+
+@app.post("/api/v1/prompts/{prompt_id}/versions/branch", response_model=PromptVersion, status_code=201, tags=["Prompt Versions"])
+async def create_prompt_branch(
+    prompt_id: str,
+    branch_data: dict,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new branch from a specific version"""
+    logger.info("Creating prompt branch", user_id=current_user.id, prompt_id=prompt_id)
+    
+    branch = await prompt_service.create_branch(
+        prompt_id,
+        branch_data.get("branch_name"),
+        branch_data.get("source_version_id"),
+        current_user.id
+    )
+    
+    logger.info("Prompt branch created", user_id=current_user.id, prompt_id=prompt_id, branch_id=branch.id)
+    return branch
+
+@app.post("/api/v1/prompts/{prompt_id}/versions/{source_version_id}/merge/{target_version_id}", response_model=PromptVersion, status_code=201, tags=["Prompt Versions"])
+async def merge_prompt_versions(
+    prompt_id: str,
+    source_version_id: str,
+    target_version_id: str,
+    merge_data: dict,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Merge one version into another"""
+    logger.info("Merging prompt versions", user_id=current_user.id, prompt_id=prompt_id, 
+                source_version_id=source_version_id, target_version_id=target_version_id)
+    
+    merged_version = await prompt_service.merge_versions(
+        prompt_id,
+        source_version_id,
+        target_version_id,
+        current_user.id,
+        merge_data.get("merge_message")
+    )
+    
+    logger.info("Prompt versions merged", user_id=current_user.id, prompt_id=prompt_id, 
+                merged_version_id=merged_version.id)
+    return merged_version
+
+@app.get("/api/v1/prompts/{prompt_id}/versions/{version_id}", response_model=PromptResponse, tags=["Prompt Versions"])
+async def get_prompt_version(
+    prompt_id: str,
+    version_id: str,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific version of a prompt"""
+    logger.info("Fetching prompt version", user_id=current_user.id, prompt_id=prompt_id, version_id=version_id)
+    
+    prompt = await prompt_service.get_prompt_version(prompt_id, version_id)
+    if not prompt:
+        raise PromptNotFoundError(f"Prompt version {version_id} not found")
+    
+    return prompt
+
+@app.post("/api/v1/prompts/{prompt_id}/versions/{version_id}/restore", response_model=PromptResponse, tags=["Prompt Versions"])
+async def restore_prompt_version(
+    prompt_id: str,
+    version_id: str,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Restore a prompt to a specific version"""
+    logger.info("Restoring prompt version", user_id=current_user.id, prompt_id=prompt_id, version_id=version_id)
+    
+    prompt = await prompt_service.restore_prompt_version(prompt_id, version_id, current_user.id)
+    if not prompt:
+        raise PromptNotFoundError(f"Prompt version {version_id} not found")
+    
+    logger.info("Prompt version restored", user_id=current_user.id, prompt_id=prompt_id, version_id=version_id)
+    return prompt
+
+@app.post("/api/v1/prompts/{prompt_id}/versions/{version_id}/tag", response_model=PromptVersion, tags=["Prompt Versions"])
+async def tag_prompt_version(
+    prompt_id: str,
+    version_id: str,
+    tag_data: dict,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Add a tag to a specific version"""
+    logger.info("Tagging prompt version", user_id=current_user.id, prompt_id=prompt_id, version_id=version_id)
+    
+    version = await prompt_service.tag_version(
+        prompt_id,
+        version_id,
+        tag_data.get("tag")
+    )
+    
+    logger.info("Prompt version tagged", user_id=current_user.id, prompt_id=prompt_id, version_id=version_id)
+    return version
+
+@app.get("/api/v1/prompts/{prompt_id}/versions/compare", tags=["Prompt Versions"])
+async def compare_prompt_versions(
+    prompt_id: str,
+    version1: str,
+    version2: str,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Compare two versions of a prompt"""
+    logger.info("Comparing prompt versions", user_id=current_user.id, prompt_id=prompt_id, version1=version1, version2=version2)
+    
+    comparison = await prompt_service.compare_prompt_versions(prompt_id, version1, version2)
+    return comparison
+
 # Similar comprehensive endpoints for Pipelines, Analytics, Settings...
 # [Additional 200+ lines of endpoints would follow the same pattern]
 

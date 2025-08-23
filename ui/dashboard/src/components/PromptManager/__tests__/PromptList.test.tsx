@@ -1,196 +1,297 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@mui/material';
-import '@testing-library/jest-dom';
-import PromptList from '../PromptList';
-import { lightPromptPilotTheme } from '../../../theme/theme';
-import { Prompt } from '../../../types/Prompt';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { PromptList } from '../PromptList';
+import { theme } from '../../../theme';
+import { usePrompts } from '../../../hooks/usePrompts';
 
-// Mock the usePrompts hook
-jest.mock('../../../hooks/usePrompts', () => ({
-  usePrompts: jest.fn(),
-}));
-
-const mockUsePrompts = require('../../../hooks/usePrompts').usePrompts;
+// Mock the hooks
+vi.mock('../../../hooks/usePrompts');
 
 // Mock data
-const mockPromptItems: Prompt[] = [
-  {
-    id: '1',
-    name: 'Test Prompt 1',
-    description: 'Test description 1',
-    task_type: 'text_generation',
-    tags: ['test', 'example'],
-    version_info: {
+const mockPrompts = {
+  items: [
+    {
+      id: '1',
+      name: 'Test Prompt 1',
+      description: 'A test prompt for unit testing',
+      content: 'This is a test prompt: {{variable}}',
+      tags: ['test', 'unit'],
+      task_type: 'completion',
+      status: 'active',
       version: '1.0.0',
       created_at: '2024-01-01T00:00:00Z',
-      created_by: 'test-user',
-      is_active: true,
-      status: 'PUBLISHED',
-      author: 'Test User',
       updated_at: '2024-01-01T00:00:00Z',
+      author: 'test-user',
+      usage_count: 5,
+      success_rate: 95.5,
+      avg_response_time: 150
     },
-    messages: [],
-    input_variables: {},
-    model_provider: 'openai',
-    model_name: 'gpt-3.5-turbo',
-    parameters: {},
-    test_cases: [],
-    evaluation_metrics: {},
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Test Prompt 2',
-    description: 'Test description 2',
-    task_type: 'summarization',
-    tags: ['summary'],
-    version_info: {
-      version: '2.0.0',
+    {
+      id: '2',
+      name: 'Test Prompt 2',
+      description: 'Another test prompt',
+      content: 'Another test prompt: {{input}}',
+      tags: ['test', 'integration'],
+      task_type: 'chat',
+      status: 'draft',
+      version: '0.1.0',
       created_at: '2024-01-02T00:00:00Z',
-      created_by: 'test-user-2',
-      is_active: true,
-      status: 'DRAFT',
-      author: 'Test User 2',
       updated_at: '2024-01-02T00:00:00Z',
-    },
-    messages: [],
-    input_variables: {},
-    model_provider: 'anthropic',
-    model_name: 'claude-3',
-    parameters: {},
-    test_cases: [],
-    evaluation_metrics: {},
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z',
-  },
-];
-
-const mockPrompts = {
-  items: mockPromptItems,
+      author: 'test-user-2',
+      usage_count: 0,
+      success_rate: 0,
+      avg_response_time: 0
+    }
+  ],
   total: 2,
   page: 1,
-  size: 10,
+  limit: 10,
+  pages: 1
 };
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
+      queries: {
+        retry: false,
+      },
     },
   });
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={lightPromptPilotTheme}>
-        {children}
-      </ThemeProvider>
+      <BrowserRouter>
+        <ThemeProvider theme={theme}>
+          {children}
+        </ThemeProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
 
-// Mock props
-const mockProps = {
-  selectedPromptId: '',
-  onPromptSelect: jest.fn(),
-  onEditPrompt: jest.fn(),
-  onTestPrompt: jest.fn(),
-  onDuplicate: jest.fn(),
-  onDelete: jest.fn(),
-};
-
 describe('PromptList Component', () => {
+  const mockUsePrompts = vi.mocked(usePrompts);
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+  });
+
+  it('renders loading state correctly', () => {
+    mockUsePrompts.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+      isFetching: true,
+      isPending: true,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(
+      <TestWrapper>
+        <PromptList />
+      </TestWrapper>
+    );
+
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('renders prompts correctly', async () => {
     mockUsePrompts.mockReturnValue({
       data: mockPrompts,
       isLoading: false,
       error: null,
-    });
-  });
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
 
-  it('renders without crashing', () => {
     render(
       <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-    
-    expect(screen.getByRole('textbox', { name: /search prompts/i })).toBeInTheDocument();
-  });
-
-  it('displays prompts in table format', () => {
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
+        <PromptList />
       </TestWrapper>
     );
 
+    // Check if prompt names are rendered
     expect(screen.getByText('Test Prompt 1')).toBeInTheDocument();
     expect(screen.getByText('Test Prompt 2')).toBeInTheDocument();
-    expect(screen.getByText('Test description 1')).toBeInTheDocument();
-    expect(screen.getByText('Test description 2')).toBeInTheDocument();
+
+    // Check if descriptions are rendered
+    expect(screen.getByText('A test prompt for unit testing')).toBeInTheDocument();
+    expect(screen.getByText('Another test prompt')).toBeInTheDocument();
+
+    // Check if tags are rendered
+    expect(screen.getByText('test')).toBeInTheDocument();
+    expect(screen.getByText('unit')).toBeInTheDocument();
+    expect(screen.getByText('integration')).toBeInTheDocument();
+
+    // Check if status chips are rendered
+    expect(screen.getByText('active')).toBeInTheDocument();
+    expect(screen.getByText('draft')).toBeInTheDocument();
   });
 
-  it('filters prompts based on search input', async () => {
+  it('renders error state correctly', () => {
+    const errorMessage = 'Failed to fetch prompts';
+    mockUsePrompts.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error(errorMessage),
+      isFetching: false,
+      isPending: false,
+      isError: true,
+      refetch: vi.fn(),
+    } as any);
+
     render(
       <TestWrapper>
-        <PromptList {...mockProps} />
+        <PromptList />
       </TestWrapper>
     );
 
-    const searchInput = screen.getByRole('textbox', { name: /search prompts/i });
-    fireEvent.change(searchInput, { target: { value: 'Test Prompt 1' } });
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
+  });
+
+  it('renders empty state correctly', () => {
+    mockUsePrompts.mockReturnValue({
+      data: { items: [], total: 0, page: 1, limit: 10, pages: 0 },
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(
+      <TestWrapper>
+        <PromptList />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText(/no prompts found/i)).toBeInTheDocument();
+  });
+
+  it('handles search functionality', async () => {
+    const mockRefetch = vi.fn();
+    mockUsePrompts.mockReturnValue({
+      data: mockPrompts,
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: mockRefetch,
+    } as any);
+
+    render(
+      <TestWrapper>
+        <PromptList />
+      </TestWrapper>
+    );
+
+    // Find search input
+    const searchInput = screen.getByPlaceholderText(/search prompts/i);
+    expect(searchInput).toBeInTheDocument();
+
+    // Type in search input
+    fireEvent.change(searchInput, { target: { value: 'test search' } });
+
+    // Wait for debounced search
+    await waitFor(() => {
+      expect(mockUsePrompts).toHaveBeenCalledWith(
+        1, 10, 'test search', undefined, undefined
+      );
+    }, { timeout: 1000 });
+  });
+
+  it('handles filter by task type', async () => {
+    mockUsePrompts.mockReturnValue({
+      data: mockPrompts,
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    render(
+      <TestWrapper>
+        <PromptList />
+      </TestWrapper>
+    );
+
+    // Find task type filter
+    const taskTypeFilter = screen.getByLabelText(/task type/i);
+    fireEvent.click(taskTypeFilter);
+
+    // Select completion option
+    const completionOption = await screen.findByText('Completion');
+    fireEvent.click(completionOption);
 
     await waitFor(() => {
-      expect(screen.getByText('Test Prompt 1')).toBeInTheDocument();
-      expect(screen.queryByText('Test Prompt 2')).not.toBeInTheDocument();
+      expect(mockUsePrompts).toHaveBeenCalledWith(
+        1, 10, '', undefined, 'completion'
+      );
     });
   });
 
-  it('filters prompts by task type', async () => {
+  it('handles pagination', async () => {
+    mockUsePrompts.mockReturnValue({
+      data: { ...mockPrompts, pages: 3, page: 1 },
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
     render(
       <TestWrapper>
-        <PromptList {...mockProps} />
+        <PromptList />
       </TestWrapper>
     );
 
-    const searchInput = screen.getByRole('textbox', { name: /search prompts/i });
-    fireEvent.change(searchInput, { target: { value: 'summarization' } });
+    // Find pagination controls
+    const nextPageButton = screen.getByLabelText(/go to next page/i);
+    fireEvent.click(nextPageButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Test Prompt 2')).toBeInTheDocument();
-      expect(screen.queryByText('Test Prompt 1')).not.toBeInTheDocument();
+      expect(mockUsePrompts).toHaveBeenCalledWith(
+        2, 10, '', undefined, undefined
+      );
     });
   });
 
-  it('calls onPromptSelect when prompt row is clicked', () => {
+  it('opens prompt actions menu', async () => {
+    mockUsePrompts.mockReturnValue({
+      data: mockPrompts,
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
     render(
       <TestWrapper>
-        <PromptList {...mockProps} />
+        <PromptList />
       </TestWrapper>
     );
 
-    const promptRow = screen.getByText('Test Prompt 1').closest('tr');
-    fireEvent.click(promptRow!);
+    // Find and click the actions menu button for the first prompt
+    const actionButtons = screen.getAllByLabelText(/more actions/i);
+    fireEvent.click(actionButtons[0]);
 
-    expect(mockProps.onPromptSelect).toHaveBeenCalledWith(mockPromptItems[0]);
-  });
-
-  it('opens context menu when more actions button is clicked', async () => {
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-
-    const moreButtons = screen.getAllByRole('button', { name: /more/i });
-    fireEvent.click(moreButtons[0]);
-
+    // Check if menu options appear
     await waitFor(() => {
       expect(screen.getByText('Edit')).toBeInTheDocument();
       expect(screen.getByText('Test')).toBeInTheDocument();
@@ -199,120 +300,75 @@ describe('PromptList Component', () => {
     });
   });
 
-  it('calls appropriate callback when context menu items are clicked', async () => {
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-
-    const moreButtons = screen.getAllByRole('button', { name: /more/i });
-    fireEvent.click(moreButtons[0]);
-
-    await waitFor(() => {
-      const editButton = screen.getByText('Edit');
-      fireEvent.click(editButton);
-    });
-
-    expect(mockProps.onEditPrompt).toHaveBeenCalledWith(mockPromptItems[0]);
-  });
-
-  it('displays loading state', () => {
+  it('handles create new prompt', () => {
     mockUsePrompts.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      error: null,
-    });
-
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
-  });
-
-  it('displays error state', () => {
-    const errorMessage = 'Failed to load prompts';
-    mockUsePrompts.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: new Error(errorMessage),
-    });
-
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-
-    expect(screen.getByText(/error loading prompts/i)).toBeInTheDocument();
-  });
-
-  it('displays empty state when no prompts', () => {
-    mockUsePrompts.mockReturnValue({
-      data: { items: [], total: 0, page: 1, size: 10 },
+      data: mockPrompts,
       isLoading: false,
       error: null,
-    });
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
 
     render(
       <TestWrapper>
-        <PromptList {...mockProps} />
+        <PromptList />
       </TestWrapper>
     );
 
-    expect(screen.getByText(/no api keys configured/i)).toBeInTheDocument();
+    // Find and click create prompt button
+    const createButton = screen.getByText(/create prompt/i);
+    fireEvent.click(createButton);
+
+    // This would typically trigger navigation or modal opening
+    // The exact behavior depends on the onCreatePrompt implementation
   });
 
-  it('handles pagination controls', () => {
+  it('displays correct metrics', () => {
+    mockUsePrompts.mockReturnValue({
+      data: mockPrompts,
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
     render(
       <TestWrapper>
-        <PromptList {...mockProps} />
+        <PromptList />
       </TestWrapper>
     );
 
-    const pagination = screen.getByRole('navigation');
-    expect(pagination).toBeInTheDocument();
+    // Check if usage metrics are displayed
+    expect(screen.getByText('5')).toBeInTheDocument(); // usage_count
+    expect(screen.getByText('95.5%')).toBeInTheDocument(); // success_rate
+    expect(screen.getByText('150ms')).toBeInTheDocument(); // avg_response_time
   });
 
-  it('displays status chips with correct colors', () => {
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-
-    expect(screen.getByText('PUBLISHED')).toBeInTheDocument();
-    expect(screen.getByText('DRAFT')).toBeInTheDocument();
-  });
-
-  it('displays tags for each prompt', () => {
-    render(
-      <TestWrapper>
-        <PromptList {...mockProps} />
-      </TestWrapper>
-    );
-
-    expect(screen.getByText('test')).toBeInTheDocument();
-    expect(screen.getByText('example')).toBeInTheDocument();
-    expect(screen.getByText('summary')).toBeInTheDocument();
-  });
-
-  it('highlights selected prompt', () => {
-    const selectedProps = {
-      ...mockProps,
-      selectedPromptId: '1',
-    };
+  it('applies correct styling to status chips', () => {
+    mockUsePrompts.mockReturnValue({
+      data: mockPrompts,
+      isLoading: false,
+      error: null,
+      isFetching: false,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
 
     render(
       <TestWrapper>
-        <PromptList {...selectedProps} />
+        <PromptList />
       </TestWrapper>
     );
 
-    const selectedRow = screen.getByText('Test Prompt 1').closest('tr');
-    expect(selectedRow).toHaveClass('Mui-selected');
+    const activeChip = screen.getByText('active');
+    const draftChip = screen.getByText('draft');
+
+    expect(activeChip).toHaveClass('MuiChip-colorSuccess');
+    expect(draftChip).toHaveClass('MuiChip-colorWarning');
   });
 });

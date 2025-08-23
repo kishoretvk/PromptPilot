@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { settingsService } from '../services/SettingsService';
 import { queryKeys, cacheUtils } from './queryClient';
 import {
@@ -86,14 +87,25 @@ export const useStorageBackends = () => {
   });
 };
 
+// Helper functions for mutations
+const updateThemeSettings = async (settings: ThemeSettings): Promise<ThemeSettings> => {
+  return await settingsService.updateThemeSettings(settings);
+};
+
+const updateNotificationSettings = async (settings: NotificationSettings): Promise<NotificationSettings> => {
+  return await settingsService.updateNotificationSettings(settings);
+};
+
+const updateSecuritySettings = async (settings: SecuritySettings): Promise<SecuritySettings> => {
+  return await settingsService.updateSecuritySettings(settings);
+};
+
 // Hook for updating theme settings
 export const useUpdateThemeSettings = () => {
-  const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: (theme: Partial<ThemeSettings>) => settingsService.updateThemeSettings(theme),
-    onSuccess: (updatedTheme) => {
-      queryClient.setQueryData([...queryKeys.settings.all, 'theme'], updatedTheme);
+    mutationFn: updateThemeSettings,
+    onSuccess: (data) => {
+      queryClient.setQueryData([...queryKeys.settings.all, 'theme'], data);
       cacheUtils.invalidateSettings();
     },
   });
@@ -104,10 +116,9 @@ export const useUpdateNotificationSettings = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (notifications: Partial<NotificationSettings>) => 
-      settingsService.updateNotificationSettings(notifications),
-    onSuccess: (updatedNotifications) => {
-      queryClient.setQueryData([...queryKeys.settings.all, 'notifications'], updatedNotifications);
+    mutationFn: updateNotificationSettings,
+    onSuccess: (data) => {
+      queryClient.setQueryData([...queryKeys.settings.all, 'notifications'], data);
       cacheUtils.invalidateSettings();
     },
   });
@@ -115,13 +126,10 @@ export const useUpdateNotificationSettings = () => {
 
 // Hook for updating security settings
 export const useUpdateSecuritySettings = () => {
-  const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: (security: Partial<SecuritySettings>) => 
-      settingsService.updateSecuritySettings(security),
-    onSuccess: (updatedSecurity) => {
-      queryClient.setQueryData([...queryKeys.settings.all, 'security'], updatedSecurity);
+    mutationFn: updateSecuritySettings,
+    onSuccess: (data) => {
+      queryClient.setQueryData([...queryKeys.settings.all, 'security'], data);
       cacheUtils.invalidateSettings();
     },
   });

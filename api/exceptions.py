@@ -1,7 +1,7 @@
-\"\"\"Custom exceptions for PromptPilot API\"\"\"
+"""Custom exceptions for PromptPilot API"""
 
 class PromptPilotError(Exception):
-    \"\"\"Base exception for PromptPilot\"\"\"
+    """Base exception for PromptPilot"""
     
     def __init__(self, message: str, code: str = None, details: dict = None):
         self.message = message
@@ -10,49 +10,49 @@ class PromptPilotError(Exception):
         super().__init__(self.message)
 
 class ValidationError(PromptPilotError):
-    \"\"\"Raised when input validation fails\"\"\"
+    """Raised when input validation fails"""
     pass
 
 class AuthenticationError(PromptPilotError):
-    \"\"\"Raised when authentication fails\"\"\"
+    """Raised when authentication fails"""
     pass
 
 class AuthorizationError(PromptPilotError):
-    \"\"\"Raised when user lacks required permissions\"\"\"
+    """Raised when user lacks required permissions"""
     pass
 
 class PromptNotFoundError(PromptPilotError):
-    \"\"\"Raised when prompt is not found\"\"\"
+    """Raised when prompt is not found"""
     pass
 
 class PipelineNotFoundError(PromptPilotError):
-    \"\"\"Raised when pipeline is not found\"\"\"
+    """Raised when pipeline is not found"""
     pass
 
 class ExecutionError(PromptPilotError):
-    \"\"\"Raised when prompt/pipeline execution fails\"\"\"
+    """Raised when prompt/pipeline execution fails"""
     pass
 
 class LLMProviderError(PromptPilotError):
-    \"\"\"Raised when LLM provider operations fail\"\"\"
+    """Raised when LLM provider operations fail"""
     pass
 
 class StorageError(PromptPilotError):
-    \"\"\"Raised when storage operations fail\"\"\"
+    """Raised when storage operations fail"""
     pass
 
 class RateLimitError(PromptPilotError):
-    \"\"\"Raised when rate limit is exceeded\"\"\"
+    """Raised when rate limit is exceeded"""
     pass
 
 class ConfigurationError(PromptPilotError):
-    \"\"\"Raised when configuration is invalid\"\"\"
+    """Raised when configuration is invalid"""
     pass
 
 class DatabaseError(PromptPilotError):
-    \"\"\"Raised when database operations fail\"\"\"
+    """Raised when database operations fail"""
     pass
 
 class ExternalServiceError(PromptPilotError):
-    \"\"\"Raised when external service calls fail\"\"\"
+    """Raised when external service calls fail"""
     pass

@@ -1,75 +1,72 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
+import React, { useState, useEffect } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Button,
+  IconButton,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
   Grid,
   Card,
   CardContent,
   CardHeader,
+  Avatar,
+  Tabs,
+  Tab,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Button,
-  Chip,
-  useTheme,
-  alpha,
-  Paper,
-  Tabs,
-  Tab,
-  IconButton,
-  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import {
-  Assessment as AnalyticsIcon,
-  TrendingUp,
-  Speed,
-  AttachMoney,
-  Psychology,
-  Timeline,
-  PieChart,
-  BarChart,
-  Download,
-  Refresh,
-  FilterList,
+  BarChart as BarChartIcon,
+  ShowChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  Refresh as RefreshIcon,
+  Download as DownloadIcon,
+  DateRange as DateRangeIcon,
+  FilterList as FilterIcon,
+  Analytics as AnalyticsIcon,
+  TrendingUp as TrendingUpIcon,
+  AttachMoney as CostIcon,
+  Speed as PerformanceIcon,
+  CheckCircle as SuccessIcon,
+  Error as ErrorIcon
 } from '@mui/icons-material';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
   Title,
   Tooltip as ChartTooltip,
   Legend,
-  ArcElement,
+  Filler
 } from 'chart.js';
-import { Bar, Doughnut } from 'react-chartjs-2';
-
-import { useAnalytics } from '../../hooks/useAnalytics';
-import UsageCharts from './UsageCharts';
-import PerformanceMetrics from './PerformanceMetrics';
-import CostAnalysis from './CostAnalysis';
+import { Bar, Line, Pie } from 'react-chartjs-2';
+import { format, subDays, subMonths } from 'date-fns';
+import { useAnalytics, useUsageMetrics, usePerformanceData, useCostAnalysis } from '../../hooks/useAnalytics';
+import { UsageMetrics, PerformanceData, CostData } from '../../types/Analytics';
 
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
   Title,
   ChartTooltip,
   Legend,
-  ArcElement
+  Filler
 );
-
-interface AnalyticsDashboardProps {
-  timeRange?: 'day' | 'week' | 'month' | 'year';
-  promptFilter?: string[];
-}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -77,367 +74,557 @@ interface TabPanelProps {
   value: number;
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => (
-  <div
-    role="tabpanel"
-    hidden={value !== index}
-    id={`analytics-tabpanel-${index}`}
-    aria-labelledby={`analytics-tab-${index}`}
-    {...other}
-  >
-    {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-  </div>
-);
-
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
-  timeRange = 'month',
-  promptFilter = [],
-}) => {
-  const theme = useTheme();
-  const [activeTab, setActiveTab] = useState(0);
-  const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange);
-  // const [selectedPrompts, setSelectedPrompts] = useState<string[]>(promptFilter);
-
-  // Fetch analytics data
-  const { data: usageData, isLoading: usageLoading } = useAnalytics().useUsageMetrics(selectedTimeRange);
-  const { data: performanceData, isLoading: performanceLoading } = useAnalytics().usePerformanceData(selectedTimeRange);
-  const { data: costData, isLoading: costLoading } = useAnalytics().useCostData(selectedTimeRange);
-  const { data: dashboardData } = useAnalytics().useDashboardData(selectedTimeRange);
-
-  // Calculate summary metrics
-  const summaryMetrics = useMemo(() => {
-    if (!dashboardData) return null;
-
-    return {
-      totalExecutions: dashboardData.total_executions || 0,
-      totalTokens: dashboardData.total_tokens || 0,
-      averageLatency: dashboardData.average_latency || 0,
-      totalCost: dashboardData.total_cost || 0,
-      errorRate: dashboardData.error_rate || 0,
-      popularPrompts: dashboardData.popular_prompts || [],
-    };
-  }, [dashboardData]);
-
-  const handleExportData = () => {
-    // Implementation for data export
-    console.log('Exporting analytics data...');
-  };
-
-  const handleRefreshData = () => {
-    // Implementation for data refresh
-    console.log('Refreshing analytics data...');
-  };
-
-  const MetricCard: React.FC<{
-    title: string;
-    value: string | number;
-    subtitle?: string;
-    icon: React.ReactNode;
-    color: string;
-    trend?: { value: number; label: string };
-  }> = ({ title, value, subtitle, icon, color, trend }) => (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography color="text.secondary" gutterBottom variant="body2">
-              {title}
-            </Typography>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-              {value}
-            </Typography>
-            {subtitle && (
-              <Typography variant="body2" color="text.secondary">
-                {subtitle}
-              </Typography>
-            )}
-            {trend && (
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <TrendingUp 
-                  fontSize="small" 
-                  sx={{ 
-                    color: trend.value > 0 ? theme.palette.success.main : theme.palette.error.main,
-                    mr: 0.5 
-                  }} 
-                />
-                <Typography variant="caption" color="text.secondary">
-                  {trend.label}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          <Box
-            sx={{
-              backgroundColor: alpha(color, 0.1),
-              borderRadius: 2,
-              p: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {React.cloneElement(icon as React.ReactElement<any>, { 
-              sx: { color, fontSize: 32 } as any
-            })}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`analytics-tabpanel-${index}`}
+      aria-labelledby={`analytics-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `analytics-tab-${index}`,
+    'aria-controls': `analytics-tabpanel-${index}`,
+  };
+}
+
+const AnalyticsDashboard: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [activeTab, setActiveTab] = useState(0);
+  const [timeRange, setTimeRange] = useState('30d');
+  const [dateRange, setDateRange] = useState({
+    start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    end: format(new Date(), 'yyyy-MM-dd')
+  });
+  
+  const { data: analyticsData, isLoading: analyticsLoading, refetch: refetchAnalytics } = useAnalytics();
+  const { data: usageMetrics, isLoading: usageLoading } = useUsageMetrics(timeRange);
+  const { data: performanceData, isLoading: performanceLoading } = usePerformanceData(timeRange);
+  const { data: costData, isLoading: costLoading } = useCostAnalysis(timeRange);
+  
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
+  
+  const handleTimeRangeChange = (range: string) => {
+    setTimeRange(range);
+    const endDate = new Date();
+    let startDate: Date;
+    
+    switch (range) {
+      case '7d':
+        startDate = subDays(endDate, 7);
+        break;
+      case '30d':
+        startDate = subDays(endDate, 30);
+        break;
+      case '90d':
+        startDate = subDays(endDate, 90);
+        break;
+      case '1y':
+        startDate = subMonths(endDate, 12);
+        break;
+      default:
+        startDate = subDays(endDate, 30);
+    }
+    
+    setDateRange({
+      start: format(startDate, 'yyyy-MM-dd'),
+      end: format(endDate, 'yyyy-MM-dd')
+    });
+  };
+  
+  // Usage chart data
+  const usageChartData = {
+    labels: usageMetrics?.executions_by_day?.map(item => item.date) || [],
+    datasets: [
+      {
+        label: 'Executions',
+        data: usageMetrics?.executions_by_day?.map(item => item.count) || [],
+        backgroundColor: theme.palette.primary.main,
+        borderColor: theme.palette.primary.dark,
+        borderWidth: 1,
+      },
+      {
+        label: 'Tokens',
+        data: usageMetrics?.tokens_by_day?.map(item => item.count) || [],
+        backgroundColor: theme.palette.secondary.main,
+        borderColor: theme.palette.secondary.dark,
+        borderWidth: 1,
+      }
+    ]
+  };
+  
+  // Performance chart data
+  const performanceChartData = {
+    labels: performanceData?.latency_by_day?.map(item => item.date) || [],
+    datasets: [
+      {
+        label: 'Average Latency (ms)',
+        data: performanceData?.latency_by_day?.map(item => item.average) || [],
+        borderColor: theme.palette.success.main,
+        backgroundColor: theme.palette.success.light,
+        fill: true,
+      },
+      {
+        label: 'Success Rate (%)',
+        data: performanceData?.success_rate_by_day?.map(item => item.rate * 100) || [],
+        borderColor: theme.palette.info.main,
+        backgroundColor: theme.palette.info.light,
+        fill: true,
+      }
+    ]
+  };
+  
+  // Cost chart data
+  const costChartData = {
+    labels: costData?.costs_by_day?.map(item => item.date) || [],
+    datasets: [
+      {
+        label: 'Cost ($)',
+        data: costData?.costs_by_day?.map(item => item.amount) || [],
+        backgroundColor: theme.palette.warning.main,
+        borderColor: theme.palette.warning.dark,
+        borderWidth: 1,
+      }
+    ]
+  };
+  
+  // Provider distribution data
+  const providerData = {
+    labels: usageMetrics?.executions_by_provider?.map(item => item.provider) || [],
+    datasets: [
+      {
+        data: usageMetrics?.executions_by_provider?.map(item => item.count) || [],
+        backgroundColor: [
+          theme.palette.primary.main,
+          theme.palette.secondary.main,
+          theme.palette.success.main,
+          theme.palette.warning.main,
+          theme.palette.error.main,
+          theme.palette.info.main,
+        ],
+        borderWidth: 0,
+      }
+    ]
+  };
+  
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: false,
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: theme.palette.divider,
+        }
+      }
+    }
+  };
+  
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+      },
+      title: {
+        display: false,
+      }
+    }
+  };
+  
+  return (
+    <Box sx={{ py: 3 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           <Box>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{
-                fontWeight: 700,
-                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              <AnalyticsIcon sx={{ mr: 2, verticalAlign: 'middle' }} />
+            <Typography variant="h4" component="h1" gutterBottom>
               Analytics Dashboard
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
-              Monitor performance, usage, and costs across your prompt workflows
+              Monitor usage, performance, and costs of your PromptPilot instance
             </Typography>
           </Box>
-
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Time Range</InputLabel>
               <Select
-                value={selectedTimeRange}
-                onChange={(e) => setSelectedTimeRange(e.target.value as any)}
+                value={timeRange}
                 label="Time Range"
+                onChange={(e) => handleTimeRangeChange(e.target.value as string)}
               >
-                <MenuItem value="day">Last 24 Hours</MenuItem>
-                <MenuItem value="week">Last 7 Days</MenuItem>
-                <MenuItem value="month">Last 30 Days</MenuItem>
-                <MenuItem value="year">Last Year</MenuItem>
+                <MenuItem value="7d">Last 7 Days</MenuItem>
+                <MenuItem value="30d">Last 30 Days</MenuItem>
+                <MenuItem value="90d">Last 90 Days</MenuItem>
+                <MenuItem value="1y">Last Year</MenuItem>
               </Select>
             </FormControl>
-
-            <Tooltip title="Filter by prompts">
-              <IconButton>
-                <FilterList />
+            
+            <Tooltip title="Refresh Data">
+              <IconButton 
+                onClick={() => refetchAnalytics()}
+                disabled={analyticsLoading}
+              >
+                <RefreshIcon />
               </IconButton>
             </Tooltip>
-
-            <Tooltip title="Refresh data">
-              <IconButton onClick={handleRefreshData}>
-                <Refresh />
-              </IconButton>
-            </Tooltip>
-
+            
             <Button
               variant="outlined"
-              startIcon={<Download />}
-              onClick={handleExportData}
+              startIcon={<DownloadIcon />}
             >
               Export
             </Button>
           </Box>
         </Box>
-
-        {/* Summary Metrics */}
-        {summaryMetrics && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title="Total Executions"
-                value={summaryMetrics.totalExecutions.toLocaleString()}
-                subtitle="Prompt executions"
-                icon={<Psychology />}
-                color={theme.palette.primary.main}
-                trend={{ value: 12, label: '+12% from last period' }}
-              />
+        
+        {/* Summary Cards */}
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h4" color="primary.main">
+                      {usageMetrics?.total_executions?.toLocaleString() || '0'}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Total Executions
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'primary.light', width: 56, height: 56 }}>
+                    <TrendingUpIcon sx={{ color: 'primary.main' }} />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h4" color="secondary.main">
+                      {usageMetrics?.total_tokens?.toLocaleString() || '0'}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Tokens Used
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'secondary.light', width: 56, height: 56 }}>
+                    <AnalyticsIcon sx={{ color: 'secondary.main' }} />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h4" color="success.main">
+                      {costData?.total_cost ? `$${costData.total_cost.toFixed(2)}` : '$0.00'}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Total Cost
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'success.light', width: 56, height: 56 }}>
+                    <CostIcon sx={{ color: 'success.main' }} />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h4" color="info.main">
+                      {usageMetrics?.success_rate ? `${(usageMetrics.success_rate * 100).toFixed(1)}%` : '0%'}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Success Rate
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: 'info.light', width: 56, height: 56 }}>
+                    <SuccessIcon sx={{ color: 'info.main' }} />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+      
+      {/* Tabs */}
+      <Paper elevation={0} sx={{ borderRadius: 2, mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant={isMobile ? 'scrollable' : 'fullWidth'}
+          scrollButtons="auto"
+        >
+          <Tab icon={<BarChartIcon />} label="Usage" {...a11yProps(0)} />
+          <Tab icon={<LineChartIcon />} label="Performance" {...a11yProps(1)} />
+          <Tab icon={<PieChartIcon />} label="Costs" {...a11yProps(2)} />
+          <Tab icon={<AnalyticsIcon />} label="Providers" {...a11yProps(3)} />
+        </Tabs>
+      </Paper>
+      
+      {/* Tab Content */}
+      <Box sx={{ minHeight: '60vh' }}>
+        {/* Usage Tab */}
+        <TabPanel value={activeTab} index={0}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} lg={8}>
+              <Card>
+                <CardHeader
+                  title="Executions & Tokens Over Time"
+                  subheader={`Showing data for the last ${timeRange === '7d' ? '7 days' : timeRange === '30d' ? '30 days' : timeRange === '90d' ? '90 days' : 'year'}`}
+                />
+                <CardContent sx={{ height: 400 }}>
+                  {usageLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Bar data={usageChartData} options={chartOptions} />
+                  )}
+                </CardContent>
+              </Card>
             </Grid>
-
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title="Average Latency"
-                value={`${summaryMetrics.averageLatency.toFixed(2)}s`}
-                subtitle="Response time"
-                icon={<Speed />}
-                color={theme.palette.info.main}
-                trend={{ value: -5, label: '-5% from last period' }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title="Total Cost"
-                value={`$${summaryMetrics.totalCost.toFixed(2)}`}
-                subtitle="API costs"
-                icon={<AttachMoney />}
-                color={theme.palette.warning.main}
-                trend={{ value: 8, label: '+8% from last period' }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title="Error Rate"
-                value={`${(summaryMetrics.errorRate * 100).toFixed(1)}%`}
-                subtitle="Failed executions"
-                icon={<Timeline />}
-                color={summaryMetrics.errorRate > 0.05 ? theme.palette.error.main : theme.palette.success.main}
-                trend={{ value: -2, label: '-2% from last period' }}
-              />
+            
+            <Grid item xs={12} lg={4}>
+              <Card>
+                <CardHeader
+                  title="Top Prompts"
+                  subheader="Most frequently executed prompts"
+                />
+                <CardContent>
+                  {analyticsLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {analyticsData?.top_prompts?.slice(0, 5).map((prompt, index) => (
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" noWrap sx={{ maxWidth: '70%' }}>
+                            {prompt.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {prompt.executions.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
-        )}
-
-        {/* Popular Prompts */}
-        {summaryMetrics?.popularPrompts && summaryMetrics.popularPrompts.length > 0 && (
-          <Card sx={{ mb: 4 }}>
-            <CardHeader title="Most Used Prompts" />
-            <CardContent>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {summaryMetrics.popularPrompts.slice(0, 10).map((prompt: any, index: number) => (
-                  <Chip
-                    key={prompt.id}
-                    label={`${prompt.name} (${prompt.count})`}
-                    variant={index < 3 ? 'filled' : 'outlined'}
-                    color={index === 0 ? 'primary' : index === 1 ? 'secondary' : 'default'}
-                    size="small"
-                  />
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Detailed Analytics Tabs */}
-        <Card>
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab icon={<BarChart />} label="Usage Analytics" />
-            <Tab icon={<Speed />} label="Performance" />
-            <Tab icon={<AttachMoney />} label="Cost Analysis" />
-            <Tab icon={<PieChart />} label="Provider Breakdown" />
-          </Tabs>
-
-          <Box sx={{ minHeight: 400 }}>
-            <TabPanel value={activeTab} index={0}>
-              <UsageCharts
-                data={usageData}
-                isLoading={usageLoading}
-                timeRange={selectedTimeRange}
-              />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={1}>
-              <PerformanceMetrics
-                data={performanceData}
-                isLoading={performanceLoading}
-                timeRange={selectedTimeRange}
-              />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={2}>
-              <CostAnalysis
-                data={costData}
-                isLoading={costLoading}
-                timeRange={selectedTimeRange}
-              />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={3}>
-              <Box sx={{ p: 3 }}>
-                {dashboardData?.provider_breakdown ? (
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <Paper sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                          Usage by Provider
-                        </Typography>
-                        <Doughnut
-                          data={{
-                            labels: Object.keys(dashboardData.provider_breakdown),
-                            datasets: [{
-                              data: Object.values(dashboardData.provider_breakdown),
-                              backgroundColor: [
-                                theme.palette.primary.main,
-                                theme.palette.secondary.main,
-                                theme.palette.error.main,
-                                theme.palette.warning.main,
-                                theme.palette.info.main,
-                              ],
-                            }],
-                          }}
-                          options={{
-                            responsive: true,
-                            plugins: {
-                              legend: {
-                                position: 'bottom' as const,
-                              },
-                            },
-                          }}
-                        />
-                      </Paper>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <Paper sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                          Provider Performance
-                        </Typography>
-                        <Bar
-                          data={{
-                            labels: Object.keys(dashboardData.provider_breakdown),
-                            datasets: [{
-                              label: 'Average Response Time (ms)',
-                              data: Object.keys(dashboardData.provider_breakdown).map(() => 
-                                Math.random() * 2000 + 500
-                              ),
-                              backgroundColor: alpha(theme.palette.primary.main, 0.6),
-                            }],
-                          }}
-                          options={{
-                            responsive: true,
-                            plugins: {
-                              legend: {
-                                display: false,
-                              },
-                            },
-                            scales: {
-                              y: {
-                                beginAtZero: true,
-                                title: {
-                                  display: true,
-                                  text: 'Response Time (ms)',
-                                },
-                              },
-                            },
-                          }}
-                        />
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                ) : (
-                  <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-                    No provider breakdown data available
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
-          </Box>
-        </Card>
+        </TabPanel>
+        
+        {/* Performance Tab */}
+        <TabPanel value={activeTab} index={1}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} lg={8}>
+              <Card>
+                <CardHeader
+                  title="Latency & Success Rate"
+                  subheader={`Performance metrics over the last ${timeRange === '7d' ? '7 days' : timeRange === '30d' ? '30 days' : timeRange === '90d' ? '90 days' : 'year'}`}
+                />
+                <CardContent sx={{ height: 400 }}>
+                  {performanceLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Line data={performanceChartData} options={chartOptions} />
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} lg={4}>
+              <Card>
+                <CardHeader
+                  title="Error Analysis"
+                  subheader="Common error types and frequencies"
+                />
+                <CardContent>
+                  {analyticsLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {analyticsData?.error_analysis?.slice(0, 5).map((error, index) => (
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ErrorIcon sx={{ color: 'error.main', fontSize: 'small' }} />
+                            <Typography variant="body2" noWrap sx={{ maxWidth: '70%' }}>
+                              {error.type}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            {error.count.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+        
+        {/* Costs Tab */}
+        <TabPanel value={activeTab} index={2}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} lg={8}>
+              <Card>
+                <CardHeader
+                  title="Cost Analysis"
+                  subheader={`Daily costs over the last ${timeRange === '7d' ? '7 days' : timeRange === '30d' ? '30 days' : timeRange === '90d' ? '90 days' : 'year'}`}
+                />
+                <CardContent sx={{ height: 400 }}>
+                  {costLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Bar data={costChartData} options={chartOptions} />
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} lg={4}>
+              <Card>
+                <CardHeader
+                  title="Cost Breakdown"
+                  subheader="Costs by provider"
+                />
+                <CardContent sx={{ height: 400 }}>
+                  {costLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : costData?.costs_by_provider && costData.costs_by_provider.length > 0 ? (
+                    <Pie data={providerData} options={pieChartOptions} />
+                  ) : (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography color="text.secondary">No cost data available</Typography>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+        
+        {/* Providers Tab */}
+        <TabPanel value={activeTab} index={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} lg={8}>
+              <Card>
+                <CardHeader
+                  title="Provider Distribution"
+                  subheader="Executions by AI provider"
+                />
+                <CardContent sx={{ height: 400 }}>
+                  {usageLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : usageMetrics?.executions_by_provider && usageMetrics.executions_by_provider.length > 0 ? (
+                    <Pie data={providerData} options={pieChartOptions} />
+                  ) : (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography color="text.secondary">No provider data available</Typography>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} lg={4}>
+              <Card>
+                <CardHeader
+                  title="Provider Performance"
+                  subheader="Latency and success rates by provider"
+                />
+                <CardContent>
+                  {performanceLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {performanceData?.provider_performance?.map((provider, index) => (
+                        <Box key={index}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="body2" fontWeight="medium">
+                              {provider.provider}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {provider.count.toLocaleString()} executions
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Avg. Latency: {provider.average_latency.toFixed(2)}ms
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Success: {(provider.success_rate * 100).toFixed(1)}%
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
       </Box>
-    </Container>
+    </Box>
   );
 };
 

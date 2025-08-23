@@ -1,6 +1,6 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, AxiosInstance } from 'axios';
 import { toast } from 'react-toastify';
-import { ApiResponse, ApiError } from '../types';
+import { ApiResponse } from '../types';
 import { errorHandler } from '../utils/errorHandling';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -229,6 +229,30 @@ class ApiClient {
         toastId: 'reconnect-failed',
         autoClose: false
       });
+    }
+  }
+
+  // Generic API call function
+  private async apiCall<T>(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    try {
+      const response: AxiosResponse<T> = await axios({
+        method,
+        url: `${API_BASE_URL}${url}`,
+        data,
+        ...config,
+      });
+      return response.data;
+    } catch (error) {
+      errorHandler.handleAPIError(error as AxiosError, {
+        component: 'ApiClient',
+        action: 'api_call'
+      });
+      throw error;
     }
   }
 

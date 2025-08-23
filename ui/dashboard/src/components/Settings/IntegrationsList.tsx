@@ -26,13 +26,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemSecondaryAction,
-  useTheme,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -60,7 +53,7 @@ import {
   useLLMProviders,
   useStorageBackends,
 } from '../../hooks/useSettings';
-import { Integration, CreateIntegrationRequest, UpdateIntegrationRequest } from '../../types/Settings';
+import { Integration } from '../../types/Settings';
 
 interface IntegrationFormData {
   name: string;
@@ -224,7 +217,6 @@ const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 };
 
 const IntegrationsList: React.FC = () => {
-  const theme = useTheme();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>();
   const [testResults, setTestResults] = useState<Record<string, any>>({});

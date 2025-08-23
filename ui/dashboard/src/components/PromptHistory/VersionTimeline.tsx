@@ -1,45 +1,41 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
+  Chip,
+  Tooltip,
+  IconButton,
+  useTheme,
   Card,
   CardContent,
-  Chip,
-  IconButton,
-  Checkbox,
-  Tooltip,
-  useTheme,
-  alpha,
+  CardHeader,
+  Grid,
+  Avatar,
 } from '@mui/material';
 import {
-  Timeline,
-  TimelineItem,
-  TimelineOppositeContent,
-  TimelineSeparator,
-  TimelineDot,
-  TimelineConnector,
-  TimelineContent,
-} from '@mui/lab';
-import {
-  Circle,
   Restore,
-  Edit,
-  Visibility,
-  CheckCircle,
-  RadioButtonUnchecked,
+  CallSplit,
+  Code,
   Person,
   Schedule,
-  Code,
-  Note,
+  Merge,
+  Label,
+  Branch,
+  Tag,
+  History,
 } from '@mui/icons-material';
-import { PromptVersion, Prompt } from '../../types';
+import { PromptVersion } from '../../types';
 
 interface VersionTimelineProps {
   versions: PromptVersion[];
   selectedVersions: string[];
   onVersionSelect: (versionId: string) => void;
   onRestoreVersion: (version: PromptVersion) => void;
-  onEditVersion?: (prompt: Prompt) => void;
+  onTagVersion: (version: PromptVersion) => void;
+  onBranchVersion: (version: PromptVersion) => void;
+  onMergeVersion: (version: PromptVersion) => void;
+  sourceVersion: PromptVersion | null;
+  targetVersion: PromptVersion | null;
 }
 
 const VersionTimeline: React.FC<VersionTimelineProps> = ({
@@ -47,280 +43,272 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
   selectedVersions,
   onVersionSelect,
   onRestoreVersion,
-  onEditVersion,
+  onTagVersion,
+  onBranchVersion,
+  onMergeVersion,
+  sourceVersion,
+  targetVersion,
 }) => {
   const theme = useTheme();
 
-  const getStatusColor = (status: string) => {
-    const colors = {
+  const sortedVersions = useMemo(() => {
+    return [...versions].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [versions]);
+
+  const getStatusColor = (status?: string) => {
+    if (!status) return theme.palette.grey[500];
+    
+    const colors: Record<string, string> = {
       DRAFT: theme.palette.warning.main,
       STAGING: theme.palette.info.main,
       PUBLISHED: theme.palette.success.main,
       ARCHIVED: theme.palette.grey[500],
       DEPRECATED: theme.palette.error.main,
     };
-    return colors[status as keyof typeof colors] || theme.palette.grey[500];
-  };
-
-  const getTimelineDotIcon = (version: PromptVersion, index: number) => {
-    if (index === 0) {
-      return <CheckCircle sx={{ color: theme.palette.success.main }} />;
-    }
     
-    switch (version.status || 'DRAFT') {
-      case 'PUBLISHED':
-        return <Circle sx={{ color: theme.palette.success.main }} />;
-      case 'STAGING':
-        return <Circle sx={{ color: theme.palette.info.main }} />;
-      case 'DRAFT':
-        return <Circle sx={{ color: theme.palette.warning.main }} />;
-      case 'DEPRECATED':
-        return <Circle sx={{ color: theme.palette.error.main }} />;
-      default:
-        return <Circle sx={{ color: theme.palette.grey[500] }} />;
-    }
+    return colors[status] || theme.palette.grey[500];
   };
 
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-    const diffInDays = diffInHours / 24;
-
-    if (diffInHours < 1) {
-      const minutes = Math.floor(diffInMs / (1000 * 60));
-      return `${minutes} minutes ago`;
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)} hours ago`;
-    } else if (diffInDays < 7) {
-      return `${Math.floor(diffInDays)} days ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
-
-  if (versions.length === 0) {
+  if (sortedVersions.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
+        <History sx={{ fontSize: 48, color: theme.palette.grey[400], mb: 2 }} />
         <Typography color="text.secondary">
-          No version history available for this prompt.
+          No version history available
         </Typography>
       </Box>
     );
   }
 
   return (
-    <Timeline position="right">
-      {versions.map((version, index) => {
-        const isSelected = selectedVersions.includes(version.version);
-        const isLatest = index === 0;
+    <Box sx={{ position: 'relative', pb: 4 }}>
+      {/* Timeline line */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 20,
+          top: 0,
+          bottom: 0,
+          width: 2,
+          bgcolor: theme.palette.divider,
+        }}
+      />
 
-        return (
-          <TimelineItem key={version.version}>
-            <TimelineOppositeContent
-              sx={{ 
-                m: 'auto 0', 
-                minWidth: 120,
-                textAlign: 'right',
-                pr: 2,
-              }}
-              align="right"
-              variant="body2"
-              color="text.secondary"
-            >
-              <Typography variant="caption" display="block">
-                {formatRelativeTime(version.updated_at || version.created_at)}
-              </Typography>
-              <Typography variant="caption" display="block">
-                {new Date(version.updated_at || version.created_at).toLocaleTimeString()}
-              </Typography>
-            </TimelineOppositeContent>
-
-            <TimelineSeparator>
-              <TimelineDot
+      <Grid container spacing={3}>
+        {sortedVersions.map((version, index) => {
+          const isSelected = selectedVersions.includes(version.id);
+          const isLatest = index === 0;
+          const isSource = sourceVersion?.id === version.id;
+          const isTarget = targetVersion?.id === version.id;
+          
+          return (
+            <Grid item xs={12} key={version.id}>
+              <Box
                 sx={{
-                  bgcolor: isSelected 
-                    ? alpha(theme.palette.primary.main, 0.2)
-                    : 'transparent',
-                  border: isSelected 
-                    ? `2px solid ${theme.palette.primary.main}`
-                    : 'none',
-                  p: isSelected ? 0.5 : 0,
+                  position: 'relative',
+                  display: 'flex',
+                  mb: 2,
+                  pl: 6,
                 }}
               >
-                {getTimelineDotIcon(version, index)}
-              </TimelineDot>
-              {index < versions.length - 1 && <TimelineConnector />}
-            </TimelineSeparator>
+                {/* Timeline dot */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 12,
+                    top: 20,
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    bgcolor: isSelected 
+                      ? theme.palette.primary.main 
+                      : isSource
+                        ? theme.palette.warning.main
+                        : isTarget
+                          ? theme.palette.success.main
+                          : isLatest 
+                            ? theme.palette.success.main 
+                            : theme.palette.grey[500],
+                    border: `3px solid ${theme.palette.background.paper}`,
+                    zIndex: 1,
+                  }}
+                />
 
-            <TimelineContent sx={{ py: '12px', px: 2 }}>
-              <Card
-                sx={{
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                  border: isSelected 
-                    ? `2px solid ${theme.palette.primary.main}`
-                    : `1px solid ${theme.palette.divider}`,
-                  backgroundColor: isSelected
-                    ? alpha(theme.palette.primary.main, 0.04)
-                    : 'background.paper',
-                  '&:hover': {
-                    boxShadow: theme.shadows[4],
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-                onClick={() => onVersionSelect(version.version)}
-              >
-                <CardContent sx={{ pb: 2 }}>
-                  {/* Header */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={() => onVersionSelect(version.version)}
-                        size="small"
-                        icon={<RadioButtonUnchecked />}
-                        checkedIcon={<CheckCircle />}
-                        sx={{ mr: 1, p: 0 }}
-                      />
-                      
-                      <Box>
-                        <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center' }}>
+                {/* Version card */}
+                <Card
+                  sx={{
+                    flex: 1,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    border: isSelected 
+                      ? `2px solid ${theme.palette.primary.main}` 
+                      : isSource
+                        ? `2px solid ${theme.palette.warning.main}`
+                        : isTarget
+                          ? `2px solid ${theme.palette.success.main}`
+                          : `1px solid ${theme.palette.divider}`,
+                    bgcolor: isSelected 
+                      ? theme.palette.action.selected 
+                      : theme.palette.background.paper,
+                    '&:hover': {
+                      boxShadow: 2,
+                      borderColor: theme.palette.primary.light,
+                    },
+                  }}
+                  onClick={() => onVersionSelect(version.id)}
+                >
+                  <CardHeader
+                    avatar={
+                      <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                        <Code />
+                      </Avatar>
+                    }
+                    title={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="h6" component="div">
                           v{version.version}
-                          {isLatest && (
-                            <Chip
-                              label="Latest"
-                              size="small"
-                              color="primary"
-                              sx={{ ml: 1, height: 20 }}
-                            />
-                          )}
                         </Typography>
+                        {version.is_active && (
+                          <Chip 
+                            label="Active" 
+                            size="small" 
+                            color="success" 
+                            variant="outlined" 
+                            sx={{ height: 20 }} 
+                          />
+                        )}
+                        {version.is_merge && (
+                          <Chip 
+                            label="Merge" 
+                            size="small" 
+                            color="info" 
+                            variant="outlined" 
+                            sx={{ height: 20 }} 
+                          />
+                        )}
+                        {isLatest && (
+                          <Chip 
+                            label="Latest" 
+                            size="small" 
+                            color="info" 
+                            variant="outlined" 
+                            sx={{ height: 20 }} 
+                          />
+                        )}
+                        {isSource && (
+                          <Chip 
+                            label="Source" 
+                            size="small" 
+                            color="warning" 
+                            variant="outlined" 
+                            sx={{ height: 20 }} 
+                          />
+                        )}
+                        {isTarget && (
+                          <Chip 
+                            label="Target" 
+                            size="small" 
+                            color="success" 
+                            variant="outlined" 
+                            sx={{ height: 20 }} 
+                          />
+                        )}
                       </Box>
-                    </Box>
-
-                    <Chip
-                      label={version.status || 'DRAFT'}
-                      size="small"
-                      sx={{
-                        backgroundColor: getStatusColor(version.status || 'DRAFT'),
-                        color: theme.palette.common.white,
-                        textTransform: 'capitalize',
-                      }}
-                    />
-                  </Box>
-
-                  {/* Version Details */}
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Person fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {version.author || version.created_by}
-                      </Typography>
-                    </Box>
-
-                    {version.commit_ref && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Code fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary"
-                          sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                        >
-                          {version.commit_ref.substring(0, 8)}
-                        </Typography>
+                    }
+                    subheader={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Person sx={{ fontSize: 16 }} />
+                          <Typography variant="caption">
+                            {version.created_by || 'Unknown'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Schedule sx={{ fontSize: 16 }} />
+                          <Typography variant="caption">
+                            {new Date(version.created_at).toLocaleString()}
+                          </Typography>
+                        </Box>
                       </Box>
-                    )}
-
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Schedule fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary">
-                        Created: {new Date(version.created_at).toLocaleDateString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Actions */}
-                  <Box sx={{ display: 'flex', gap: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
-                    <Tooltip title="View details">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle view details
-                        }}
-                      >
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Restore this version">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRestoreVersion(version);
-                        }}
-                        color="primary"
-                      >
-                        <Restore fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    {onEditVersion && (
-                      <Tooltip title="Edit based on this version">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
+                    }
+                    action={
+                      <Box sx={{ display: 'flex', gap: 0.5, mr: 1 }}>
+                        <Tooltip title="Restore">
+                          <IconButton onClick={(e) => {
                             e.stopPropagation();
-                            // Create a minimal prompt object for editing
-                            const promptForEdit: Prompt = {
-                              id: `temp_${version.version}`,
-                              name: `Prompt v${version.version}`,
-                              description: '',
-                              task_type: 'text_generation',
-                              tags: [],
-                              version_info: version,
-                              messages: [],
-                              input_variables: {},
-                              model_provider: 'openai',
-                              model_name: 'gpt-3.5-turbo',
-                              parameters: {},
-                              test_cases: [],
-                              evaluation_metrics: {},
-                              created_at: new Date().toISOString(),
-                              updated_at: new Date().toISOString(),
-                            };
-                            onEditVersion(promptForEdit);
-                          }}
-                          color="primary"
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                            onRestoreVersion(version);
+                          }}>
+                            <Restore />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Tag">
+                          <IconButton onClick={(e) => {
+                            e.stopPropagation();
+                            onTagVersion(version);
+                          }}>
+                            <Label />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Branch">
+                          <IconButton onClick={(e) => {
+                            e.stopPropagation();
+                            onBranchVersion(version);
+                          }}>
+                            <Branch />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Merge">
+                          <IconButton onClick={(e) => {
+                            e.stopPropagation();
+                            onMergeVersion(version);
+                          }}>
+                            <Merge />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    }
+                  />
+                  <CardContent>
+                    {version.commit_message && (
+                      <Typography variant="body2" sx={{ mb: 2, fontStyle: 'italic' }}>
+                        "{version.commit_message}"
+                      </Typography>
                     )}
-                  </Box>
-
-                  {/* Version Notes/Changes */}
-                  {/* This would be populated from actual version data if available */}
-                  {index === 0 && (
-                    <Box sx={{ mt: 2, p: 1, backgroundColor: alpha(theme.palette.success.main, 0.1), borderRadius: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Note fontSize="small" sx={{ mr: 1, color: theme.palette.success.main }} />
-                        <Typography variant="caption" color="text.secondary">
-                          Current active version
+                    
+                    {version.tags && version.tags.length > 0 && (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                        {version.tags.map((tag, tagIndex) => (
+                          <Chip
+                            key={tagIndex}
+                            label={tag}
+                            size="small"
+                            icon={<Tag sx={{ fontSize: 16 }} />}
+                            variant="outlined"
+                          />
+                        ))}
+                      </Box>
+                    )}
+                    
+                    {version.changes_summary && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Changes:
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {version.changes_summary}
                         </Typography>
                       </Box>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </TimelineContent>
-          </TimelineItem>
-        );
-      })}
-    </Timeline>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
   );
 };
 

@@ -1,64 +1,47 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
   Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardHeader,
-  Button,
-  Chip,
   Paper,
-  Tabs,
-  Tab,
+  Chip,
   IconButton,
+  Tooltip,
   useTheme,
-  alpha,
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   ArrowBack,
-  SwapHoriz,
-  Download,
   Code,
-  DataObject,
-  Settings,
-  Assessment,
-  CheckCircle,
-  Cancel,
-  ChangeCircle,
+  Person,
+  Schedule,
+  Difference,
+  ExpandMore,
+  Add,
+  Remove,
+  Edit,
 } from '@mui/icons-material';
-import { PromptVersion } from '../../types';
+import ReactDiffViewer from 'react-diff-viewer';
 
 interface VersionComparisonProps {
-  versionA: PromptVersion & { prompt_data?: any };
-  versionB: PromptVersion & { prompt_data?: any };
-  differences: {
-    changed_fields: string[];
-    additions: Record<string, any>;
-    deletions: Record<string, any>;
-    modifications: Record<string, any>;
-  };
+  versionA: any;
+  versionB: any;
+  differences: any[];
   onBack: () => void;
 }
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => (
-  <div
-    role="tabpanel"
-    hidden={value !== index}
-    id={`comparison-tabpanel-${index}`}
-    aria-labelledby={`comparison-tab-${index}`}
-    {...other}
-  >
-    {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-  </div>
-);
 
 const VersionComparison: React.FC<VersionComparisonProps> = ({
   versionA,
@@ -67,419 +50,484 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
   onBack,
 }) => {
   const theme = useTheme();
-  const [activeTab, setActiveTab] = useState(0);
-  const [swapped, setSwapped] = useState(false);
+  const [filter, setFilter] = useState<string>('all');
+  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
 
-  // Swap versions for comparison
-  const leftVersion = swapped ? versionB : versionA;
-  const rightVersion = swapped ? versionA : versionB;
-
-  const handleSwap = () => {
-    setSwapped(!swapped);
+  const formatContentForDiff = (content: any) => {
+    return JSON.stringify(content, null, 2);
   };
 
-  const handleExportComparison = () => {
-    const exportData = {
-      comparison: {
-        version_a: versionA,
-        version_b: versionB,
-        differences,
-      },
-      exported_at: new Date().toISOString(),
-    };
+  const oldContent = formatContentForDiff(versionA?.content || {});
+  const newContent = formatContentForDiff(versionB?.content || {});
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `version-comparison-${versionA.version}-vs-${versionB.version}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const toggleFieldExpansion = (field: string) => {
+    setExpandedFields(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      DRAFT: theme.palette.warning.main,
-      STAGING: theme.palette.info.main,
-      PUBLISHED: theme.palette.success.main,
-      ARCHIVED: theme.palette.grey[500],
-      DEPRECATED: theme.palette.error.main,
-    };
-    return colors[status as keyof typeof colors] || theme.palette.grey[500];
+  const getDiffIcon = (type: string) => {
+    switch (type) {
+      case 'added': return <Add sx={{ color: theme.palette.success.main }} />;
+      case 'removed': return <Remove sx={{ color: theme.palette.error.main }} />;
+      case 'modified': return <Edit sx={{ color: theme.palette.warning.main }} />;
+      default: return null;
+    }
   };
 
-  // const getDifferenceIcon = (type: 'added' | 'removed' | 'modified') => {
-  //   switch (type) {
-  //     case 'added':
-  //       return <CheckCircle sx={{ color: theme.palette.success.main }} />;
-  //     case 'removed':
-  //       return <Cancel sx={{ color: theme.palette.error.main }} />;
-  //     case 'modified':
-  //       return <ChangeCircle sx={{ color: theme.palette.warning.main }} />;
-  //     default:
-  //       return null;
-  //   }
-  // };
+  const getDiffColor = (type: string) => {
+    switch (type) {
+      case 'added': return theme.palette.success.light;
+      case 'removed': return theme.palette.error.light;
+      case 'modified': return theme.palette.warning.light;
+      default: return theme.palette.grey[100];
+    }
+  };
 
-  const renderVersionCard = (version: PromptVersion, side: 'left' | 'right') => (
-    <Card sx={{ height: '100%', border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
-      <CardHeader
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6">
-              Version {version.version}
-            </Typography>
-            <Chip
-              label={version.status || 'DRAFT'}
-              size="small"
+  const filteredDifferences = filter === 'all' 
+    ? differences 
+    : differences.filter(diff => diff.type === filter);
+
+  const fieldStatistics = differences?.summary?.field_statistics || {
+    messages: { added: 0, modified: 0, removed: 0 },
+    parameters: { added: 0, modified: 0, removed: 0 },
+    input_variables: { added: 0, modified: 0, removed: 0 },
+    other_fields: { added: 0, modified: 0, removed: 0 }
+  };
+
+  return (
+    <Box sx={{ py: 3 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+        <IconButton onClick={onBack} sx={{ mr: 2 }}>
+          <ArrowBack />
+        </IconButton>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Version Comparison
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            Comparing v{versionA?.version} with v{versionB?.version}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Version Info Cards */}
+      <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
+        <Paper sx={{ flex: 1, p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box
               sx={{
-                backgroundColor: getStatusColor(version.status || 'DRAFT'),
-                color: theme.palette.common.white,
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: theme.palette.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme.palette.primary.contrastText,
+                mr: 2,
               }}
-            />
+            >
+              <Code />
+            </Box>
+            <Box>
+              <Typography variant="h6">Version {versionA?.version}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <Person sx={{ fontSize: 16 }} />
+                <Typography variant="caption">
+                  {versionA?.content?.created_by || 'Unknown'}
+                </Typography>
+                <Schedule sx={{ fontSize: 16, ml: 1 }} />
+                <Typography variant="caption">
+                  {new Date(versionA?.created_at).toLocaleDateString()}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
-        }
-        subheader={
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              By {version.author || version.created_by} • {new Date(version.updated_at || version.created_at).toLocaleString()}
-            </Typography>
-            {version.commit_ref && (
-              <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                {version.commit_ref.substring(0, 8)}
-              </Typography>
-            )}
+        </Paper>
+
+        <Paper sx={{ flex: 1, p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: theme.palette.secondary.main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme.palette.secondary.contrastText,
+                mr: 2,
+              }}
+            >
+              <Code />
+            </Box>
+            <Box>
+              <Typography variant="h6">Version {versionB?.version}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <Person sx={{ fontSize: 16 }} />
+                <Typography variant="caption">
+                  {versionB?.content?.created_by || 'Unknown'}
+                </Typography>
+                <Schedule sx={{ fontSize: 16, ml: 1 }} />
+                <Typography variant="caption">
+                  {new Date(versionB?.created_at).toLocaleDateString()}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
-        }
-        sx={{
-          backgroundColor: side === 'left' 
-            ? alpha(theme.palette.info.main, 0.05)
-            : alpha(theme.palette.success.main, 0.05),
-        }}
-      />
-      <CardContent>
-        {/* Version details would be rendered here based on prompt_data */}
-        <Typography variant="body2" color="text.secondary">
-          Detailed version data comparison will be displayed here.
-        </Typography>
-      </CardContent>
-    </Card>
-  );
+        </Paper>
+      </Box>
 
-  const renderDifferencesSummary = () => (
-    <Card>
-      <CardHeader
-        title="Changes Summary"
-        avatar={<Assessment color="primary" />}
-      />
-      <CardContent>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: alpha(theme.palette.success.main, 0.1) }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                <CheckCircle sx={{ color: theme.palette.success.main, mr: 1 }} />
-                <Typography variant="h6" color="success.main">
-                  {Object.keys(differences.additions).length}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Additions
+      {/* Summary of Changes */}
+      <Paper sx={{ mb: 4, p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Difference sx={{ mr: 1 }} />
+          <Typography variant="h6">Change Summary</Typography>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+          <Chip 
+            label={`${differences.filter(d => d.type === 'modified').length} Modified`} 
+            color="warning" 
+            variant="outlined" 
+          />
+          <Chip 
+            label={`${differences.filter(d => d.type === 'added').length} Added`} 
+            color="success" 
+            variant="outlined" 
+          />
+          <Chip 
+            label={`${differences.filter(d => d.type === 'removed').length} Removed`} 
+            color="error" 
+            variant="outlined" 
+          />
+        </Box>
+        
+        {/* Field Statistics */}
+        <Accordion sx={{ mb: 2 }}>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography>Field Statistics</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Field Type</TableCell>
+                    <TableCell>Added</TableCell>
+                    <TableCell>Modified</TableCell>
+                    <TableCell>Removed</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Messages</TableCell>
+                    <TableCell>{fieldStatistics.messages.added}</TableCell>
+                    <TableCell>{fieldStatistics.messages.modified}</TableCell>
+                    <TableCell>{fieldStatistics.messages.removed}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Parameters</TableCell>
+                    <TableCell>{fieldStatistics.parameters.added}</TableCell>
+                    <TableCell>{fieldStatistics.parameters.modified}</TableCell>
+                    <TableCell>{fieldStatistics.parameters.removed}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Input Variables</TableCell>
+                    <TableCell>{fieldStatistics.input_variables.added}</TableCell>
+                    <TableCell>{fieldStatistics.input_variables.modified}</TableCell>
+                    <TableCell>{fieldStatistics.input_variables.removed}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Other Fields</TableCell>
+                    <TableCell>{fieldStatistics.other_fields.added}</TableCell>
+                    <TableCell>{fieldStatistics.other_fields.modified}</TableCell>
+                    <TableCell>{fieldStatistics.other_fields.removed}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </AccordionDetails>
+        </Accordion>
+        
+        {differences.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Typography variant="subtitle2">
+                Changed Fields:
               </Typography>
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: alpha(theme.palette.error.main, 0.1) }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                <Cancel sx={{ color: theme.palette.error.main, mr: 1 }} />
-                <Typography variant="h6" color="error.main">
-                  {Object.keys(differences.deletions).length}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Deletions
-              </Typography>
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: alpha(theme.palette.warning.main, 0.1) }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                <ChangeCircle sx={{ color: theme.palette.warning.main, mr: 1 }} />
-                <Typography variant="h6" color="warning.main">
-                  {Object.keys(differences.modifications).length}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Modifications
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Changed Fields */}
-        {differences.changed_fields.length > 0 && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Changed Fields:
-            </Typography>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Filter</InputLabel>
+                <Select
+                  value={filter}
+                  label="Filter"
+                  onChange={(e) => setFilter(e.target.value as string)}
+                >
+                  <MenuItem value="all">All Changes</MenuItem>
+                  <MenuItem value="modified">Modified</MenuItem>
+                  <MenuItem value="added">Added</MenuItem>
+                  <MenuItem value="removed">Removed</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {differences.changed_fields.map((field) => (
-                <Chip
-                  key={field}
-                  label={field}
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                />
+              {filteredDifferences.map((diff, index) => (
+                <Tooltip key={index} title={`${diff.type}: ${diff.field}`}>
+                  <Chip 
+                    label={diff.field} 
+                    size="small" 
+                    color={
+                      diff.type === 'modified' ? 'warning' : 
+                      diff.type === 'added' ? 'success' : 'error'
+                    }
+                    variant="outlined"
+                    onClick={() => toggleFieldExpansion(diff.field)}
+                    icon={getDiffIcon(diff.type)}
+                  />
+                </Tooltip>
               ))}
             </Box>
           </Box>
         )}
-      </CardContent>
-    </Card>
-  );
+      </Paper>
 
-  const renderDetailedComparison = () => (
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
-        <Typography variant="h6" gutterBottom sx={{ color: theme.palette.info.main }}>
-          Version {leftVersion.version} (Left)
-        </Typography>
-        {renderVersionCard(leftVersion, 'left')}
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <Typography variant="h6" gutterBottom sx={{ color: theme.palette.success.main }}>
-          Version {rightVersion.version} (Right)
-        </Typography>
-        {renderVersionCard(rightVersion, 'right')}
-      </Grid>
-    </Grid>
-  );
-
-  const renderFieldByFieldComparison = () => (
-    <Box>
-      {/* Additions */}
-      {Object.keys(differences.additions).length > 0 && (
-        <Card sx={{ mb: 3 }}>
-          <CardHeader
-            title="Additions"
-            avatar={<CheckCircle color="success" />}
-            sx={{ backgroundColor: alpha(theme.palette.success.main, 0.1) }}
-          />
-          <CardContent>
-            {Object.entries(differences.additions).map(([field, value]) => (
-              <Box key={field} sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="success.main">
-                  + {field}
-                </Typography>
-                <Paper sx={{ p: 1, mt: 1, backgroundColor: alpha(theme.palette.success.main, 0.05) }}>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                    {JSON.stringify(value, null, 2)}
-                  </Typography>
-                </Paper>
-              </Box>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Deletions */}
-      {Object.keys(differences.deletions).length > 0 && (
-        <Card sx={{ mb: 3 }}>
-          <CardHeader
-            title="Deletions"
-            avatar={<Cancel color="error" />}
-            sx={{ backgroundColor: alpha(theme.palette.error.main, 0.1) }}
-          />
-          <CardContent>
-            {Object.entries(differences.deletions).map(([field, value]) => (
-              <Box key={field} sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="error.main">
-                  - {field}
-                </Typography>
-                <Paper sx={{ p: 1, mt: 1, backgroundColor: alpha(theme.palette.error.main, 0.05) }}>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                    {JSON.stringify(value, null, 2)}
-                  </Typography>
-                </Paper>
-              </Box>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Modifications */}
-      {Object.keys(differences.modifications).length > 0 && (
-        <Card sx={{ mb: 3 }}>
-          <CardHeader
-            title="Modifications"
-            avatar={<ChangeCircle color="warning" />}
-            sx={{ backgroundColor: alpha(theme.palette.warning.main, 0.1) }}
-          />
-          <CardContent>
-            {Object.entries(differences.modifications).map(([field, change]) => (
-              <Box key={field} sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" color="warning.main">
-                  ~ {field}
-                </Typography>
-                
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" color="error.main">
-                      Before (v{leftVersion.version}):
-                    </Typography>
-                    <Paper sx={{ p: 1, mt: 0.5, backgroundColor: alpha(theme.palette.error.main, 0.05) }}>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                        {JSON.stringify((change as any)?.before, null, 2)}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" color="success.main">
-                      After (v{rightVersion.version}):
-                    </Typography>
-                    <Paper sx={{ p: 1, mt: 0.5, backgroundColor: alpha(theme.palette.success.main, 0.05) }}>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                        {JSON.stringify((change as any)?.after, null, 2)}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </Box>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-    </Box>
-  );
-
-  return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton onClick={onBack} sx={{ mr: 2 }}>
-              <ArrowBack />
-            </IconButton>
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                gutterBottom
-                sx={{
-                  fontWeight: 700,
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+      {/* Field-Level Differences */}
+      {filteredDifferences.length > 0 && (
+        <Paper sx={{ mb: 4, p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Field-Level Differences
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          
+          {filteredDifferences.map((diff, index) => (
+            <Accordion 
+              key={index} 
+              expanded={expandedFields[diff.field] || false}
+              onChange={() => toggleFieldExpansion(diff.field)}
+              sx={{ mb: 1 }}
+            >
+              <AccordionSummary 
+                expandIcon={<ExpandMore />}
+                sx={{ 
+                  bgcolor: getDiffColor(diff.type),
+                  '&:hover': { bgcolor: theme.palette.action.hover }
                 }}
               >
-                Version Comparison
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                v{versionA.version} vs v{versionB.version}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<SwapHoriz />}
-              onClick={handleSwap}
-            >
-              Swap Sides
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<Download />}
-              onClick={handleExportComparison}
-            >
-              Export
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Summary */}
-        <Box sx={{ mb: 3 }}>
-          {renderDifferencesSummary()}
-        </Box>
-
-        {/* Comparison Tabs */}
-        <Card>
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab icon={<DataObject />} label="Side by Side" />
-            <Tab icon={<Code />} label="Field by Field" />
-            <Tab icon={<Settings />} label="Raw Data" />
-          </Tabs>
-
-          <Box sx={{ p: 3 }}>
-            <TabPanel value={activeTab} index={0}>
-              {renderDetailedComparison()}
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={1}>
-              {renderFieldByFieldComparison()}
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={2}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom>
-                    Version {versionA.version} Raw Data
-                  </Typography>
-                  <Paper sx={{ p: 2, backgroundColor: theme.palette.grey[50] }}>
-                    <Typography
-                      component="pre"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.75rem',
-                        overflow: 'auto',
-                        maxHeight: 400,
-                      }}
-                    >
-                      {JSON.stringify(versionA, null, 2)}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {getDiffIcon(diff.type)}
+                  <Typography>{diff.field}</Typography>
+                  <Chip 
+                    label={diff.type} 
+                    size="small" 
+                    color={
+                      diff.type === 'modified' ? 'warning' : 
+                      diff.type === 'added' ? 'success' : 'error'
+                    }
+                    variant="outlined"
+                  />
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {diff.field === 'messages' && diff.diff ? (
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Message Changes:
                     </Typography>
-                  </Paper>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom>
-                    Version {versionB.version} Raw Data
-                  </Typography>
-                  <Paper sx={{ p: 2, backgroundColor: theme.palette.grey[50] }}>
-                    <Typography
-                      component="pre"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.75rem',
-                        overflow: 'auto',
-                        maxHeight: 400,
-                      }}
-                    >
-                      {JSON.stringify(versionB, null, 2)}
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Index</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Details</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {diff.diff.map((msgDiff: any, msgIndex: number) => (
+                            <TableRow key={msgIndex}>
+                              <TableCell>{msgDiff.index}</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={msgDiff.type} 
+                                  size="small" 
+                                  color={
+                                    msgDiff.type === 'modified' ? 'warning' : 
+                                    msgDiff.type === 'added' ? 'success' : 'error'
+                                  }
+                                  variant="outlined"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+                                  {JSON.stringify({ version1: msgDiff.version1, version2: msgDiff.version2 }, null, 2)}
+                                </pre>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                ) : diff.field === 'parameters' && diff.diff ? (
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Parameter Changes:
                     </Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
-            </TabPanel>
-          </Box>
-        </Card>
-      </Box>
-    </Container>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Key</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Version 1</TableCell>
+                            <TableCell>Version 2</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {diff.diff.map((paramDiff: any, paramIndex: number) => (
+                            <TableRow key={paramIndex}>
+                              <TableCell>{paramDiff.key}</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={paramDiff.type} 
+                                  size="small" 
+                                  color={
+                                    paramDiff.type === 'modified' ? 'warning' : 
+                                    paramDiff.type === 'added' ? 'success' : 'error'
+                                  }
+                                  variant="outlined"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+                                  {JSON.stringify(paramDiff.version1, null, 2)}
+                                </pre>
+                              </TableCell>
+                              <TableCell>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+                                  {JSON.stringify(paramDiff.version2, null, 2)}
+                                </pre>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                ) : diff.field === 'input_variables' && diff.diff ? (
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Input Variable Changes:
+                    </Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Key</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Version 1</TableCell>
+                            <TableCell>Version 2</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {diff.diff.map((varDiff: any, varIndex: number) => (
+                            <TableRow key={varIndex}>
+                              <TableCell>{varDiff.key}</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={varDiff.type} 
+                                  size="small" 
+                                  color={
+                                    varDiff.type === 'modified' ? 'warning' : 
+                                    varDiff.type === 'added' ? 'success' : 'error'
+                                  }
+                                  variant="outlined"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+                                  {JSON.stringify(varDiff.version1, null, 2)}
+                                </pre>
+                              </TableCell>
+                              <TableCell>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+                                  {JSON.stringify(varDiff.version2, null, 2)}
+                                </pre>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                ) : diff.diff && Array.isArray(diff.diff) ? (
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Text Diff:
+                    </Typography>
+                    <ReactDiffViewer
+                      oldValue={diff.diff.filter(line => line.startsWith('-') || line.startsWith(' ')).join('')}
+                      newValue={diff.diff.filter(line => line.startsWith('+') || line.startsWith(' ')).join('')}
+                      splitView={true}
+                      useDarkTheme={theme.palette.mode === 'dark'}
+                    />
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Version {versionA?.version}:
+                      </Typography>
+                      <pre style={{ whiteSpace: 'pre-wrap', backgroundColor: theme.palette.grey[100], padding: '8px', borderRadius: '4px' }}>
+                        {JSON.stringify(diff.version1, null, 2)}
+                      </pre>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Version {versionB?.version}:
+                      </Typography>
+                      <pre style={{ whiteSpace: 'pre-wrap', backgroundColor: theme.palette.grey[100], padding: '8px', borderRadius: '4px' }}>
+                        {JSON.stringify(diff.version2, null, 2)}
+                      </pre>
+                    </Box>
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Paper>
+      )}
+
+      {/* Detailed Diff Viewer */}
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Full Content Comparison
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+        <ReactDiffViewer
+          oldValue={oldContent}
+          newValue={newContent}
+          splitView={true}
+          useDarkTheme={theme.palette.mode === 'dark'}
+          styles={{
+            diffContainer: {
+              pre: {
+                lineHeight: '1.5',
+              },
+            },
+            line: {
+              '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+              },
+            },
+          }}
+        />
+      </Paper>
+    </Box>
   );
 };
 

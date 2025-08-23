@@ -184,14 +184,30 @@ class PromptVersion(Base):
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     
+    # Version relationships
+    parent_version_id = Column(UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=True)
+    is_active = Column(Boolean, default=False)
+    tags = Column(JSONB, nullable=False, default=[])
+    
+    # Merge tracking
+    merged_from_version_id = Column(UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=True)
+    is_merge = Column(Boolean, default=False)
+    
     # Relationships
     prompt = relationship("Prompt", back_populates="versions")
     created_by_user = relationship("User", foreign_keys=[created_by])
+    parent_version = relationship("PromptVersion", remote_side=[id], back_populates="child_versions")
+    child_versions = relationship("PromptVersion", back_populates="parent_version")
+    merged_from_version = relationship("PromptVersion", remote_side=[id], back_populates="merged_to_versions")
+    merged_to_versions = relationship("PromptVersion", back_populates="merged_from_version")
     
     __table_args__ = (
         UniqueConstraint('prompt_id', 'version', name='uq_prompt_version'),
         Index('idx_prompt_version_prompt', 'prompt_id'),
         Index('idx_prompt_version_created', 'created_at'),
+        Index('idx_prompt_version_active', 'is_active'),
+        Index('idx_prompt_version_parent', 'parent_version_id'),
+        Index('idx_prompt_version_merge', 'merged_from_version_id'),
     )
 
 # Pipeline Management

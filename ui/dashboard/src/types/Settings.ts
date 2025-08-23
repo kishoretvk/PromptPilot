@@ -48,6 +48,11 @@ export interface SecuritySettings {
   max_requests_per_minute: number;
   allowed_domains: string[];
   cors_enabled: boolean;
+  session_timeout: number;
+  max_login_attempts: number;
+  password_min_length: number;
+  require_2fa: boolean;
+  ip_whitelist: string[];
 }
 
 export interface Settings {

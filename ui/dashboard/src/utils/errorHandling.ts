@@ -370,6 +370,26 @@ export class ErrorBoundary extends Error {
   }
 }
 
+export const logError = (error: Error, context?: Record<string, any>) => {
+  // Log to console in development
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Application Error:', error);
+    if (context) {
+      console.error('Error Context:', context);
+    }
+  }
+
+  errorHandler.logError(
+    errorHandler.createError(
+      error instanceof Error ? error.message : 'Unknown error',
+      'USER_ACTION',
+      context
+    ),
+    'error',
+    context
+  );
+};
+
 export const logErrorBoundaryError = (
   error: Error,
   errorInfo: { componentStack: string },

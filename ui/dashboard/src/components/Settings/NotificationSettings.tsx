@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Button,
-  FormControlLabel,
   Switch,
   TextField,
   Alert,
@@ -20,7 +19,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
-  useTheme,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -38,7 +36,6 @@ import {
   useNotificationSettings,
   useUpdateNotificationSettings,
 } from '../../hooks/useSettings';
-import { NotificationSettings as NotificationSettingsType } from '../../types/Settings';
 
 interface NotificationFormData {
   email_notifications: boolean;
@@ -84,8 +81,6 @@ const notificationTypeConfig = [
 ];
 
 const NotificationSettings: React.FC = () => {
-  const theme = useTheme();
-  
   const { data: notificationSettings, isLoading } = useNotificationSettings();
   const updateMutation = useUpdateNotificationSettings();
   

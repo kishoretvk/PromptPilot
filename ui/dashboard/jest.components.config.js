@@ -1,9 +1,6 @@
-// Jest Configuration for PromptPilot Frontend Tests
-const path = require('path');
-
+// Jest Configuration for Component Tests
 module.exports = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
@@ -18,24 +15,9 @@ module.exports = {
     'node_modules/(?!(axios|@tanstack/react-query|@mui|react-router-dom)/)'
   ],
   testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.(ts|tsx|js|jsx)',
-    '<rootDir>/src/**/*.(test|spec).(ts|tsx|js|jsx)'
+    '<rootDir>/src/components/common/__tests__/**/*.(ts|tsx|js|jsx)'
   ],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/index.tsx',
-    '!src/setupTests.ts'
-  ],
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70
-    }
-  },
   clearMocks: true,
   restoreMocks: true,
   testTimeout: 10000

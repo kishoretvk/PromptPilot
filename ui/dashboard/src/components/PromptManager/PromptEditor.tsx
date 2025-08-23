@@ -237,14 +237,14 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
       };
 
       if (isCreating) {
-        await createPromptMutation.mutateAsync(promptData);
-        onPromptCreated?.(promptData);
+        const createdPrompt = await createPromptMutation.mutateAsync(promptData);
+        onPromptCreated?.(createdPrompt);
       } else {
-        await updatePromptMutation.mutateAsync({
+        const updatedPrompt = await updatePromptMutation.mutateAsync({
           id: prompt!.id,
           data: promptData
         });
-        onPromptUpdated?.(promptData);
+        onPromptUpdated?.(updatedPrompt);
       }
     } catch (error) {
       console.error('Error saving prompt:', error);

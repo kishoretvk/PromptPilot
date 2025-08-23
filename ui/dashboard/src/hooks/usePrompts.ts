@@ -6,8 +6,6 @@ import {
   CreatePromptRequest,
   UpdatePromptRequest,
   TestPromptRequest,
-  PaginatedResponse,
-  TestResultResponse,
 } from '../types';
 import { useCallback } from 'react';
 
@@ -49,12 +47,20 @@ export const usePromptVersions = (promptId: string, enabled = true) => {
   });
 };
 
+// Helper functions for mutations
+const createPrompt = async (prompt: CreatePromptRequest): Promise<Prompt> => {
+  return await promptService.createPrompt(prompt);
+};
+
+const updatePrompt = async (params: { id: string; data: UpdatePromptRequest }): Promise<Prompt> => {
+  return await promptService.updatePrompt(params.id, params.data);
+};
+
 // Hook for creating a new prompt
 export const useCreatePrompt = () => {
-  const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: CreatePromptRequest) => promptService.createPrompt(data),
+    mutationFn: createPrompt,
     onSuccess: (newPrompt) => {
       // Invalidate and refetch prompts list
       cacheUtils.invalidatePrompts();
@@ -70,15 +76,13 @@ export const useCreatePrompt = () => {
 
 // Hook for updating a prompt
 export const useUpdatePrompt = () => {
-  const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdatePromptRequest }) =>
-      promptService.updatePrompt(id, data),
-    onSuccess: (updatedPrompt, variables) => {
+    mutationFn: updatePrompt,
+    onSuccess: (updatedPrompt) => {
       // Update the prompt in cache
       queryClient.setQueryData(
-        queryKeys.prompts.detail(variables.id),
+        queryKeys.prompts.detail(updatedPrompt.id),
         updatedPrompt
       );
       
@@ -106,18 +110,140 @@ export const useDeletePrompt = () => {
   });
 };
 
-// Hook for comparing two prompt versions
+// Hook for comparing prompt versions
 export const usePromptComparison = (
   promptId: string,
-  versionA: string,
-  versionB: string,
-  options?: { enabled?: boolean }
+  version1Id: string,
+  version2Id: string,
+  options: { enabled?: boolean } = {}
 ) => {
+  const { enabled = true } = options;
+  
   return useQuery({
-    queryKey: [...queryKeys.prompts.all, 'comparison', promptId, versionA, versionB],
-    queryFn: () => promptService.compareVersions(promptId, versionA, versionB),
-    enabled: options?.enabled ?? (!!promptId && !!versionA && !!versionB),
-    staleTime: 10 * 60 * 1000, // 10 minutes for comparison data
+    queryKey: queryKeys.prompts.comparison(promptId, version1Id, version2Id),
+    queryFn: () => promptService.compareVersions(promptId, version1Id, version2Id),
+    enabled: enabled && !!promptId && !!version1Id && !!version2Id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Hook for creating a new prompt version
+export const useCreatePromptVersion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ promptId, versionData }: { promptId: string; versionData: any }) =>
+      promptService.createPromptVersion(promptId, versionData),
+    onSuccess: (newVersion, variables) => {
+      // Invalidate versions to include the new one
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.prompts.versions(variables.promptId),
+      });
+      
+      // Invalidate prompts list
+      cacheUtils.invalidatePrompts();
+    },
+  });
+};
+
+// Hook for creating a prompt branch
+export const useCreatePromptBranch = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ promptId, branchData }: { promptId: string; branchData: any }) =>
+      promptService.createPromptBranch(promptId, branchData),
+    onSuccess: (newBranch, variables) => {
+      // Invalidate versions to include the new branch
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.prompts.versions(variables.promptId),
+      });
+      
+      // Invalidate prompts list
+      cacheUtils.invalidatePrompts();
+    },
+  });
+};
+
+// Hook for merging prompt versions
+export const useMergePromptVersions = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ promptId, sourceVersionId, targetVersionId, mergeData }: { 
+      promptId: string; 
+      sourceVersionId: string; 
+      targetVersionId: string;
+      mergeData: any;
+    }) =>
+      promptService.mergePromptVersions(promptId, sourceVersionId, targetVersionId, mergeData),
+    onSuccess: (mergedVersion, variables) => {
+      // Update prompt in cache
+      queryClient.setQueryData(
+        queryKeys.prompts.detail(variables.promptId),
+        mergedVersion
+      );
+      
+      // Invalidate versions to reflect the merge
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.prompts.versions(variables.promptId),
+      });
+      
+      // Invalidate prompts list
+      cacheUtils.invalidatePrompts();
+    },
+  });
+};
+
+// Hook for restoring a prompt version
+export const useRestorePromptVersion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ promptId, versionId }: { promptId: string; versionId: string }) =>
+      promptService.restorePromptVersion(promptId, versionId),
+    onSuccess: (restoredPrompt, variables) => {
+      // Update prompt in cache
+      queryClient.setQueryData(
+        queryKeys.prompts.detail(variables.promptId),
+        restoredPrompt
+      );
+      
+      // Invalidate versions to reflect the new active version
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.prompts.versions(variables.promptId),
+      });
+      
+      // Invalidate prompts list
+      cacheUtils.invalidatePrompts();
+    },
+  });
+};
+
+// Hook for getting prompt by version
+export const usePromptByVersion = (promptId: string, versionId: string, enabled = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.prompts.detail(promptId), 'version', versionId],
+    queryFn: () => promptService.getPromptByVersion(promptId, versionId),
+    enabled: enabled && !!promptId && !!versionId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Hook for tagging a prompt version
+export const useTagPromptVersion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ promptId, versionId, tag }: { promptId: string; versionId: string; tag: string }) => {
+      return promptService.tagPromptVersion(promptId, versionId, tag);
+    },
+    onSuccess: (data) => {
+      // Invalidate versions to reflect the new tag
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.prompts.versions(data.promptId),
+      });
+    },
   });
 };
 
@@ -159,31 +285,6 @@ export const useDuplicatePrompt = () => {
         queryKeys.prompts.detail(duplicatedPrompt.id),
         duplicatedPrompt
       );
-      
-      // Invalidate prompts list
-      cacheUtils.invalidatePrompts();
-    },
-  });
-};
-
-// Hook for restoring a prompt version
-export const useRestorePromptVersion = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ promptId, version }: { promptId: string; version: string }) =>
-      promptService.restorePromptVersion(promptId, version),
-    onSuccess: (restoredPrompt, variables) => {
-      // Update prompt in cache
-      queryClient.setQueryData(
-        queryKeys.prompts.detail(variables.promptId),
-        restoredPrompt
-      );
-      
-      // Invalidate versions to reflect the new active version
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.prompts.versions(variables.promptId),
-      });
       
       // Invalidate prompts list
       cacheUtils.invalidatePrompts();

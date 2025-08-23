@@ -1,12 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pipelineService } from '../services/PipelineService';
-import { queryKeys, cacheUtils } from './queryClient';
+import { queryKeys } from './queryClient';
 import {
   Pipeline,
   CreatePipelineRequest,
   UpdatePipelineRequest,
-  PaginatedResponse,
-  PipelineExecution,
 } from '../types';
 import { useCallback } from 'react';
 

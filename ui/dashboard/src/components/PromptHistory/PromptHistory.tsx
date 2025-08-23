@@ -19,6 +19,15 @@ import {
   Tooltip,
   useTheme,
   alpha,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
+  Tabs,
+  Tab,
+  CircularProgress,
 } from '@mui/material';
 import {
   History,
@@ -32,8 +41,13 @@ import {
   Schedule,
   Code,
   ArrowBack,
+  Merge,
+  Label,
+  Branch,
+  FilterList,
+  Search,
 } from '@mui/icons-material';
-import { usePromptVersions, usePromptComparison, useRestorePromptVersion } from '../../hooks/usePrompts';
+import { usePromptVersions, usePromptComparison, useRestorePromptVersion, useCreatePromptBranch, useMergePromptVersions, useTagPromptVersion } from '../../hooks/usePrompts';
 import { Prompt, PromptVersion } from '../../types';
 import VersionComparison from './VersionComparison';
 import VersionTimeline from './VersionTimeline';
@@ -56,12 +70,26 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
   const [showComparison, setShowComparison] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [versionToRestore, setVersionToRestore] = useState<PromptVersion | null>(null);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [versionToTag, setVersionToTag] = useState<PromptVersion | null>(null);
+  const [newTag, setNewTag] = useState('');
+  const [branchDialogOpen, setBranchDialogOpen] = useState(false);
+  const [versionToBranch, setVersionToBranch] = useState<PromptVersion | null>(null);
+  const [branchName, setBranchName] = useState('');
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [sourceVersion, setSourceVersion] = useState<PromptVersion | null>(null);
+  const [targetVersion, setTargetVersion] = useState<PromptVersion | null>(null);
+  const [mergeMessage, setMergeMessage] = useState('');
+  const [viewMode, setViewMode] = useState<'timeline' | 'grid'>('timeline');
+  const [activeTab, setActiveTab] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTag, setFilterTag] = useState<string>('all');
 
   // Use either provided promptId or prompt.id
   const currentPromptId = promptId || prompt?.id;
 
   const { data: versions, isLoading: versionsLoading, error: versionsError } = usePromptVersions(
-    currentPromptId || ''
+    currentPromptId || '', true, 100 // Include branches, limit to 100 versions
   );
   const { data: comparisonData, isLoading: comparisonLoading } = usePromptComparison(
     currentPromptId || '',
@@ -70,6 +98,41 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
     { enabled: selectedVersions.length === 2 && !!currentPromptId }
   );
   const restoreVersionMutation = useRestorePromptVersion();
+  const createBranchMutation = useCreatePromptBranch();
+  const mergeVersionsMutation = useMergePromptVersions();
+  const tagVersionMutation = useTagPromptVersion();
+
+  // Filter versions based on search term and tag filter
+  const filteredVersions = useMemo(() => {
+    if (!versions) return [];
+    
+    return versions.filter(version => {
+      // Search filter
+      const matchesSearch = !searchTerm || 
+        version.version.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        version.commit_message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        version.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Tag filter
+      const matchesTag = filterTag === 'all' || 
+        (filterTag === 'untagged' && version.tags.length === 0) ||
+        version.tags.includes(filterTag);
+      
+      return matchesSearch && matchesTag;
+    });
+  }, [versions, searchTerm, filterTag]);
+
+  // Get unique tags for filter dropdown
+  const uniqueTags = useMemo(() => {
+    if (!versions) return [];
+    
+    const tags = new Set<string>();
+    versions.forEach(version => {
+      version.tags.forEach(tag => tags.add(tag));
+    });
+    
+    return Array.from(tags);
+  }, [versions]);
 
   const handleVersionSelect = useCallback((versionId: string) => {
     setSelectedVersions(prev => {
@@ -94,13 +157,32 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
     setRestoreDialogOpen(true);
   }, []);
 
+  const handleTagVersion = useCallback((version: PromptVersion) => {
+    setVersionToTag(version);
+    setTagDialogOpen(true);
+  }, []);
+
+  const handleBranchVersion = useCallback((version: PromptVersion) => {
+    setVersionToBranch(version);
+    setBranchDialogOpen(true);
+  }, []);
+
+  const handleMergeVersion = useCallback((version: PromptVersion) => {
+    if (!sourceVersion) {
+      setSourceVersion(version);
+    } else if (!targetVersion) {
+      setTargetVersion(version);
+      setMergeDialogOpen(true);
+    }
+  }, [sourceVersion, targetVersion]);
+
   const confirmRestore = useCallback(async () => {
     if (!versionToRestore || !currentPromptId) return;
 
     try {
       await restoreVersionMutation.mutateAsync({
         promptId: currentPromptId,
-        version: versionToRestore.version,
+        versionId: versionToRestore.id,
       });
       setRestoreDialogOpen(false);
       setVersionToRestore(null);
@@ -109,63 +191,84 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
     }
   }, [versionToRestore, currentPromptId, restoreVersionMutation]);
 
-  const handleExportHistory = useCallback(() => {
-    if (!versions) return;
+  const addTagToVersion = useCallback(async () => {
+    if (!versionToTag || !currentPromptId || !newTag) return;
 
-    const exportData = {
-      prompt_id: currentPromptId,
-      versions: versions,
-      exported_at: new Date().toISOString(),
-    };
+    try {
+      await tagVersionMutation.mutateAsync({
+        promptId: currentPromptId,
+        versionId: versionToTag.id,
+        tag: newTag,
+      });
+      setTagDialogOpen(false);
+      setVersionToTag(null);
+      setNewTag('');
+    } catch (error) {
+      console.error('Failed to add tag:', error);
+    }
+  }, [versionToTag, currentPromptId, newTag, tagVersionMutation]);
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `prompt-history-${currentPromptId}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [versions, currentPromptId]);
+  const createBranch = useCallback(async () => {
+    if (!versionToBranch || !currentPromptId || !branchName) return;
 
-  const sortedVersions = useMemo(() => {
-    if (!versions) return [];
-    return [...versions].sort((a, b) => 
-      new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
-    );
-  }, [versions]);
+    try {
+      await createBranchMutation.mutateAsync({
+        promptId: currentPromptId,
+        branchData: {
+          branchName: branchName,
+          sourceVersionId: versionToBranch.id,
+        },
+      });
+      setBranchDialogOpen(false);
+      setVersionToBranch(null);
+      setBranchName('');
+    } catch (error) {
+      console.error('Failed to create branch:', error);
+    }
+  }, [versionToBranch, currentPromptId, branchName, createBranchMutation]);
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      DRAFT: theme.palette.warning.main,
-      STAGING: theme.palette.info.main,
-      PUBLISHED: theme.palette.success.main,
-      ARCHIVED: theme.palette.grey[500],
-      DEPRECATED: theme.palette.error.main,
-    };
-    return colors[status as keyof typeof colors] || theme.palette.grey[500];
-  };
+  const mergeVersions = useCallback(async () => {
+    if (!sourceVersion || !targetVersion || !currentPromptId) return;
 
-  if (!currentPromptId) {
+    try {
+      await mergeVersionsMutation.mutateAsync({
+        promptId: currentPromptId,
+        sourceVersionId: sourceVersion.id,
+        targetVersionId: targetVersion.id,
+        mergeData: {
+          mergeMessage: mergeMessage,
+        },
+      });
+      setMergeDialogOpen(false);
+      setSourceVersion(null);
+      setTargetVersion(null);
+      setMergeMessage('');
+    } catch (error) {
+      console.error('Failed to merge versions:', error);
+    }
+  }, [sourceVersion, targetVersion, currentPromptId, mergeMessage, mergeVersionsMutation]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedVersions([]);
+    setSourceVersion(null);
+    setTargetVersion(null);
+  }, []);
+
+  if (versionsLoading) {
     return (
-      <Container maxWidth="lg">
-        <Alert severity="error" sx={{ mt: 3 }}>
-          No prompt selected. Please select a prompt to view its history.
-        </Alert>
-      </Container>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (versionsError) {
     return (
-      <Container maxWidth="lg">
-        <Alert severity="error" sx={{ mt: 3 }}>
-          Error loading prompt history: {versionsError.message}
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Failed to load version history: {versionsError.message}
         </Alert>
-      </Container>
+      </Box>
     );
   }
 
@@ -181,260 +284,224 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
   }
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {onBack && (
-              <IconButton onClick={onBack} sx={{ mr: 2 }}>
-                <ArrowBack />
-              </IconButton>
-            )}
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                gutterBottom
-                sx={{
-                  fontWeight: 700,
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                <History sx={{ mr: 2, verticalAlign: 'middle' }} />
-                Prompt History
-              </Typography>
-              {prompt && (
-                <Typography variant="subtitle1" color="text.secondary">
-                  {prompt.name} - Version History & Changes
-                </Typography>
-              )}
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Compare />}
-              onClick={handleCompareVersions}
-              disabled={selectedVersions.length !== 2}
-            >
-              Compare ({selectedVersions.length}/2)
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<Download />}
-              onClick={handleExportHistory}
-              disabled={!versions?.length}
-            >
-              Export History
-            </Button>
-          </Box>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        {onBack && (
+          <IconButton onClick={onBack} sx={{ mr: 2 }}>
+            <ArrowBack />
+          </IconButton>
+        )}
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            <History sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Prompt Version History
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            Track and manage all versions of your prompt
+          </Typography>
         </Box>
+      </Box>
 
-        {/* Selection Info */}
-        {selectedVersions.length > 0 && (
-          <Alert 
-            severity="info" 
-            sx={{ mb: 3 }}
-            action={
-              <Button 
-                color="inherit" 
-                size="small" 
-                onClick={() => setSelectedVersions([])}
+      {/* Controls */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+          {/* Search */}
+          <TextField
+            size="small"
+            placeholder="Search versions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: <Search sx={{ mr: 1, fontSize: 20 }} />,
+            }}
+            sx={{ minWidth: 200 }}
+          />
+          
+          {/* Tag Filter */}
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Filter by Tag</InputLabel>
+            <Select
+              value={filterTag}
+              label="Filter by Tag"
+              onChange={(e) => setFilterTag(e.target.value as string)}
+            >
+              <MenuItem value="all">All Versions</MenuItem>
+              <MenuItem value="untagged">Untagged</MenuItem>
+              <Divider />
+              {uniqueTags.map(tag => (
+                <MenuItem key={tag} value={tag}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Label sx={{ fontSize: 16 }} />
+                    {tag}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          
+          {/* View Mode Toggle */}
+          <Tabs
+            value={viewMode}
+            onChange={(_, newValue) => setViewMode(newValue as 'timeline' | 'grid')}
+            sx={{ minHeight: 40 }}
+          >
+            <Tab label="Timeline" value="timeline" sx={{ minHeight: 40 }} />
+            <Tab label="Grid" value="grid" sx={{ minHeight: 40 }} />
+          </Tabs>
+          
+          {/* Action Buttons */}
+          <Box sx={{ flexGrow: 1 }} />
+          
+          {selectedVersions.length > 0 && (
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="contained"
+                startIcon={<Compare />}
+                onClick={handleCompareVersions}
+                disabled={selectedVersions.length !== 2}
+              >
+                Compare ({selectedVersions.length})
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={clearSelection}
               >
                 Clear
               </Button>
-            }
-          >
-            {selectedVersions.length === 1 
-              ? '1 version selected for comparison'
-              : `${selectedVersions.length} versions selected for comparison`
-            }
-          </Alert>
-        )}
+            </Box>
+          )}
+        </Box>
+      </Paper>
 
-        <Grid container spacing={3}>
-          {/* Version Timeline */}
-          <Grid item xs={12} lg={8}>
-            <Card sx={{ height: 'fit-content' }}>
-              <CardHeader
-                title="Version Timeline"
-                avatar={<CallSplit color="primary" />}
-                action={
-                  <Chip
-                    label={`${sortedVersions.length} versions`}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                }
-              />
-              <CardContent>
-                {versionsLoading ? (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography color="text.secondary">Loading version history...</Typography>
-                  </Box>
-                ) : (
-                  <VersionTimeline
-                    versions={sortedVersions}
-                    selectedVersions={selectedVersions}
-                    onVersionSelect={handleVersionSelect}
-                    onRestoreVersion={handleRestoreVersion}
-                    onEditVersion={onEditVersion}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+      {/* Version Stats */}
+      {versions && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" color="text.secondary">
+                Total Versions
+              </Typography>
+              <Typography variant="h4">
+                {versions.length}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6" color="text.secondary">
+                Active Version
+              </Typography>
+              <Typography variant="h4">
+                {versions.find(v => v.is_active)?.version || 'None'}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6" color="text.secondary">
+                Tags
+              </Typography>
+              <Typography variant="h4">
+                {uniqueTags.length}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      )}
 
-          {/* Version Details */}
-          <Grid item xs={12} lg={4}>
-            <Card sx={{ height: 'fit-content' }}>
-              <CardHeader
-                title="Version Details"
-                avatar={<Visibility color="primary" />}
-              />
-              <CardContent>
-                {selectedVersions.length === 0 ? (
-                  <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-                    Select a version to view details
-                  </Typography>
-                ) : (
-                  <Box>
-                    {selectedVersions.map((versionId, index) => {
-                      const version = sortedVersions.find(v => v.version === versionId);
-                      if (!version) return null;
+      {/* Version Timeline/Grid */}
+      {filteredVersions && (
+        <VersionTimeline
+          versions={filteredVersions}
+          selectedVersions={selectedVersions}
+          onVersionSelect={handleVersionSelect}
+          onRestoreVersion={handleRestoreVersion}
+          onTagVersion={handleTagVersion}
+          onBranchVersion={handleBranchVersion}
+          onMergeVersion={handleMergeVersion}
+          sourceVersion={sourceVersion}
+          targetVersion={targetVersion}
+        />
+      )}
 
-                      return (
-                        <Paper
-                          key={versionId}
-                          elevation={1}
-                          sx={{
-                            p: 2,
-                            mb: index < selectedVersions.length - 1 ? 2 : 0,
-                            border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h6" component="div">
-                              v{version.version}
-                            </Typography>
-                            <Chip
-                              label={version.status || 'DRAFT'}
-                              size="small"
-                              sx={{
-                                backgroundColor: getStatusColor(version.status || 'DRAFT'),
-                                color: theme.palette.common.white,
-                              }}
-                            />
-                          </Box>
-
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <Person fontSize="small" sx={{ mr: 1 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {version.author || version.created_by}
-                            </Typography>
-                          </Box>
-
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Schedule fontSize="small" sx={{ mr: 1 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {new Date(version.updated_at || version.created_at).toLocaleString()}
-                            </Typography>
-                          </Box>
-
-                          {version.commit_ref && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                              <Code fontSize="small" sx={{ mr: 1 }} />
-                              <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                                {version.commit_ref.substring(0, 8)}
-                              </Typography>
-                            </Box>
-                          )}
-
-                          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                            <Tooltip title="Restore this version">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleRestoreVersion(version)}
-                                color="primary"
-                              >
-                                <Restore fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                            {onEditVersion && (
-                              <Tooltip title="Edit this version">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => {
-                                    // Convert version to prompt for editing
-                                    const promptForEdit: Prompt = {
-                                      ...prompt!,
-                                      version_info: version,
-                                    };
-                                    onEditVersion(promptForEdit);
-                                  }}
-                                  color="primary"
-                                >
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                          </Box>
-                        </Paper>
-                      );
-                    })}
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Restore Confirmation Dialog */}
-      <Dialog
-        open={restoreDialogOpen}
-        onClose={() => setRestoreDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      {/* Restore Dialog */}
+      <Dialog open={restoreDialogOpen} onClose={() => setRestoreDialogOpen(false)}>
         <DialogTitle>Restore Version</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to restore to version {versionToRestore?.version}?
-            This will create a new version based on the selected version.
+            Are you sure you want to restore version {versionToRestore?.version}? 
+            This will create a backup of the current version and replace it with this one.
           </Typography>
-          {versionToRestore && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Author:</strong> {versionToRestore.author || versionToRestore.created_by}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Created:</strong> {new Date(versionToRestore.created_at).toLocaleString()}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Status:</strong> {versionToRestore.status || 'DRAFT'}
-              </Typography>
-            </Box>
-          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRestoreDialogOpen(false)}>
-            Cancel
+          <Button onClick={() => setRestoreDialogOpen(false)}>Cancel</Button>
+          <Button onClick={confirmRestore} variant="contained" color="primary">
+            Restore
           </Button>
-          <Button
-            onClick={confirmRestore}
-            variant="contained"
-            disabled={restoreVersionMutation.isPending}
-          >
-            {restoreVersionMutation.isPending ? 'Restoring...' : 'Restore'}
+        </DialogActions>
+      </Dialog>
+
+      {/* Tag Dialog */}
+      <Dialog open={tagDialogOpen} onClose={() => setTagDialogOpen(false)}>
+        <DialogTitle>Add Tag to Version</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Tag Name"
+            fullWidth
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTagDialogOpen(false)}>Cancel</Button>
+          <Button onClick={addTagToVersion} variant="contained" color="primary">
+            Add Tag
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Branch Dialog */}
+      <Dialog open={branchDialogOpen} onClose={() => setBranchDialogOpen(false)}>
+        <DialogTitle>Create Branch</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Branch Name"
+            fullWidth
+            value={branchName}
+            onChange={(e) => setBranchName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBranchDialogOpen(false)}>Cancel</Button>
+          <Button onClick={createBranch} variant="contained" color="primary">
+            Create Branch
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Merge Dialog */}
+      <Dialog open={mergeDialogOpen} onClose={() => setMergeDialogOpen(false)}>
+        <DialogTitle>Merge Versions</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Merging {sourceVersion?.version} into {targetVersion?.version}
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Merge Message (Optional)"
+            fullWidth
+            multiline
+            rows={3}
+            value={mergeMessage}
+            onChange={(e) => setMergeMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMergeDialogOpen(false)}>Cancel</Button>
+          <Button onClick={mergeVersions} variant="contained" color="primary">
+            Merge
           </Button>
         </DialogActions>
       </Dialog>

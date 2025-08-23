@@ -1,29 +1,33 @@
-import React, { useCallback } from 'react';
-import {
-  Box,
+import React, { useState, useCallback } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Button,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  InputLabel,
+  InputAdornment,
+  OutlinedInput,
+  Switch,
+  Chip,
+  IconButton,
+  Tooltip,
   Grid,
-  Typography,
   Card,
   CardContent,
-  Button,
-  FormControlLabel,
-  Switch,
-  TextField,
-  Alert,
   Divider,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
   ListItemSecondaryAction,
-  Chip,
   Slider,
-  FormControl,
-  InputLabel,
-  OutlinedInput,
-  InputAdornment,
-  IconButton,
+  TextField,
+  Alert,
   useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Security as SecurityIcon,
@@ -35,13 +39,15 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   VpnKey as VpnKeyIcon,
+  AccountCircle as AccountCircleIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import {
   useSecuritySettings,
   useUpdateSecuritySettings,
 } from '../../hooks/useSettings';
-import { SecuritySettings as SecuritySettingsType } from '../../types/Settings';
 
 interface SecurityFormData {
   require_api_key: boolean;
@@ -49,27 +55,39 @@ interface SecurityFormData {
   max_requests_per_minute: number;
   allowed_domains: string[];
   cors_enabled: boolean;
+  session_timeout: number;
+  max_login_attempts: number;
+  password_min_length: number;
+  require_2fa: boolean;
+  ip_whitelist: string[];
 }
 
 const SecuritySettings: React.FC = () => {
   const theme = useTheme();
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const { data: securitySettings, isLoading } = useSecuritySettings();
   const updateMutation = useUpdateSecuritySettings();
   
   const { control, handleSubmit, watch } = useForm<SecurityFormData>({
     defaultValues: {
-      require_api_key: securitySettings?.require_api_key || false,
-      api_key_expiry_days: securitySettings?.api_key_expiry_days || 365,
-      max_requests_per_minute: securitySettings?.max_requests_per_minute || 100,
+      session_timeout: securitySettings?.session_timeout || 30,
+      max_login_attempts: securitySettings?.max_login_attempts || 5,
+      password_min_length: securitySettings?.password_min_length || 8,
+      require_2fa: securitySettings?.require_2fa || false,
       allowed_domains: securitySettings?.allowed_domains || [],
-      cors_enabled: securitySettings?.cors_enabled || true,
+      ip_whitelist: securitySettings?.ip_whitelist || [],
     },
   });
 
   const { fields: domainFields, append: appendDomain, remove: removeDomain } = useFieldArray({
     control: control as any,
     name: 'allowed_domains',
+  });
+
+  const { fields: ipFields, append: appendIP, remove: removeIP } = useFieldArray({
+    control: control as any,
+    name: 'ip_whitelist',
   });
 
   const watchedValues = watch();
@@ -86,15 +104,41 @@ const SecuritySettings: React.FC = () => {
     removeDomain(index);
   }, [removeDomain]);
 
-  const getRateLimitColor = (value: number) => {
-    if (value <= 50) return 'success';
-    if (value <= 200) return 'warning';
+  const handleAddIP = useCallback(() => {
+    appendIP('');
+  }, [appendIP]);
+
+  const handleRemoveIP = useCallback((index: number) => {
+    removeIP(index);
+  }, [removeIP]);
+
+  const getSessionTimeoutColor = (value: number) => {
+    if (value <= 30) return 'success';
+    if (value <= 60) return 'warning';
     return 'error';
   };
 
-  const getExpiryColor = (days: number) => {
-    if (days >= 365) return 'success';
-    if (days >= 90) return 'warning';
+  const getMaxLoginAttemptsColor = (value: number) => {
+    if (value <= 3) return 'success';
+    if (value <= 5) return 'warning';
+    return 'error';
+  };
+
+  const getPasswordMinLengthColor = (value: number) => {
+    if (value >= 12) return 'success';
+    if (value >= 8) return 'warning';
+    return 'error';
+  };
+
+  const getExpiryColor = (value: number) => {
+    if (value >= 180) return 'success';
+    if (value >= 90) return 'warning';
+    return 'error';
+  };
+
+  const getRateLimitColor = (value: number) => {
+    if (value <= 100) return 'success';
+    if (value <= 500) return 'warning';
     return 'error';
   };
 

@@ -3,25 +3,38 @@
 
 import '@testing-library/jest-dom';
 import 'jest-canvas-mock';
+import React from 'react';
 
 // Mock fetch API
 import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+// Fix TextDecoder type compatibility
+global.TextDecoder = TextDecoder as any;
 
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  observe() {
-    return null;
+// Mock IntersectionObserver with proper typing
+global.IntersectionObserver = class IntersectionObserver implements globalThis.IntersectionObserver {
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+  
+  constructor(private callback: IntersectionObserverCallback, private options?: IntersectionObserverInit) {}
+  
+  observe(target: Element) {
+    // Mock implementation
   }
+  
+  unobserve(target: Element) {
+    // Mock implementation
+  }
+  
   disconnect() {
-    return null;
+    // Mock implementation
   }
-  unobserve() {
-    return null;
+  
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
   }
-};
+} as any;
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -212,18 +225,20 @@ jest.mock('chart.js', () => ({
 
 // Mock react-chartjs-2
 jest.mock('react-chartjs-2', () => ({
-  Line: ({ data, options }: any) => <div data-testid="line-chart" />,
-  Bar: ({ data, options }: any) => <div data-testid="bar-chart" />,
-  Pie: ({ data, options }: any) => <div data-testid="pie-chart" />,
-  Doughnut: ({ data, options }: any) => <div data-testid="doughnut-chart" />,
+  Line: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'line-chart' })),
+  Bar: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'bar-chart' })),
+  Pie: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'pie-chart' })),
+  Doughnut: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'doughnut-chart' })),
 }));
 
 // Mock ReactFlow
 jest.mock('reactflow', () => ({
-  ReactFlow: ({ children }: any) => <div data-testid="react-flow">{children}</div>,
-  Background: () => <div data-testid="react-flow-background" />,
-  Controls: () => <div data-testid="react-flow-controls" />,
-  MiniMap: () => <div data-testid="react-flow-minimap" />,
+  ReactFlow: jest.fn().mockImplementation(({ children }: any) => 
+    React.createElement('div', { 'data-testid': 'react-flow' }, children)
+  ),
+  Background: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'react-flow-background' })),
+  Controls: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'react-flow-controls' })),
+  MiniMap: jest.fn().mockReturnValue(React.createElement('div', { 'data-testid': 'react-flow-minimap' })),
   useNodesState: () => [[], jest.fn(), jest.fn()],
   useEdgesState: () => [[], jest.fn(), jest.fn()],
   addEdge: jest.fn(),

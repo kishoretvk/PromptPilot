@@ -50,30 +50,60 @@ class PromptService {
     return response.data;
   }
 
-  async getPromptVersions(id: string): Promise<PromptVersion[]> {
-    const response = await apiClient.get<PromptVersion[]>(`${this.basePath}/${id}/versions`);
+  async getPromptVersions(id: string, includeBranches: boolean = true, limit: number = 50): Promise<PromptVersion[]> {
+    const response = await apiClient.get<PromptVersion[]>(`${this.basePath}/${id}/versions`, {
+      include_branches: includeBranches,
+      limit: limit
+    });
     return response.data;
   }
 
-  async createPromptVersion(id: string, changelog?: string): Promise<PromptVersion> {
-    const response = await apiClient.post<PromptVersion>(`${this.basePath}/${id}/versions`, { changelog });
+  async createPromptVersion(id: string, versionData: { 
+    version?: string; 
+    commitMessage?: string;
+    parentVersionId?: string;
+  }): Promise<PromptVersion> {
+    const response = await apiClient.post<PromptVersion>(`${this.basePath}/${id}/versions`, versionData);
     return response.data;
   }
 
-  async restorePromptVersion(id: string, version: string): Promise<Prompt> {
-    const response = await apiClient.post<Prompt>(`${this.basePath}/${id}/versions/${version}/restore`);
+  async createPromptBranch(id: string, branchData: {
+    branchName: string;
+    sourceVersionId: string;
+  }): Promise<PromptVersion> {
+    const response = await apiClient.post<PromptVersion>(`${this.basePath}/${id}/versions/branch`, branchData);
     return response.data;
   }
 
-  async getPromptByVersion(id: string, version: string): Promise<Prompt> {
-    const response = await apiClient.get<Prompt>(`${this.basePath}/${id}/versions/${version}`);
+  async mergePromptVersions(id: string, sourceVersionId: string, targetVersionId: string, mergeData: {
+    mergeMessage?: string;
+  }): Promise<PromptVersion> {
+    const response = await apiClient.post<PromptVersion>(
+      `${this.basePath}/${id}/versions/${sourceVersionId}/merge/${targetVersionId}`, 
+      mergeData
+    );
     return response.data;
   }
 
-  async compareVersions(id: string, version1: string, version2: string): Promise<any> {
+  async getPromptByVersion(id: string, versionId: string): Promise<Prompt> {
+    const response = await apiClient.get<Prompt>(`${this.basePath}/${id}/versions/${versionId}`);
+    return response.data;
+  }
+
+  async restorePromptVersion(id: string, versionId: string): Promise<Prompt> {
+    const response = await apiClient.post<Prompt>(`${this.basePath}/${id}/versions/${versionId}/restore`);
+    return response.data;
+  }
+
+  async tagPromptVersion(id: string, versionId: string, tag: string): Promise<PromptVersion> {
+    const response = await apiClient.post<PromptVersion>(`${this.basePath}/${id}/versions/${versionId}/tag`, { tag });
+    return response.data;
+  }
+
+  async compareVersions(id: string, version1Id: string, version2Id: string): Promise<any> {
     const response = await apiClient.get<any>(`${this.basePath}/${id}/versions/compare`, {
-      version1,
-      version2,
+      version1: version1Id,
+      version2: version2Id,
     });
     return response.data;
   }

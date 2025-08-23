@@ -47,9 +47,9 @@ class LoginRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
 
-class TokenResponse(BaseModel):
+class TokenResponse(BaseSchema):
     access_token: str
-    token_type: str = \"bearer\"
+    token_type: str = "bearer"
     expires_in: int
 
 class UserResponse(BaseSchema):
@@ -64,7 +64,7 @@ class UserResponse(BaseSchema):
 
 # Message schemas
 class MessageSchema(BaseSchema):
-    role: str = Field(..., regex=\"^(system|developer|user|assistant)$\")
+    role: str = Field(..., pattern="^(system|developer|user|assistant)$")
     content: str = Field(..., min_length=1)
     priority: int = Field(default=1, ge=1, le=10)
 
@@ -72,7 +72,7 @@ class TestCaseSchema(BaseSchema):
     name: str = Field(..., min_length=1, max_length=255)
     inputs: Dict[str, Any]
     expected_outputs: Optional[str]
-    test_type: str = Field(default=\"functional\")
+    test_type: str = Field(default="functional")
     evaluation_metrics: Dict[str, Any] = Field(default_factory=dict)
 
 # Prompt schemas
@@ -149,7 +149,7 @@ class TestResultResponse(BaseSchema):
 class PipelineStepSchema(BaseSchema):
     id: Optional[str]
     name: str = Field(..., min_length=1, max_length=255)
-    step_type: str = Field(..., regex=\"^(prompt|transform|condition|loop|parallel)$\")
+    step_type: str = Field(..., pattern="^(prompt|transform|condition|loop|parallel)$")
     order: int = Field(..., ge=0)
     prompt_id: Optional[str]
     configuration: Dict[str, Any] = Field(default_factory=dict)
@@ -162,7 +162,7 @@ class PipelineStepSchema(BaseSchema):
 class CreatePipelineRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=1000)
-    error_strategy: str = Field(default=\"fail_fast\", regex=\"^(fail_fast|continue|retry)$\")
+    error_strategy: str = Field(default="fail_fast", pattern="^(fail_fast|continue|retry)$")
     steps: List[PipelineStepSchema] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
     configuration: Dict[str, Any] = Field(default_factory=dict)
@@ -170,7 +170,7 @@ class CreatePipelineRequest(BaseModel):
 class UpdatePipelineRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str]
-    error_strategy: Optional[str] = Field(None, regex=\"^(fail_fast|continue|retry)$\")
+    error_strategy: Optional[str] = Field(None, pattern="^(fail_fast|continue|retry)$")
     steps: Optional[List[PipelineStepSchema]]
     tags: Optional[List[str]]
     status: Optional[PipelineStatusEnum]
@@ -311,7 +311,7 @@ class ErrorResponse(BaseModel):
     details: Optional[Dict[str, Any]]
 
 class ValidationErrorResponse(BaseModel):
-    error: str = \"Validation Error\"
+    error: str = "Validation Error"
     message: str
     errors: List[Dict[str, Any]]
     timestamp: datetime

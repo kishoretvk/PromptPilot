@@ -2,17 +2,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { analyticsService } from '../services/AnalyticsService';
 import { queryKeys } from './queryClient';
 import {
-  UsageMetrics,
-  PerformanceData,
-  CostData,
   AnalyticsFilter,
 } from '../types';
 
 // Hook for fetching usage metrics
-export const useUsageMetrics = (timeRange = '30d', filters?: AnalyticsFilter) => {
+export const useUsageMetrics = (timeRange = '30d', filters?: Omit<AnalyticsFilter, 'date_range'>) => {
+  // Provide default date range if not specified
+  const defaultDateRange = {
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  };
+  
+  // Include timeRange in the filters object
+  const usageFilters: AnalyticsFilter = {
+    date_range: defaultDateRange,
+    ...filters
+  };
+  
   return useQuery({
     queryKey: queryKeys.analytics.usage({ timeRange, ...filters }),
-    queryFn: () => analyticsService.getUsageMetrics(timeRange, filters),
+    queryFn: () => analyticsService.getUsageMetrics(usageFilters),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };

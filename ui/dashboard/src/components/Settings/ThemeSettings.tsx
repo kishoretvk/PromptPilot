@@ -1,24 +1,23 @@
-import React, { useState, useCallback } from 'react';
-import {
-  Box,
-  Grid,
-  Typography,
-  Card,
-  CardContent,
-  Button,
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormControlLabel,
-  Switch,
-  Slider,
-  Alert,
-  Divider,
-  Paper,
+  Checkbox,
+  Button,
+  Grid,
+  Card,
+  CardContent,
   Avatar,
   Chip,
+  Alert,
   useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Palette as PaletteIcon,
@@ -33,7 +32,6 @@ import {
   useThemeSettings,
   useUpdateThemeSettings,
 } from '../../hooks/useSettings';
-import { ThemeSettings as ThemeSettingsType } from '../../types/Settings';
 
 interface ThemeFormData {
   mode: 'light' | 'dark' | 'auto';
@@ -63,8 +61,7 @@ const fontOptions = [
 
 const ThemeSettings: React.FC = () => {
   const theme = useTheme();
-  const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
-  
+
   const { data: themeSettings, isLoading } = useThemeSettings();
   const updateMutation = useUpdateThemeSettings();
   
@@ -73,7 +70,6 @@ const ThemeSettings: React.FC = () => {
       mode: themeSettings?.mode || 'light',
       primary_color: themeSettings?.primary_color || '#1976d2',
       secondary_color: themeSettings?.secondary_color || '#dc004e',
-      font_family: themeSettings?.font_family || 'Roboto, sans-serif',
       font_size: themeSettings?.font_size || 'medium',
       compact_mode: themeSettings?.compact_mode || false,
     },
@@ -205,7 +201,7 @@ const ThemeSettings: React.FC = () => {
                   control={control}
                   render={({ field }) => (
                     <FormControlLabel
-                      control={<Switch {...field} checked={field.value} />}
+                      control={<Checkbox {...field} checked={field.value} />}
                       label="Compact Mode"
                     />
                   )}

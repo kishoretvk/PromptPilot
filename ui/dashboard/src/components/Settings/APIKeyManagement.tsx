@@ -4,9 +4,6 @@ import {
   Grid,
   Typography,
   Button,
-  Card,
-  CardContent,
-  CardActions,
   IconButton,
   Chip,
   Dialog,
@@ -20,7 +17,6 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-  Tooltip,
   Table,
   TableBody,
   TableCell,
@@ -33,7 +29,6 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  useTheme,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -56,7 +51,7 @@ import {
   useTestAPIKey,
   useLLMProviders,
 } from '../../hooks/useSettings';
-import { APIKey, CreateAPIKeyRequest, UpdateAPIKeyRequest } from '../../types/Settings';
+import { APIKey } from '../../types/Settings';
 
 interface APIKeyFormData {
   name: string;
@@ -207,7 +202,6 @@ const APIKeyDialog: React.FC<APIKeyDialogProps> = ({
 };
 
 const APIKeyManagement: React.FC = () => {
-  const theme = useTheme();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedKey, setSelectedKey] = useState<APIKey | undefined>();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
