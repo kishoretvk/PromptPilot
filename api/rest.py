@@ -55,7 +55,7 @@ try:
     from .schemas import (
         LoginRequest, TokenResponse, PromptResponse, CreatePromptRequest,
         UpdatePromptRequest, TestPromptRequest, TestResultResponse,
-        PaginatedResponse, HealthResponse
+        PaginatedResponse, HealthResponse, PromptVersionSchema
     )
 except ImportError:
     logger.warning("Schemas module not configured")
@@ -70,6 +70,7 @@ except ImportError:
     class TestResultResponse(BaseModel): id: str; output: str; success: bool
     class PaginatedResponse(BaseModel): items: List[Any]; total: int; page: int
     class HealthResponse(BaseModel): status: str; timestamp: datetime
+    class PromptVersionSchema(BaseModel): id: str; prompt_id: str; version: str
 
 try:
     from .auth import (
@@ -143,10 +144,10 @@ except ImportError:
     class RateLimitError(Exception): pass
 
 # Metrics
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
-REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
-PROMPT_EXECUTIONS = Counter('prompt_executions_total', 'Total prompt executions', ['prompt_id', 'status'])
-PIPELINE_EXECUTIONS = Counter('pipeline_executions_total', 'Total pipeline executions', ['pipeline_id', 'status'])
+# REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
+# REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
+# PROMPT_EXECUTIONS = Counter('prompt_executions_total', 'Total prompt executions', ['prompt_id', 'status'])
+# PIPELINE_EXECUTIONS = Counter('pipeline_executions_total', 'Total pipeline executions', ['pipeline_id', 'status'])
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -411,7 +412,7 @@ async def test_prompt(
     return result
 
 # Prompt Version Management Endpoints
-@app.get("/api/v1/prompts/{prompt_id}/versions", response_model=List[PromptVersion], tags=["Prompt Versions"])
+@app.get("/api/v1/prompts/{prompt_id}/versions", response_model=List[PromptVersionSchema], tags=["Prompt Versions"])
 async def get_prompt_versions(
     prompt_id: str,
     include_branches: bool = True,
@@ -425,7 +426,7 @@ async def get_prompt_versions(
     versions = await prompt_service.get_prompt_versions(prompt_id, include_branches, limit)
     return versions
 
-@app.post("/api/v1/prompts/{prompt_id}/versions", response_model=PromptVersion, status_code=201, tags=["Prompt Versions"])
+@app.post("/api/v1/prompts/{prompt_id}/versions", response_model=PromptVersionSchema, status_code=201, tags=["Prompt Versions"])
 async def create_prompt_version(
     prompt_id: str,
     version_data: dict,
@@ -446,7 +447,7 @@ async def create_prompt_version(
     logger.info("Prompt version created", user_id=current_user.id, prompt_id=prompt_id, version_id=version.id)
     return version
 
-@app.post("/api/v1/prompts/{prompt_id}/versions/branch", response_model=PromptVersion, status_code=201, tags=["Prompt Versions"])
+@app.post("/api/v1/prompts/{prompt_id}/versions/branch", response_model=PromptVersionSchema, status_code=201, tags=["Prompt Versions"])
 async def create_prompt_branch(
     prompt_id: str,
     branch_data: dict,
@@ -466,7 +467,7 @@ async def create_prompt_branch(
     logger.info("Prompt branch created", user_id=current_user.id, prompt_id=prompt_id, branch_id=branch.id)
     return branch
 
-@app.post("/api/v1/prompts/{prompt_id}/versions/{source_version_id}/merge/{target_version_id}", response_model=PromptVersion, status_code=201, tags=["Prompt Versions"])
+@app.post("/api/v1/prompts/{prompt_id}/versions/{source_version_id}/merge/{target_version_id}", response_model=PromptVersionSchema, status_code=201, tags=["Prompt Versions"])
 async def merge_prompt_versions(
     prompt_id: str,
     source_version_id: str,
@@ -524,7 +525,7 @@ async def restore_prompt_version(
     logger.info("Prompt version restored", user_id=current_user.id, prompt_id=prompt_id, version_id=version_id)
     return prompt
 
-@app.post("/api/v1/prompts/{prompt_id}/versions/{version_id}/tag", response_model=PromptVersion, tags=["Prompt Versions"])
+@app.post("/api/v1/prompts/{prompt_id}/versions/{version_id}/tag", response_model=PromptVersionSchema, tags=["Prompt Versions"])
 async def tag_prompt_version(
     prompt_id: str,
     version_id: str,

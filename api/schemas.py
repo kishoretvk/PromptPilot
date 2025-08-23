@@ -198,6 +198,27 @@ class ExecutePipelineRequest(BaseModel):
     input_data: Dict[str, Any]
     override_config: Optional[Dict[str, Any]]
 
+# Prompt Version schemas
+class PromptVersionSchema(BaseSchema):
+    id: str
+    prompt_id: str
+    version: str
+    changelog: Optional[str]
+    content_snapshot: Dict[str, Any]
+    created_at: datetime
+    created_by: Optional[str]
+    is_active: bool
+
+class CreatePromptVersionRequest(BaseModel):
+    version: str
+    changelog: Optional[str]
+    content_snapshot: Dict[str, Any]
+    created_by: Optional[str]
+
+class UpdatePromptVersionRequest(BaseModel):
+    changelog: Optional[str]
+    is_active: Optional[bool]
+
 class PipelineExecutionResponse(BaseSchema):
     id: str
     pipeline_id: str
