@@ -362,9 +362,28 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
                                 />
                               </TableCell>
                               <TableCell>
-                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
-                                  {JSON.stringify({ version1: msgDiff.version1, version2: msgDiff.version2 }, null, 2)}
-                                </pre>
+                                {msgDiff.content_diff ? (
+                                  <Box sx={{ mt: 1 }}>
+                                    <ReactDiffViewer
+                                      oldValue={msgDiff.version1?.content || ''}
+                                      newValue={msgDiff.version2?.content || ''}
+                                      splitView={true}
+                                      useDarkTheme={theme.palette.mode === 'dark'}
+                                      styles={{
+                                        diffContainer: {
+                                          pre: {
+                                            lineHeight: '1.4',
+                                            fontSize: '0.8rem',
+                                          },
+                                        },
+                                      }}
+                                    />
+                                  </Box>
+                                ) : (
+                                  <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+                                    {JSON.stringify({ version1: msgDiff.version1, version2: msgDiff.version2 }, null, 2)}
+                                  </pre>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}

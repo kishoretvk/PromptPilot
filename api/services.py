@@ -475,7 +475,7 @@ class PromptService:
         }
     
     def _diff_messages(self, messages1: List[Dict], messages2: List[Dict]) -> List[Dict]:
-        """Create detailed diff for messages array"""
+        """Create detailed diff for messages array with enhanced visualization"""
         diffs = []
         
         # Convert messages to comparable format
@@ -489,17 +489,34 @@ class PromptService:
             msg2 = msg2_dict.get(key)
             
             if msg1 != msg2:
+                diff_type = "modified"
+                if msg1 is None:
+                    diff_type = "added"
+                elif msg2 is None:
+                    diff_type = "removed"
+                
+                # Create detailed diff for message content
+                content_diff = None
+                if msg1 and msg2 and msg1.get('content') and msg2.get('content'):
+                    content_diff = list(difflib.unified_diff(
+                        msg1['content'].splitlines(keepends=True),
+                        msg2['content'].splitlines(keepends=True),
+                        fromfile=f'message-{key}-version-{msg1.get("version", "1")}',
+                        tofile=f'message-{key}-version-{msg2.get("version", "2")}'
+                    ))
+                
                 diffs.append({
                     "index": key,
                     "version1": msg1,
                     "version2": msg2,
-                    "type": "modified" if msg1 and msg2 else "added" if msg2 else "removed"
+                    "type": diff_type,
+                    "content_diff": content_diff
                 })
         
         return diffs
     
     def _diff_parameters(self, params1: Dict, params2: Dict) -> List[Dict]:
-        """Create detailed diff for parameters dictionary"""
+        """Create detailed diff for parameters dictionary with enhanced visualization"""
         diffs = []
         
         all_keys = set(params1.keys()) | set(params2.keys())
@@ -509,17 +526,23 @@ class PromptService:
             val2 = params2.get(key)
             
             if val1 != val2:
+                diff_type = "modified"
+                if val1 is None:
+                    diff_type = "added"
+                elif val2 is None:
+                    diff_type = "removed"
+                
                 diffs.append({
                     "key": key,
                     "version1": val1,
                     "version2": val2,
-                    "type": "modified" if val1 is not None and val2 is not None else "added" if val2 is not None else "removed"
+                    "type": diff_type
                 })
         
         return diffs
     
     def _diff_input_variables(self, vars1: Dict, vars2: Dict) -> List[Dict]:
-        """Create detailed diff for input variables dictionary"""
+        """Create detailed diff for input variables dictionary with enhanced visualization"""
         diffs = []
         
         all_keys = set(vars1.keys()) | set(vars2.keys())
@@ -529,11 +552,17 @@ class PromptService:
             val2 = vars2.get(key)
             
             if val1 != val2:
+                diff_type = "modified"
+                if val1 is None:
+                    diff_type = "added"
+                elif val2 is None:
+                    diff_type = "removed"
+                
                 diffs.append({
                     "key": key,
                     "version1": val1,
                     "version2": val2,
-                    "type": "modified" if val1 is not None and val2 is not None else "added" if val2 is not None else "removed"
+                    "type": diff_type
                 })
         
         return diffs
@@ -549,16 +578,15 @@ class PromptService:
         
         for diff in differences:
             field = diff["field"]
-            diff_type = diff["type"]
             
             if field == "messages":
-                stats["messages"][diff_type] += 1
+                stats["messages"][diff["type"]] += 1
             elif field == "parameters":
-                stats["parameters"][diff_type] += 1
+                stats["parameters"][diff["type"]] += 1
             elif field == "input_variables":
-                stats["input_variables"][diff_type] += 1
+                stats["input_variables"][diff["type"]] += 1
             else:
-                stats["other_fields"][diff_type] += 1
+                stats["other_fields"][diff["type"]] += 1
         
         return stats
     
