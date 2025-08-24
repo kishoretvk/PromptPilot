@@ -51,7 +51,7 @@ import {
 } from 'chart.js';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { format, subDays, subMonths } from 'date-fns';
-import { useAnalytics, useUsageMetrics, usePerformanceData, useCostAnalysis } from '../../hooks/useAnalytics';
+import { useAnalytics, useUsageMetrics, usePerformanceData, useCostData } from '../../hooks/useAnalytics';
 import { UsageMetrics, PerformanceData, CostData } from '../../types/Analytics';
 
 // Register Chart.js components
@@ -110,7 +110,7 @@ const AnalyticsDashboard: React.FC = () => {
   const { data: analyticsData, isLoading: analyticsLoading, refetch: refetchAnalytics } = useAnalytics();
   const { data: usageMetrics, isLoading: usageLoading } = useUsageMetrics(timeRange);
   const { data: performanceData, isLoading: performanceLoading } = usePerformanceData(timeRange);
-  const { data: costData, isLoading: costLoading } = useCostAnalysis(timeRange);
+  const { data: costData, isLoading: costLoading } = useCostData(timeRange);
   
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);

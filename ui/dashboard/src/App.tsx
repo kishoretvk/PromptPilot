@@ -31,12 +31,12 @@ import {
   IntegrationInstructions,
   Home,
   ChevronLeft,
-  SpeedIcon,
+  Speed as SpeedIcon,
 } from '@mui/icons-material';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { QueryClientProvider, QueryClient, useQuery } from 'react-query';
-import { ReactQueryDevtools } from 'react-query/devtools';
+import { QueryClientProvider, QueryClient, useQuery } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 // import { toast } from 'react-toastify';
 import ErrorFallback from './components/common/ErrorFallback';
 
