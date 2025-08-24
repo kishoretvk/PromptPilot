@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -19,6 +19,7 @@ import {
   useMediaQuery,
   Breadcrumbs,
   Link as MuiLink,
+  CssBaseline,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,8 +31,12 @@ import {
   IntegrationInstructions,
   Home,
   ChevronLeft,
+  SpeedIcon,
 } from '@mui/icons-material';
 import { ErrorBoundary } from 'react-error-boundary';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { QueryClientProvider, QueryClient, useQuery } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
 // import { toast } from 'react-toastify';
 import ErrorFallback from './components/common/ErrorFallback';
 
@@ -41,6 +46,7 @@ const PromptHistory = React.lazy(() => import('./components/PromptHistory/Prompt
 const PipelineBuilder = React.lazy(() => import('./components/PipelineBuilder/PipelineBuilder'));
 const AnalyticsDashboard = React.lazy(() => import('./components/Analytics/AnalyticsDashboard'));
 const SettingsIntegrations = React.lazy(() => import('./components/Settings/SettingsIntegrations'));
+const MonitoringDashboard = React.lazy(() => import('./components/MonitoringDashboard'));
 
 // Navigation configuration
 interface NavigationItem {
@@ -305,11 +311,230 @@ function AppLayout() {
   );
 }
 
+// Theme setup
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#3498db',
+    },
+  },
+});
+
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <Router>
-      <AppLayout />
-    </Router>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <Box sx={{ display: 'flex' }}>
+            <CssBaseline />
+            <AppBar position="fixed" open={open}>
+              <Toolbar>
+                <IconButton
+                  color="inherit"
+                  aria-label="open drawer"
+                  onClick={toggleDrawer}
+                  edge="start"
+                  sx={{ mr: 2, ...(open && { display: 'none' }) }}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Typography variant="h6" noWrap component="div">
+                  PromptPilot Dashboard
+                </Typography>
+              </Toolbar>
+            </AppBar>
+            <Drawer variant="permanent" open={open}>
+              <Toolbar
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  px: [1],
+                }}
+              >
+                <IconButton onClick={toggleDrawer}>
+                  <ChevronLeft />
+                </IconButton>
+              </Toolbar>
+              <Divider />
+              <List>
+                <ListItem key="dashboard" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Dashboard />
+                    </ListItemIcon>
+                    <ListItemText primary="Dashboard" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem key="history" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/history"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <History />
+                    </ListItemIcon>
+                    <ListItemText primary="History" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem key="pipeline" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/pipeline"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <AccountTree />
+                    </ListItemIcon>
+                    <ListItemText primary="Pipeline" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem key="analytics" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/analytics"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Analytics />
+                    </ListItemIcon>
+                    <ListItemText primary="Analytics" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem key="monitoring" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/monitoring"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <SpeedIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Monitoring" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem key="settings" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/settings"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Settings />
+                    </ListItemIcon>
+                    <ListItemText primary="Settings" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem key="integrations" disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/integrations"
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <IntegrationInstructions />
+                    </ListItemIcon>
+                    <ListItemText primary="Integrations" sx={{ opacity: open ? 1 : 0 }} />
+                  </ListItemButton>
+                </ListItem>
+              </List>
+            </Drawer>
+            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+              <DrawerHeader />
+              <Routes>
+                <Route path="/" element={<PromptManager />} />
+                <Route path="/history" element={<PromptHistory />} />
+                <Route path="/pipeline" element={<PipelineBuilder />} />
+                <Route path="/analytics" element={<AnalyticsDashboard />} />
+                <Route path="/monitoring" element={<MonitoringDashboard />} />
+                <Route path="/settings" element={<SettingsIntegrations />} />
+                <Route path="/integrations" element={<SettingsIntegrations />} />
+              </Routes>
+            </Box>
+          </Box>
+        </Router>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

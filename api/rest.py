@@ -242,9 +242,33 @@ async def health_check():
             if not test_db_connection():
                 db_status = "disconnected"
         
+        # Get system stats
+        import psutil
+        import time
+        
+        # CPU usage
+        cpu_percent = psutil.cpu_percent(interval=1)
+        
+        # Memory usage
+        memory = psutil.virtual_memory()
+        memory_percent = memory.percent
+        
+        # Disk usage
+        disk = psutil.disk_usage('/')
+        disk_percent = (disk.used / disk.total) * 100
+        
         return HealthResponse(
             status="healthy",
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
+            version="1.0.0",
+            database=db_status,
+            uptime=time.time() - psutil.boot_time(),
+            dependencies={
+                "database": db_status,
+                "cpu_usage": f"{cpu_percent}%",
+                "memory_usage": f"{memory_percent}%",
+                "disk_usage": f"{disk_percent:.2f}%"
+            }
         )
     except Exception as e:
         logger.error("Health check failed", error=str(e))

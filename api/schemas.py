@@ -309,10 +309,10 @@ class UpdateSettingRequest(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
-    version: str
-    database: str
-    uptime: float
-    dependencies: Dict[str, str]
+    version: str = "1.0.0"
+    database: str = "unknown"
+    uptime: float = 0.0
+    dependencies: Dict[str, str] = {}
 
 class SystemStatsResponse(BaseModel):
     total_users: int

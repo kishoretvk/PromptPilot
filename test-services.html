@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PromptPilot Service Test</title>
+</head>
+<body>
+    <h1>PromptPilot Service Test</h1>
+    
+    <h2>Testing API Service</h2>
+    <button onclick="testAPI()">Test API Health</button>
+    <div id="apiResult"></div>
+    
+    <h2>Testing UI Service</h2>
+    <button onclick="testUI()">Test UI Access</button>
+    <div id="uiResult"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<p style="color: green;">✅ API is running: ${JSON.stringify(data)}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ API returned status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ API error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testUI() {
+            const resultDiv = document.getElementById('uiResult');
+            try {
+                const response = await fetch('http://localhost:3000');
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p style="color: green;">✅ UI is accessible (Status: ${response.status})</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ UI returned status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ UI error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

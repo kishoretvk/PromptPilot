@@ -1,0 +1,27 @@
+{
+  "name": "Professional Email Generator",
+  "description": "Generate professional emails with proper tone and structure",
+  "task_type": "text-generation",
+  "tags": ["email", "professional", "communication"],
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a professional communication assistant. Generate concise, polite, and effective emails."
+    },
+    {
+      "role": "user",
+      "content": "Write an email to {{recipient}} about {{topic}}. The tone should be {{tone}}."
+    }
+  ],
+  "input_variables": {
+    "recipient": "string",
+    "topic": "string",
+    "tone": "string"
+  },
+  "model_provider": "OpenAI",
+  "model_name": "gpt-4",
+  "parameters": {
+    "temperature": 0.7,
+    "max_tokens": 500
+  }
+}
