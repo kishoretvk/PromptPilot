@@ -188,6 +188,17 @@ uvicorn api.rest:app --host 0.0.0.0 --port 8000 --workers 4
 - [ ] Advanced security features
 - [ ] SLA monitoring
 
+## 📚 Documentation
+
+- [User Guide](docs/USER_GUIDE.md)
+- [API Reference](docs/API.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Development Guide](docs/DEVELOPMENT.md)
+- [Monitoring and Observability](docs/monitoring.md)
+- [Database Migrations](docs/database-migrations.md)
+- [Backup and Restore](docs/backup-restore.md)
+- [Configuration Management](docs/configuration.md)
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
