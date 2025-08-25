@@ -217,166 +217,160 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
         {/* Execution Trends */}
-        <Grid item xs={12} lg={8}>
-          <Card>
-            <CardHeader
-              title="Execution Trends"
-              subheader={`Prompt execution patterns over the last ${timeRange}`}
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Line data={executionTrend} options={chartOptions} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card>
+          <CardHeader
+            title="Execution Trends"
+            subheader={`Prompt execution patterns over the last ${timeRange}`}
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Line data={executionTrend} options={chartOptions} />
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Summary Stats */}
-        <Grid item xs={12} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader title="Usage Summary" />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box>
-                  <Typography variant="h4" color="primary.main" fontWeight="bold">
-                    {data.total_executions?.toLocaleString() || '1,247'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Executions
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="h4" color="secondary.main" fontWeight="bold">
-                    {data.total_tokens?.toLocaleString() || '324,891'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Tokens Processed
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="h4" color="success.main" fontWeight="bold">
-                    {data.success_rate ? `${(data.success_rate * 100).toFixed(1)}%` : '98.2%'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Success Rate
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="h4" color="warning.main" fontWeight="bold">
-                    {data.average_response_time ? `${data.average_response_time.toFixed(2)}s` : '1.24s'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Avg Response Time
-                  </Typography>
-                </Box>
+        <Card sx={{ height: '100%' }}>
+          <CardHeader title="Usage Summary" />
+          <CardContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography variant="h4" color="primary.main" fontWeight="bold">
+                  {data.total_executions?.toLocaleString() || '1,247'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total Executions
+                </Typography>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
 
+              <Box>
+                <Typography variant="h4" color="secondary.main" fontWeight="bold">
+                  {data.total_tokens?.toLocaleString() || '324,891'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Tokens Processed
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="h4" color="success.main" fontWeight="bold">
+                  {data.success_rate ? `${(data.success_rate * 100).toFixed(1)}%` : '98.2%'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Success Rate
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="h4" color="warning.main" fontWeight="bold">
+                  {data.average_response_time ? `${data.average_response_time.toFixed(2)}s` : '1.24s'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Avg Response Time
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '7fr 5fr' }, gap: 3, mt: 3 }}>
         {/* Token Usage */}
-        <Grid item xs={12} lg={7}>
-          <Card>
-            <CardHeader
-              title="Token Usage"
-              subheader="Input and output token consumption"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Bar data={tokenUsage} options={barChartOptions} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card>
+          <CardHeader
+            title="Token Usage"
+            subheader="Input and output token consumption"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Bar data={tokenUsage} options={barChartOptions} />
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Popular Prompts */}
-        <Grid item xs={12} lg={5}>
-          <Card>
-            <CardHeader
-              title="Popular Prompts"
-              subheader="Most frequently used prompts"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Bar
-                  data={promptPopularity}
-                  options={{
-                    ...chartOptions,
-                    indexAxis: 'y' as const,
-                    scales: {
-                      x: {
-                        beginAtZero: true,
-                        grid: {
-                          color: alpha(theme.palette.text.secondary, 0.1),
-                        },
-                      },
-                      y: {
-                        grid: {
-                          display: false,
-                        },
+        <Card>
+          <CardHeader
+            title="Popular Prompts"
+            subheader="Most frequently used prompts"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Bar
+                data={promptPopularity}
+                options={{
+                  ...chartOptions,
+                  indexAxis: 'y' as const,
+                  scales: {
+                    x: {
+                      beginAtZero: true,
+                      grid: {
+                        color: alpha(theme.palette.text.secondary, 0.1),
                       },
                     },
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                    y: {
+                      grid: {
+                        display: false,
+                      },
+                    },
+                  },
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
+      <Box sx={{ mt: 3 }}>
         {/* Hourly Distribution */}
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader
-              title="Usage Distribution"
-              subheader="Peak usage hours and patterns"
-            />
-            <CardContent>
-              <Box sx={{ height: 250 }}>
-                <Line
-                  data={{
-                    labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-                    datasets: [
-                      {
-                        label: 'Executions per Hour',
-                        data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 50) + 5),
-                        borderColor: theme.palette.primary.main,
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                        fill: true,
-                        tension: 0.4,
-                      },
-                    ],
-                  }}
-                  options={{
-                    ...chartOptions,
-                    scales: {
-                      ...chartOptions.scales,
-                      y: {
-                        ...chartOptions.scales.y,
-                        title: {
-                          display: true,
-                          text: 'Executions',
-                        },
-                      },
-                      x: {
-                        ...chartOptions.scales.x,
-                        title: {
-                          display: true,
-                          text: 'Hour of Day',
-                        },
+        <Card>
+          <CardHeader
+            title="Usage Distribution"
+            subheader="Peak usage hours and patterns"
+          />
+          <CardContent>
+            <Box sx={{ height: 250 }}>
+              <Line
+                data={{
+                  labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                  datasets: [
+                    {
+                      label: 'Executions per Hour',
+                      data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 50) + 5),
+                      borderColor: theme.palette.primary.main,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      fill: true,
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={{
+                  ...chartOptions,
+                  scales: {
+                    ...chartOptions.scales,
+                    y: {
+                      ...chartOptions.scales.y,
+                      title: {
+                        display: true,
+                        text: 'Executions',
                       },
                     },
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                    x: {
+                      ...chartOptions.scales.x,
+                      title: {
+                        display: true,
+                        text: 'Hour of Day',
+                      },
+                    },
+                  },
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

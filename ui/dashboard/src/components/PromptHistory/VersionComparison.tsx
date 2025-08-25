@@ -89,12 +89,19 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
     ? differences 
     : differences.filter(diff => diff.type === filter);
 
-  const fieldStatistics = differences?.summary?.field_statistics || {
-    messages: { added: 0, modified: 0, removed: 0 },
-    parameters: { added: 0, modified: 0, removed: 0 },
-    input_variables: { added: 0, modified: 0, removed: 0 },
-    other_fields: { added: 0, modified: 0, removed: 0 }
-  };
+  const fieldStatistics = differences && typeof differences === 'object' && 'summary' in differences 
+    ? differences.summary?.field_statistics || {
+        messages: { added: 0, modified: 0, removed: 0 },
+        parameters: { added: 0, modified: 0, removed: 0 },
+        input_variables: { added: 0, modified: 0, removed: 0 },
+        other_fields: { added: 0, modified: 0, removed: 0 }
+      }
+    : {
+        messages: { added: 0, modified: 0, removed: 0 },
+        parameters: { added: 0, modified: 0, removed: 0 },
+        input_variables: { added: 0, modified: 0, removed: 0 },
+        other_fields: { added: 0, modified: 0, removed: 0 }
+      };
 
   return (
     <Box sx={{ py: 3 }}>

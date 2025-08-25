@@ -246,9 +246,9 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' }, gap: 3 }}>
         {/* Cost Overview */}
-        <Grid item xs={12} lg={4}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card sx={{ height: '100%' }}>
             <CardHeader title="Cost Overview" />
             <CardContent>
@@ -307,10 +307,10 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Cost Trends */}
-        <Grid item xs={12} lg={8}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Cost Trends"
@@ -322,10 +322,10 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Provider Breakdown */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Cost by Provider"
@@ -357,10 +357,10 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Model Costs */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Cost by Model"
@@ -372,10 +372,10 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Top Spending Prompts */}
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <Card>
             <CardHeader
               title="Top Spending Prompts"
@@ -431,18 +431,18 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
               </TableContainer>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Cost Optimization Recommendations */}
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <Card>
             <CardHeader
               title="Cost Optimization Recommendations"
               subheader="Actionable insights to reduce spending"
             />
             <CardContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+                <Box>
                   <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.info.main, 0.3)}` }}>
                     <Typography variant="h6" color="info.main" gutterBottom>
                       Model Optimization
@@ -453,9 +453,9 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
                     </Typography>
                     <Chip label="High Impact" size="small" color="info" />
                   </Paper>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} md={4}>
+                <Box>
                   <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}` }}>
                     <Typography variant="h6" color="warning.main" gutterBottom>
                       Token Efficiency
@@ -466,9 +466,9 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
                     </Typography>
                     <Chip label="Medium Impact" size="small" color="warning" />
                   </Paper>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} md={4}>
+                <Box>
                   <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.success.main, 0.3)}` }}>
                     <Typography variant="h6" color="success.main" gutterBottom>
                       Caching Strategy
@@ -479,12 +479,12 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
                     </Typography>
                     <Chip label="Low Impact" size="small" color="success" />
                   </Paper>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 };

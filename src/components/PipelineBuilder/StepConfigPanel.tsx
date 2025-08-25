@@ -99,8 +99,8 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
 
   const renderPromptConfig = () => (
     <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FormControl fullWidth>
             <InputLabel>Prompt Template</InputLabel>
             <Select
@@ -113,9 +113,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
               <MenuItem value="prompt_4">Data Analysis</MenuItem>
             </Select>
           </FormControl>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <FormControl fullWidth>
             <InputLabel>Model Provider</InputLabel>
             <Select
@@ -128,18 +128,18 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
               <MenuItem value="azure">Azure OpenAI</MenuItem>
             </Select>
           </FormControl>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <TextField
             fullWidth
             label="Model Name"
             value={config.model_name || 'gpt-3.5-turbo'}
             onChange={(e) => handleConfigChange('model_name', e.target.value)}
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <TextField
             fullWidth
             label="Temperature"
@@ -148,9 +148,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             onChange={(e) => handleConfigChange('temperature', parseFloat(e.target.value))}
             inputProps={{ min: 0, max: 2, step: 0.1 }}
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <TextField
             fullWidth
             label="Max Tokens"
@@ -158,9 +158,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             value={config.max_tokens || 2048}
             onChange={(e) => handleConfigChange('max_tokens', parseInt(e.target.value))}
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <TextField
             fullWidth
             multiline
@@ -170,15 +170,15 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             onChange={(e) => handleConfigChange('system_message', e.target.value)}
             placeholder="Optional system message for the prompt..."
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 
   const renderTransformConfig = () => (
     <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
+        <Box>
           <FormControl fullWidth>
             <InputLabel>Transform Type</InputLabel>
             <Select
@@ -192,9 +192,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
               <MenuItem value="custom">Custom Script</MenuItem>
             </Select>
           </FormControl>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <TextField
             fullWidth
             multiline
@@ -204,9 +204,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             onChange={(e) => handleConfigChange('script', e.target.value)}
             placeholder="Enter transformation logic or template..."
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FormControlLabel
             control={
               <Switch
@@ -216,15 +216,15 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             }
             label="Preserve Original Data"
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 
   const renderFilterConfig = () => (
     <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FormControl fullWidth>
             <InputLabel>Filter Type</InputLabel>
             <Select
@@ -238,9 +238,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
               <MenuItem value="custom">Custom Filter</MenuItem>
             </Select>
           </FormControl>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <TextField
             fullWidth
             label="Minimum Value"
@@ -248,9 +248,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             value={config.min_value || 0}
             onChange={(e) => handleConfigChange('min_value', parseFloat(e.target.value))}
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <TextField
             fullWidth
             label="Maximum Value"
@@ -258,9 +258,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             value={config.max_value || 100}
             onChange={(e) => handleConfigChange('max_value', parseFloat(e.target.value))}
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <TextField
             fullWidth
             label="Filter Expression"
@@ -268,9 +268,9 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             onChange={(e) => handleConfigChange('expression', e.target.value)}
             placeholder="Enter filter expression or regex pattern..."
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FormControlLabel
             control={
               <Switch
@@ -280,15 +280,15 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             }
             label="Reject Mode (exclude matching items)"
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 
   const renderApiConfig = () => (
     <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <TextField
             fullWidth
             label="API Endpoint"
@@ -296,81 +296,199 @@ const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
             onChange={(e) => handleConfigChange('endpoint', e.target.value)}
             placeholder="https://api.example.com/endpoint"
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <FormControl fullWidth>
             <InputLabel>HTTP Method</InputLabel>
             <Select
-              value={config.method || 'POST'}
+              value={config.method || 'GET'}
               onChange={(e) => handleConfigChange('method', e.target.value)}
             >
               <MenuItem value="GET">GET</MenuItem>
               <MenuItem value="POST">POST</MenuItem>
               <MenuItem value="PUT">PUT</MenuItem>
-              <MenuItem value="PATCH">PATCH</MenuItem>
               <MenuItem value="DELETE">DELETE</MenuItem>
             </Select>
           </FormControl>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box>
           <TextField
             fullWidth
-            label="Timeout (seconds)"
+            label="Timeout (ms)"
             type="number"
-            value={config.timeout || 30}
+            value={config.timeout || 5000}
             onChange={(e) => handleConfigChange('timeout', parseInt(e.target.value))}
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <TextField
             fullWidth
             multiline
             rows={3}
             label="Headers (JSON)"
-            value={config.headers || '{"Content-Type": "application/json"}'}
+            value={config.headers || ''}
             onChange={(e) => handleConfigChange('headers', e.target.value)}
+            placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'
           />
-        </Grid>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <TextField
             fullWidth
             multiline
-            rows={3}
-            label="Request Body Template"
-            value={config.body_template || ''}
-            onChange={(e) => handleConfigChange('body_template', e.target.value)}
-            placeholder="Use {{variable}} for dynamic values..."
+            rows={4}
+            label="Request Body"
+            value={config.body || ''}
+            onChange={(e) => handleConfigChange('body', e.target.value)}
+            placeholder="Enter request body (for POST/PUT requests)..."
           />
-        </Grid>
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  const renderDatabaseConfig = () => (
+    <Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+        <Box>
+          <FormControl fullWidth>
+            <InputLabel>Database Type</InputLabel>
+            <Select
+              value={config.db_type || 'postgresql'}
+              onChange={(e) => handleConfigChange('db_type', e.target.value)}
+            >
+              <MenuItem value="postgresql">PostgreSQL</MenuItem>
+              <MenuItem value="mysql">MySQL</MenuItem>
+              <MenuItem value="sqlite">SQLite</MenuItem>
+              <MenuItem value="mongodb">MongoDB</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
         
-        <Grid item xs={12}>
+        <Box>
+          <TextField
+            fullWidth
+            label="Connection String"
+            value={config.connection_string || ''}
+            onChange={(e) => handleConfigChange('connection_string', e.target.value)}
+            placeholder="postgresql://user:password@host:port/database"
+          />
+        </Box>
+        
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <TextField
+            fullWidth
+            label="Query"
+            value={config.query || ''}
+            onChange={(e) => handleConfigChange('query', e.target.value)}
+            placeholder="SELECT * FROM table WHERE condition"
+            multiline
+            rows={4}
+          />
+        </Box>
+        
+        <Box>
           <FormControlLabel
             control={
               <Switch
-                checked={config.retry_enabled || false}
-                onChange={(e) => handleConfigChange('retry_enabled', e.target.checked)}
+                checked={config.use_pool || false}
+                onChange={(e) => handleConfigChange('use_pool', e.target.checked)}
               />
             }
-            label="Enable Retry on Failure"
+            label="Use Connection Pool"
           />
-        </Grid>
+        </Box>
         
-        {config.retry_enabled && (
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Max Retries"
-              type="number"
-              value={config.max_retries || 3}
-              onChange={(e) => handleConfigChange('max_retries', parseInt(e.target.value))}
-            />
-          </Grid>
-        )}
-      </Grid>
+        <Box>
+          <TextField
+            fullWidth
+            label="Pool Size"
+            type="number"
+            value={config.pool_size || 10}
+            onChange={(e) => handleConfigChange('pool_size', parseInt(e.target.value))}
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  const renderConditionConfig = () => (
+    <Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
+        <Box>
+          <TextField
+            fullWidth
+            label="Condition Expression"
+            value={config.expression || ''}
+            onChange={(e) => handleConfigChange('expression', e.target.value)}
+            placeholder="data.score > 0.8 && data.category === 'important'"
+            multiline
+            rows={3}
+          />
+        </Box>
+        
+        <Box>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={config.strict_mode || false}
+                onChange={(e) => handleConfigChange('strict_mode', e.target.checked)}
+              />
+            }
+            label="Strict Mode (fail on expression errors)"
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  const renderLoopConfig = () => (
+    <Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+        <Box>
+          <TextField
+            fullWidth
+            label="Items Path"
+            value={config.items_path || ''}
+            onChange={(e) => handleConfigChange('items_path', e.target.value)}
+            placeholder="data.items"
+          />
+        </Box>
+        
+        <Box>
+          <TextField
+            fullWidth
+            label="Item Variable Name"
+            value={config.item_variable || 'item'}
+            onChange={(e) => handleConfigChange('item_variable', e.target.value)}
+          />
+        </Box>
+        
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={config.parallel || false}
+                onChange={(e) => handleConfigChange('parallel', e.target.checked)}
+              />
+            }
+            label="Parallel Execution"
+          />
+        </Box>
+        
+        <Box>
+          <TextField
+            fullWidth
+            label="Max Concurrency"
+            type="number"
+            value={config.max_concurrency || 5}
+            onChange={(e) => handleConfigChange('max_concurrency', parseInt(e.target.value))}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 

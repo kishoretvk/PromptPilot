@@ -246,245 +246,237 @@ const CostAnalysis: React.FC<CostAnalysisProps> = ({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' }, gap: 3 }}>
         {/* Cost Overview */}
-        <Grid item xs={12} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader title="Cost Overview" />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Total Spend
-                  </Typography>
-                  <Typography variant="h4" color="primary.main" fontWeight="bold">
-                    ${data.total_cost ? data.total_cost.toFixed(2) : '1,113.40'}
-                  </Typography>
-                  <Typography variant="body2" color="success.main">
-                    +12% from last {timeRange}
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Average Cost per Request
-                  </Typography>
-                  <Typography variant="h4" color="secondary.main" fontWeight="bold">
-                    ${data.cost_by_prompt && data.cost_by_prompt.length > 0 ? 
-                      (data.cost_by_prompt.reduce((sum, p) => sum + (p.cost_per_execution || 0), 0) / data.cost_by_prompt.length).toFixed(3) 
-                      : '0.198'}
-                  </Typography>
-                  <Typography variant="body2" color="error.main">
-                    +3% from last {timeRange}
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Cost per 1K Tokens
-                  </Typography>
-                  <Typography variant="h4" color="warning.main" fontWeight="bold">
-                    ${data.cost_by_prompt && data.cost_by_prompt.length > 0 ? 
-                      (data.total_cost / data.cost_by_prompt.reduce((sum, p) => sum + p.executions, 1) * 1000).toFixed(4) 
-                      : '0.0234'}
-                  </Typography>
-                  <Typography variant="body2" color="success.main">
-                    -2% from last {timeRange}
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Projected Monthly
-                  </Typography>
-                  <Typography variant="h4" color="info.main" fontWeight="bold">
-                    ${data.projected_monthly_cost ? data.projected_monthly_cost.toFixed(0) : '3,340'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Based on current usage
-                  </Typography>
-                </Box>
+        <Card sx={{ height: '100%' }}>
+          <CardHeader title="Cost Overview" />
+          <CardContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Total Spend
+                </Typography>
+                <Typography variant="h4" color="primary.main" fontWeight="bold">
+                  ${data.total_cost ? data.total_cost.toFixed(2) : '1,113.40'}
+                </Typography>
+                <Typography variant="body2" color="success.main">
+                  +12% from last {timeRange}
+                </Typography>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Average Cost per Request
+                </Typography>
+                <Typography variant="h4" color="secondary.main" fontWeight="bold">
+                  ${data.cost_by_prompt && data.cost_by_prompt.length > 0 ? 
+                    (data.cost_by_prompt.reduce((sum, p) => sum + (p.cost_per_execution || 0), 0) / data.cost_by_prompt.length).toFixed(3) 
+                    : '0.198'}
+                </Typography>
+                <Typography variant="body2" color="error.main">
+                  +3% from last {timeRange}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Cost per 1K Tokens
+                </Typography>
+                <Typography variant="h4" color="warning.main" fontWeight="bold">
+                  ${data.cost_by_prompt && data.cost_by_prompt.length > 0 ? 
+                    (data.total_cost / data.cost_by_prompt.reduce((sum, p) => sum + p.executions, 1) * 1000).toFixed(4) 
+                    : '0.0234'}
+                </Typography>
+                <Typography variant="body2" color="success.main">
+                  -2% from last {timeRange}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Projected Monthly
+                </Typography>
+                <Typography variant="h4" color="info.main" fontWeight="bold">
+                  ${data.projected_monthly_cost ? data.projected_monthly_cost.toFixed(0) : '3,340'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Based on current usage
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Cost Trends */}
-        <Grid item xs={12} lg={8}>
-          <Card>
-            <CardHeader
-              title="Cost Trends"
-              subheader="Spending patterns over time"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Line data={costTrends} options={chartOptions} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card>
+          <CardHeader
+            title="Cost Trends"
+            subheader="Spending patterns over time"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Line data={costTrends} options={chartOptions} />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3 }}>
         {/* Provider Breakdown */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader
-              title="Cost by Provider"
-              subheader="Spending distribution across providers"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Doughnut
-                  data={providerCosts}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed;
-                            return `${label}: $${value.toFixed(2)}`;
-                          },
+        <Card>
+          <CardHeader
+            title="Cost by Provider"
+            subheader="Spending distribution across providers"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Doughnut
+                data={providerCosts}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom' as const,
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          const label = context.label || '';
+                          const value = context.parsed;
+                          return `${label}: $${value.toFixed(2)}`;
                         },
                       },
                     },
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                  }
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Model Costs */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader
-              title="Cost by Model"
-              subheader="Spending breakdown by model type"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Bar data={modelCosts} options={stackedBarOptions} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card>
+          <CardHeader
+            title="Cost by Model"
+            subheader="Spending breakdown by model type"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Bar data={modelCosts} options={stackedBarOptions} />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
+      <Box sx={{ mt: 3 }}>
         {/* Top Spending Prompts */}
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader
-              title="Top Spending Prompts"
-              subheader="Prompts with highest costs"
-            />
-            <CardContent>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Prompt Name</TableCell>
-                      <TableCell align="right">Total Cost</TableCell>
-                      <TableCell align="right">Executions</TableCell>
-                      <TableCell align="right">Avg Cost/Execution</TableCell>
-                      <TableCell align="center">Trend</TableCell>
+        <Card sx={{ mb: 3 }}>
+          <CardHeader
+            title="Top Spending Prompts"
+            subheader="Prompts with highest costs"
+          />
+          <CardContent>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Prompt Name</TableCell>
+                    <TableCell align="right">Total Cost</TableCell>
+                    <TableCell align="right">Executions</TableCell>
+                    <TableCell align="right">Avg Cost/Execution</TableCell>
+                    <TableCell align="center">Trend</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {topSpendingPrompts.map((prompt, index) => (
+                    <TableRow key={prompt.name}>
+                      <TableCell component="th" scope="row">
+                        <Typography variant="body2" fontWeight="medium">
+                          {prompt.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight="bold" color="primary.main">
+                          ${prompt.cost.toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2">
+                          {prompt.executions.toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2">
+                          ${prompt.avgCost.toFixed(3)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={index < 2 ? "↗ High" : index < 4 ? "→ Stable" : "↘ Low"}
+                          size="small"
+                          color={index < 2 ? "error" : index < 4 ? "warning" : "success"}
+                          variant="outlined"
+                        />
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {topSpendingPrompts.map((prompt, index) => (
-                      <TableRow key={prompt.name}>
-                        <TableCell component="th" scope="row">
-                          <Typography variant="body2" fontWeight="medium">
-                            {prompt.name}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" fontWeight="bold" color="primary.main">
-                            ${prompt.cost.toFixed(2)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2">
-                            {prompt.executions.toLocaleString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2">
-                            ${prompt.avgCost.toFixed(3)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={index < 2 ? "↗ High" : index < 4 ? "→ Stable" : "↘ Low"}
-                            size="small"
-                            color={index < 2 ? "error" : index < 4 ? "warning" : "success"}
-                            variant="outlined"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
 
         {/* Cost Optimization Recommendations */}
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader
-              title="Cost Optimization Recommendations"
-              subheader="Actionable insights to reduce spending"
-            />
-            <CardContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.info.main, 0.3)}` }}>
-                    <Typography variant="h6" color="info.main" gutterBottom>
-                      Model Optimization
-                    </Typography>
-                    <Typography variant="body2" paragraph>
-                      Consider using GPT-3.5-turbo for simple tasks instead of GPT-4. 
-                      Potential savings: $156/month
-                    </Typography>
-                    <Chip label="High Impact" size="small" color="info" />
-                  </Paper>
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}` }}>
-                    <Typography variant="h6" color="warning.main" gutterBottom>
-                      Token Efficiency
-                    </Typography>
-                    <Typography variant="body2" paragraph>
-                      Optimize prompt length and reduce unnecessary context. 
-                      Potential savings: $89/month
-                    </Typography>
-                    <Chip label="Medium Impact" size="small" color="warning" />
-                  </Paper>
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.success.main, 0.3)}` }}>
-                    <Typography variant="h6" color="success.main" gutterBottom>
-                      Caching Strategy
-                    </Typography>
-                    <Typography variant="body2" paragraph>
-                      Implement response caching for repeated queries. 
-                      Potential savings: $45/month
-                    </Typography>
-                    <Chip label="Low Impact" size="small" color="success" />
-                  </Paper>
-                </Grid>
+        <Card>
+          <CardHeader
+            title="Cost Optimization Recommendations"
+            subheader="Actionable insights to reduce spending"
+          />
+          <CardContent>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.info.main, 0.3)}` }}>
+                  <Typography variant="h6" color="info.main" gutterBottom>
+                    Model Optimization
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Consider using GPT-3.5-turbo for simple tasks instead of GPT-4. 
+                    Potential savings: $156/month
+                  </Typography>
+                  <Chip label="High Impact" size="small" color="info" />
+                </Paper>
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}` }}>
+                  <Typography variant="h6" color="warning.main" gutterBottom>
+                    Token Efficiency
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Optimize prompt length and reduce unnecessary context. 
+                    Potential savings: $89/month
+                  </Typography>
+                  <Chip label="Medium Impact" size="small" color="warning" />
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Paper sx={{ p: 2, border: `1px solid ${alpha(theme.palette.success.main, 0.3)}` }}>
+                  <Typography variant="h6" color="success.main" gutterBottom>
+                    Caching Strategy
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Implement response caching for repeated queries. 
+                    Potential savings: $45/month
+                  </Typography>
+                  <Chip label="Low Impact" size="small" color="success" />
+                </Paper>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

@@ -22,6 +22,11 @@ import {
   Tabs,
   Tab,
   Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import {
   History,
@@ -78,7 +83,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
   const currentPromptId = promptId || prompt?.id;
 
   const { data: versions, isLoading: versionsLoading, error: versionsError } = usePromptVersions(
-    currentPromptId || '', true, 100 // Include branches, limit to 100 versions
+    currentPromptId || '', true
   );
   const { data: comparisonData, isLoading: comparisonLoading } = usePromptComparison(
     currentPromptId || '',
@@ -273,7 +278,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Box sx={{ py: 3, maxWidth: 'lg', mx: 'auto' }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         {onBack && (
@@ -494,7 +499,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

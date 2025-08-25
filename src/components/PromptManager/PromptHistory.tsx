@@ -173,242 +173,234 @@ const PromptHistory: React.FC = () => {
         </Box>
       </Box>
       
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 3 }}>
         {/* Version List */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-            <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <HistoryIcon /> Version History
-              </Typography>
+        <Paper elevation={0} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <HistoryIcon /> Version History
+            </Typography>
+          </Box>
+          
+          {/* Filters */}
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>User</InputLabel>
+                <Select
+                  value={filter.user}
+                  label="User"
+                  onChange={(e) => setFilter({ ...filter, user: e.target.value as string })}
+                >
+                  <MenuItem value="">All Users</MenuItem>
+                  <MenuItem value="current">Current User</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth size="small">
+                <InputLabel>Date Range</InputLabel>
+                <Select
+                  value={filter.dateRange}
+                  label="Date Range"
+                  onChange={(e) => setFilter({ ...filter, dateRange: e.target.value as string })}
+                >
+                  <MenuItem value="">All Time</MenuItem>
+                  <MenuItem value="7d">Last 7 Days</MenuItem>
+                  <MenuItem value="30d">Last 30 Days</MenuItem>
+                  <MenuItem value="90d">Last 90 Days</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
-            
-            {/* Filters */}
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>User</InputLabel>
-                    <Select
-                      value={filter.user}
-                      label="User"
-                      onChange={(e) => setFilter({ ...filter, user: e.target.value as string })}
-                    >
-                      <MenuItem value="">All Users</MenuItem>
-                      <MenuItem value="current">Current User</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Date Range</InputLabel>
-                    <Select
-                      value={filter.dateRange}
-                      label="Date Range"
-                      onChange={(e) => setFilter({ ...filter, dateRange: e.target.value as string })}
-                    >
-                      <MenuItem value="">All Time</MenuItem>
-                      <MenuItem value="7d">Last 7 Days</MenuItem>
-                      <MenuItem value="30d">Last 30 Days</MenuItem>
-                      <MenuItem value="90d">Last 90 Days</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </Box>
-            
-            {/* Version List */}
-            <List sx={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
-              {versions?.map((version) => (
-                <React.Fragment key={version.version}>
-                  <ListItem
-                    divider
-                    selected={selectedVersion?.version === version.version}
-                    sx={{
-                      cursor: 'pointer',
-                      '&.Mui-selected': {
-                        bgcolor: 'action.selected',
-                      },
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      }
-                    }}
-                    onClick={() => handleViewVersion(version)}
-                  >
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="subtitle2">
-                            Version {version.version}
-                          </Typography>
-                          <Chip 
-                            label={version.status} 
-                            size="small" 
-                            color={getStatusColor(version.status)}
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <CalendarIcon fontSize="small" />
-                          <Typography variant="caption">
-                            {format(new Date(version.created_at), 'MMM dd, yyyy HH:mm')}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <ListItemSecondaryAction>
-                      <Tooltip title="Compare Version">
-                        <IconButton 
-                          edge="end" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompareVersions(version);
-                          }}
-                        >
-                          <CompareIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Restore Version">
-                        <IconButton 
-                          edge="end" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRestoreVersion(version);
-                          }}
-                        >
-                          <RestoreIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+          </Box>
+          
+          {/* Version List */}
+          <List sx={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
+            {versions?.map((version) => (
+              <React.Fragment key={version.version}>
+                <ListItem
+                  divider
+                  selected={selectedVersion?.version === version.version}
+                  sx={{
+                    cursor: 'pointer',
+                    '&.Mui-selected': {
+                      bgcolor: 'action.selected',
+                    },
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    }
+                  }}
+                  onClick={() => handleViewVersion(version)}
+                >
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2">
+                          Version {version.version}
+                        </Typography>
+                        <Chip 
+                          label={version.status} 
+                          size="small" 
+                          color={getStatusColor(version.status)}
+                        />
+                      </Box>
+                    }
+                    secondary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <CalendarIcon fontSize="small" />
+                        <Typography variant="caption">
+                          {format(new Date(version.created_at), 'MMM dd, yyyy HH:mm')}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <Tooltip title="Compare Version">
+                      <IconButton 
+                        edge="end" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCompareVersions(version);
+                        }}
+                      >
+                        <CompareIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Restore Version">
+                      <IconButton 
+                        edge="end" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestoreVersion(version);
+                        }}
+                      >
+                        <RestoreIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </React.Fragment>
+            ))}
+          </List>
+        </Paper>
         
         {/* Version Details */}
-        <Grid item xs={12} md={8}>
-          {selectedVersion ? (
-            <Paper elevation={0} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-              <CardHeader
-                avatar={
-                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                    <CodeIcon />
-                  </Avatar>
-                }
-                title={
-                  <Typography variant="h6">
-                    Version {selectedVersion.version} Details
-                  </Typography>
-                }
-                subheader={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <PersonIcon fontSize="small" />
-                      <Typography variant="caption">
-                        {selectedVersion.created_by}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarIcon fontSize="small" />
-                      <Typography variant="caption">
-                        {format(new Date(selectedVersion.created_at), 'MMM dd, yyyy HH:mm')}
-                      </Typography>
-                    </Box>
+        {selectedVersion ? (
+          <Paper elevation={0} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+            <CardHeader
+              avatar={
+                <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                  <CodeIcon />
+                </Avatar>
+              }
+              title={
+                <Typography variant="h6">
+                  Version {selectedVersion.version} Details
+                </Typography>
+              }
+              subheader={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <PersonIcon fontSize="small" />
+                    <Typography variant="caption">
+                      {selectedVersion.created_by}
+                    </Typography>
                   </Box>
-                }
-                action={
-                  <Button
-                    variant="contained"
-                    startIcon={<RestoreIcon />}
-                    onClick={() => handleRestoreVersion(selectedVersion)}
-                    sx={{ mr: 2 }}
-                  >
-                    Restore This Version
-                  </Button>
-                }
-              />
-              
-              <Divider />
-              
-              <CardContent>
-                {/* Version Info */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <NotesIcon /> Notes
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedVersion.notes || 'No notes provided for this version.'}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CalendarIcon fontSize="small" />
+                    <Typography variant="caption">
+                      {format(new Date(selectedVersion.created_at), 'MMM dd, yyyy HH:mm')}
+                    </Typography>
+                  </Box>
                 </Box>
-                
-                <Divider sx={{ my: 2 }} />
-                
-                {/* Prompt Content */}
-                <Box>
-                  <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <CodeIcon /> Prompt Content
-                  </Typography>
-                  <Paper 
-                    elevation={0} 
-                    sx={{ 
-                      p: 2, 
-                      bgcolor: 'grey.50',
-                      fontFamily: 'monospace',
-                      whiteSpace: 'pre-wrap',
-                      overflow: 'auto',
-                      maxHeight: 300
-                    }}
-                  >
-                    {selectedVersion.content}
-                  </Paper>
-                </Box>
-                
-                {/* Metadata */}
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                    Metadata
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2">
-                        <strong>Model:</strong> {selectedVersion.model}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2">
-                        <strong>Temperature:</strong> {selectedVersion.temperature}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2">
-                        <strong>Max Tokens:</strong> {selectedVersion.max_tokens}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2">
-                        <strong>Top P:</strong> {selectedVersion.top_p}
-                      </Typography>
-                    </Grid>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  startIcon={<RestoreIcon />}
+                  onClick={() => handleRestoreVersion(selectedVersion)}
+                  sx={{ mr: 2 }}
+                >
+                  Restore This Version
+                </Button>
+              }
+            />
+            
+            <Divider />
+            
+            <CardContent>
+              {/* Version Info */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <NotesIcon /> Notes
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedVersion.notes || 'No notes provided for this version.'}
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              {/* Prompt Content */}
+              <Box>
+                <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <CodeIcon /> Prompt Content
+                </Typography>
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 2, 
+                    bgcolor: 'grey.50',
+                    fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap',
+                    overflow: 'auto',
+                    maxHeight: 300
+                  }}
+                >
+                  {selectedVersion.content}
+                </Paper>
+              </Box>
+              
+              {/* Metadata */}
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  Metadata
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2">
+                      <strong>Model:</strong> {selectedVersion.model}
+                    </Typography>
                   </Grid>
-                </Box>
-              </CardContent>
-            </Paper>
-          ) : (
-            <Paper elevation={0} sx={{ borderRadius: 2, p: 4, textAlign: 'center' }}>
-              <HistoryIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                Select a version to view details
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Choose a version from the list to see its content and metadata
-              </Typography>
-            </Paper>
-          )}
-        </Grid>
-      </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2">
+                      <strong>Temperature:</strong> {selectedVersion.temperature}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2">
+                      <strong>Max Tokens:</strong> {selectedVersion.max_tokens}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2">
+                      <strong>Top P:</strong> {selectedVersion.top_p}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            </CardContent>
+          </Paper>
+        ) : (
+          <Paper elevation={0} sx={{ borderRadius: 2, p: 4, textAlign: 'center' }}>
+            <HistoryIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">
+              Select a version to view details
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Choose a version from the list to see its content and metadata
+            </Typography>
+          </Paper>
+        )}
+      </Box>
       
       {/* Comparison Dialog */}
       <Dialog 

@@ -313,8 +313,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           {/* Basic Info Tab */}
           <TabPanel value={activeTab} index={0}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
                 <TextField
                   fullWidth
                   label="Name"
@@ -324,9 +324,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   helperText={errors.name}
                   required
                 />
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <FormControl fullWidth>
                   <InputLabel>Task Type</InputLabel>
                   <Select
@@ -342,9 +342,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     <MenuItem value="analysis">Analysis</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
+              </Box>
               
-              <Grid item xs={12}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <TextField
                   fullWidth
                   label="Description"
@@ -356,9 +356,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   helperText={errors.description}
                   required
                 />
-              </Grid>
+              </Box>
               
-              <Grid item xs={12}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Autocomplete
                   multiple
                   freeSolo
@@ -383,9 +383,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     />
                   )}
                 />
-              </Grid>
+              </Box>
               
-              <Grid item xs={12}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <TextField
                   fullWidth
                   label="Developer Notes"
@@ -396,8 +396,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   disabled={isReadOnly}
                   placeholder="Additional notes, instructions, or context..."
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </TabPanel>
 
           {/* Messages Tab */}
@@ -421,8 +421,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+                    <Box>
                       <FormControl fullWidth>
                         <InputLabel>Role</InputLabel>
                         <Select
@@ -435,9 +435,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                           <MenuItem value="assistant">Assistant</MenuItem>
                         </Select>
                       </FormControl>
-                    </Grid>
+                    </Box>
                     
-                    <Grid item xs={12} md={4}>
+                    <Box>
                       <TextField
                         fullWidth
                         label="Priority"
@@ -446,18 +446,18 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                         onChange={(e) => updateMessage(index, 'priority', parseInt(e.target.value))}
                         disabled={isReadOnly}
                       />
-                    </Grid>
+                    </Box>
                     
-                    <Grid item xs={12} md={2}>
+                    <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 1' } }}>
                       <IconButton
                         color="error"
                         onClick={() => removeMessage(index)}
                       >
                         <Delete />
                       </IconButton>
-                    </Grid>
+                    </Box>
                     
-                    <Grid item xs={12}>
+                    <Box sx={{ gridColumn: '1 / -1' }}>
                       <TextField
                         fullWidth
                         label="Content"
@@ -468,8 +468,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                         disabled={isReadOnly}
                         placeholder="Enter message content... Use {variable_name} for variables"
                       />
-                    </Grid>
-                  </Grid>
+                    </Box>
+                  </Box>
                 </AccordionDetails>
               </Accordion>
             )) || (
@@ -481,8 +481,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
 
           {/* Parameters Tab */}
           <TabPanel value={activeTab} index={2}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
                 <FormControl fullWidth>
                   <InputLabel>Model Provider</InputLabel>
                   <Select
@@ -495,9 +495,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     <MenuItem value="azure">Azure OpenAI</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <TextField
                   fullWidth
                   label="Model Name"
@@ -505,9 +505,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   onChange={(e) => updateFormData('model_name', e.target.value)}
                   disabled={isReadOnly}
                 />
-              </Grid>
+              </Box>
               
-              <Grid item xs={12}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Typography gutterBottom>Temperature: {formData.parameters?.temperature}</Typography>
                 <Slider
                   value={formData.parameters?.temperature || 0.7}
@@ -524,9 +524,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     { value: 2, label: '2' },
                   ]}
                 />
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <TextField
                   fullWidth
                   label="Max Tokens"
@@ -538,9 +538,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   })}
                   disabled={isReadOnly}
                 />
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <TextField
                   fullWidth
                   label="Top P"
@@ -553,8 +553,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   disabled={isReadOnly}
                   inputProps={{ min: 0, max: 1, step: 0.1 }}
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </TabPanel>
 
           {/* Test Cases Tab */}

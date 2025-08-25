@@ -8,9 +8,19 @@ import {
   CardContent,
   CircularProgress,
   Alert,
+  Paper,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
 } from '@mui/material';
 import {
   BarChart,
+  Bar,
+  LineChart,
+  Line,
   PieChart,
   Pie,
   Cell,
@@ -72,7 +82,7 @@ const MonitoringDashboard: React.FC = () => {
   // Fetch health status
   const { data: healthStatus, isLoading: healthLoading, error: healthError } = useQuery<HealthStatus>({
     queryKey: ['health'],
-    queryFn: () => apiClient.get('/health').then(res => res.data),
+    queryFn: () => apiClient.get<HealthStatus>('/health').then(res => res.data),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
   

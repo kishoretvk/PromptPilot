@@ -199,288 +199,279 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
         {/* Latency Trends */}
-        <Grid item xs={12} lg={8}>
-          <Card>
-            <CardHeader
-              title="Response Latency"
-              subheader="Average and 95th percentile response times"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Line data={latencyData} options={{
-                  ...chartOptions,
-                  scales: {
-                    ...chartOptions.scales,
-                    y: {
-                      ...chartOptions.scales.y,
-                      title: {
-                        display: true,
-                        text: 'Latency (ms)',
-                      },
+        <Card>
+          <CardHeader
+            title="Response Latency"
+            subheader="Average and 95th percentile response times"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Line data={latencyData} options={{
+                ...chartOptions,
+                scales: {
+                  ...chartOptions.scales,
+                  y: {
+                    ...chartOptions.scales.y,
+                    title: {
+                      display: true,
+                      text: 'Latency (ms)',
                     },
                   },
-                }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                },
+              }} />
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Key Metrics */}
-        <Grid item xs={12} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader title="Performance Overview" />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Average Latency
-                  </Typography>
-                  <Typography variant="h4" color="primary.main" fontWeight="bold">
-                    {data.provider_performance && data.provider_performance.length > 0 ? 
-                      `${(data.provider_performance.reduce((sum, p) => sum + p.avg_response_time, 0) / data.provider_performance.length).toFixed(0)}ms` 
-                      : '1,247ms'}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={75}
-                    sx={{ mt: 1, height: 6, borderRadius: 3 }}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    95th Percentile
-                  </Typography>
-                  <Typography variant="h4" color="warning.main" fontWeight="bold">
-                    {data.provider_performance && data.provider_performance.length > 0 ? 
-                      `${(data.provider_performance.reduce((sum, p) => sum + p.avg_response_time * 1.5, 0) / data.provider_performance.length).toFixed(0)}ms` 
-                      : '2,456ms'}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={60}
-                    color="warning"
-                    sx={{ mt: 1, height: 6, borderRadius: 3 }}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Throughput
-                  </Typography>
-                  <Typography variant="h4" color="secondary.main" fontWeight="bold">
-                    {data.provider_performance && data.provider_performance.length > 0 ? 
-                      `${(data.provider_performance.reduce((sum, p) => sum + p.total_requests, 0) / 60).toFixed(0)} req/min` 
-                      : '42 req/min'}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={85}
-                    color="secondary"
-                    sx={{ mt: 1, height: 6, borderRadius: 3 }}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Error Rate
-                  </Typography>
-                  <Typography variant="h4" color="error.main" fontWeight="bold">
-                    {data.provider_performance && data.provider_performance.length > 0 ? 
-                      `${((1 - data.provider_performance.reduce((sum, p) => sum + p.success_rate, 0) / data.provider_performance.length) * 100).toFixed(1)}%` 
-                      : '1.2%'}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={12}
-                    color="error"
-                    sx={{ mt: 1, height: 6, borderRadius: 3 }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Throughput */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader
-              title="Throughput"
-              subheader="Requests processed per minute"
-            />
-            <CardContent>
-              <Box sx={{ height: 250 }}>
-                <Bar data={throughputData} options={{
-                  ...chartOptions,
-                  scales: {
-                    ...chartOptions.scales,
-                    y: {
-                      ...chartOptions.scales.y,
-                      title: {
-                        display: true,
-                        text: 'Requests/min',
-                      },
-                    },
-                  },
-                }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Error Rate */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader
-              title="Error Rate"
-              subheader="Failed requests over time"
-            />
-            <CardContent>
-              <Box sx={{ height: 250 }}>
-                <Line data={errorRateData} options={{
-                  ...chartOptions,
-                  scales: {
-                    ...chartOptions.scales,
-                    y: {
-                      ...chartOptions.scales.y,
-                      title: {
-                        display: true,
-                        text: 'Error Rate (%)',
-                      },
-                      max: 10,
-                    },
-                  },
-                }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Provider Performance Comparison */}
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader
-              title="Provider Performance Comparison"
-              subheader="Performance metrics across different LLM providers"
-            />
-            <CardContent>
-              <Grid container spacing={2}>
-                {providerPerformance.map((provider) => (
-                  <Grid item xs={12} sm={6} md={3} key={provider.name}>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        border: `1px solid ${alpha(getStatusColor(provider.status), 0.3)}`,
-                        backgroundColor: alpha(getStatusColor(provider.status), 0.05),
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h6" fontWeight="bold">
-                          {provider.name}
-                        </Typography>
-                        <Chip
-                          label={provider.status}
-                          size="small"
-                          sx={{
-                            backgroundColor: getStatusColor(provider.status),
-                            color: 'white',
-                            textTransform: 'capitalize',
-                          }}
-                        />
-                      </Box>
-
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Latency:
-                          </Typography>
-                          <Typography variant="body2" fontWeight="medium">
-                            {provider.latency}ms
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Throughput:
-                          </Typography>
-                          <Typography variant="body2" fontWeight="medium">
-                            {provider.throughput}/min
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Error Rate:
-                          </Typography>
-                          <Typography variant="body2" fontWeight="medium">
-                            {provider.errorRate}%
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Performance Distribution */}
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader
-              title="Latency Distribution"
-              subheader="Response time distribution over the selected period"
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <Bar
-                  data={{
-                    labels: ['0-100ms', '100-500ms', '500ms-1s', '1-2s', '2-5s', '5s+'],
-                    datasets: [
-                      {
-                        label: 'Request Count',
-                        data: [45, 234, 567, 345, 123, 23],
-                        backgroundColor: [
-                          alpha(theme.palette.success.main, 0.8),
-                          alpha(theme.palette.info.main, 0.8),
-                          alpha(theme.palette.primary.main, 0.8),
-                          alpha(theme.palette.warning.main, 0.8),
-                          alpha(theme.palette.error.main, 0.8),
-                          alpha(theme.palette.grey[600], 0.8),
-                        ],
-                      },
-                    ],
-                  }}
-                  options={{
-                    ...chartOptions,
-                    scales: {
-                      ...chartOptions.scales,
-                      y: {
-                        ...chartOptions.scales.y,
-                        title: {
-                          display: true,
-                          text: 'Number of Requests',
-                        },
-                      },
-                      x: {
-                        ...chartOptions.scales.x,
-                        title: {
-                          display: true,
-                          text: 'Response Time Range',
-                        },
-                      },
-                    },
-                  }}
+        <Card sx={{ height: '100%' }}>
+          <CardHeader title="Performance Overview" />
+          <CardContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Average Latency
+                </Typography>
+                <Typography variant="h4" color="primary.main" fontWeight="bold">
+                  {data.provider_performance && data.provider_performance.length > 0 ? 
+                    `${(data.provider_performance.reduce((sum, p) => sum + p.avg_response_time, 0) / data.provider_performance.length).toFixed(0)}ms` 
+                    : '1,247ms'}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={75}
+                  sx={{ mt: 1, height: 6, borderRadius: 3 }}
                 />
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  95th Percentile
+                </Typography>
+                <Typography variant="h4" color="warning.main" fontWeight="bold">
+                  {data.provider_performance && data.provider_performance.length > 0 ? 
+                    `${(data.provider_performance.reduce((sum, p) => sum + p.avg_response_time * 1.5, 0) / data.provider_performance.length).toFixed(0)}ms` 
+                    : '2,456ms'}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={60}
+                  color="warning"
+                  sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                />
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Throughput
+                </Typography>
+                <Typography variant="h4" color="secondary.main" fontWeight="bold">
+                  {data.provider_performance && data.provider_performance.length > 0 ? 
+                    `${(data.provider_performance.reduce((sum, p) => sum + p.total_requests, 0) / 60).toFixed(0)} req/min` 
+                    : '42 req/min'}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={85}
+                  color="secondary"
+                  sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                />
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Error Rate
+                </Typography>
+                <Typography variant="h4" color="error.main" fontWeight="bold">
+                  {data.provider_performance && data.provider_performance.length > 0 ? 
+                    `${((1 - data.provider_performance.reduce((sum, p) => sum + p.success_rate, 0) / data.provider_performance.length) * 100).toFixed(1)}%` 
+                    : '1.2%'}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={12}
+                  color="error"
+                  sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                />
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3 }}>
+        {/* Throughput */}
+        <Card>
+          <CardHeader
+            title="Throughput"
+            subheader="Requests processed per minute"
+          />
+          <CardContent>
+            <Box sx={{ height: 250 }}>
+              <Bar data={throughputData} options={{
+                ...chartOptions,
+                scales: {
+                  ...chartOptions.scales,
+                  y: {
+                    ...chartOptions.scales.y,
+                    title: {
+                      display: true,
+                      text: 'Requests/min',
+                    },
+                  },
+                },
+              }} />
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Error Rate */}
+        <Card>
+          <CardHeader
+            title="Error Rate"
+            subheader="Failed requests over time"
+          />
+          <CardContent>
+            <Box sx={{ height: 250 }}>
+              <Line data={errorRateData} options={{
+                ...chartOptions,
+                scales: {
+                  ...chartOptions.scales,
+                  y: {
+                    ...chartOptions.scales.y,
+                    title: {
+                      display: true,
+                      text: 'Error Rate (%)',
+                    },
+                    max: 10,
+                  },
+                },
+              }} />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box sx={{ mt: 3 }}>
+        {/* Provider Performance Comparison */}
+        <Card>
+          <CardHeader
+            title="Provider Performance Comparison"
+            subheader="Performance metrics across different LLM providers"
+          />
+          <CardContent>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+              {providerPerformance.map((provider) => (
+                <Paper
+                  key={provider.name}
+                  sx={{
+                    p: 2,
+                    border: `1px solid ${alpha(getStatusColor(provider.status), 0.3)}`,
+                    backgroundColor: alpha(getStatusColor(provider.status), 0.05),
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" fontWeight="bold">
+                      {provider.name}
+                    </Typography>
+                    <Chip
+                      label={provider.status}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStatusColor(provider.status),
+                        color: 'white',
+                        textTransform: 'capitalize',
+                      }}
+                    />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Latency:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {provider.latency}ms
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Throughput:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {provider.throughput}/min
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Error Rate:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {provider.errorRate}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Performance Distribution */}
+        <Card>
+          <CardHeader
+            title="Latency Distribution"
+            subheader="Response time distribution over the selected period"
+          />
+          <CardContent>
+            <Box sx={{ height: 300 }}>
+              <Bar
+                data={{
+                  labels: ['0-100ms', '100-500ms', '500ms-1s', '1-2s', '2-5s', '5s+'],
+                  datasets: [
+                    {
+                      label: 'Request Count',
+                      data: [45, 234, 567, 345, 123, 23],
+                      backgroundColor: [
+                        alpha(theme.palette.success.main, 0.8),
+                        alpha(theme.palette.info.main, 0.8),
+                        alpha(theme.palette.primary.main, 0.8),
+                        alpha(theme.palette.warning.main, 0.8),
+                        alpha(theme.palette.error.main, 0.8),
+                        alpha(theme.palette.grey[600], 0.8),
+                      ],
+                    },
+                  ],
+                }}
+                options={{
+                  ...chartOptions,
+                  scales: {
+                    ...chartOptions.scales,
+                    y: {
+                      ...chartOptions.scales.y,
+                      title: {
+                        display: true,
+                        text: 'Number of Requests',
+                      },
+                    },
+                    x: {
+                      ...chartOptions.scales.x,
+                      title: {
+                        display: true,
+                        text: 'Response Time Range',
+                      },
+                    },
+                  },
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

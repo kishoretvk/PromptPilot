@@ -96,7 +96,7 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
         }}
       />
 
-      <Grid container spacing={3}>
+      <Box>
         {sortedVersions.map((version, index) => {
           const isSelected = selectedVersions.includes(version.id);
           const isLatest = index === 0;
@@ -104,12 +104,11 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
           const isTarget = targetVersion?.id === version.id;
           
           return (
-            <Grid item xs={12} key={version.id}>
+            <Box key={version.id} sx={{ mb: 2 }}>
               <Box
                 sx={{
                   position: 'relative',
                   display: 'flex',
-                  mb: 2,
                   pl: 6,
                 }}
               >
@@ -256,7 +255,7 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
                             e.stopPropagation();
                             onBranchVersion(version);
                           }}>
-                            <Branch />
+                            <ForkRight />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Merge">
@@ -304,10 +303,10 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
                   </CardContent>
                 </Card>
               </Box>
-            </Grid>
+            </Box>
           );
         })}
-      </Grid>
+      </Box>
     </Box>
   );
 };

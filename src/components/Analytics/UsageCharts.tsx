@@ -217,9 +217,9 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
         {/* Execution Trends */}
-        <Grid item xs={12} lg={8}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Execution Trends"
@@ -231,10 +231,10 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Summary Stats */}
-        <Grid item xs={12} lg={4}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card sx={{ height: '100%' }}>
             <CardHeader title="Usage Summary" />
             <CardContent>
@@ -277,10 +277,10 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Token Usage */}
-        <Grid item xs={12} lg={7}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Token Usage"
@@ -292,10 +292,10 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Popular Prompts */}
-        <Grid item xs={12} lg={5}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Popular Prompts"
@@ -326,10 +326,10 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Hourly Distribution */}
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <Card>
             <CardHeader
               title="Usage Distribution"
@@ -375,8 +375,8 @@ const UsageCharts: React.FC<UsageChartsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 };

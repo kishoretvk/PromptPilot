@@ -321,234 +321,226 @@ const PromptTester: React.FC<PromptTesterProps> = ({
         </Box>
       </Box>
 
-      <Grid container spacing={3} sx={{ flex: 1 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, flex: 1 }}>
         {/* Left Panel - Input Configuration */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardHeader
-              title="Input Configuration"
-              action={
-                <IconButton onClick={() => setIsExpanded(!isExpanded)}>
-                  {isExpanded ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-              }
-            />
-            
-            <CardContent sx={{ flex: 1 }}>
-              {/* Test Case Selection */}
-              <Box sx={{ mb: 3 }}>
-                <FormControl fullWidth>
-                  <InputLabel>Test Case</InputLabel>
-                  <Select
-                    value={selectedTestCase}
-                    onChange={(e) => handleTestCaseSelect(e.target.value)}
-                  >
-                    <MenuItem value="manual">Manual Input</MenuItem>
-                    {prompt.test_cases.map((testCase) => (
-                      <MenuItem key={testCase.name} value={testCase.name}>
-                        {testCase.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Input Variables */}
-              {hasInputVariables ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {inputVariables.map((variable) => (
-                    <TextField
-                      key={variable}
-                      fullWidth
-                      label={variable}
-                      value={inputValues[variable] || ''}
-                      onChange={(e) => handleInputChange(variable, e.target.value)}
-                      multiline
-                      rows={2}
-                      placeholder={`Enter value for ${variable}...`}
-                    />
+        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <CardHeader
+            title="Input Configuration"
+            action={
+              <IconButton onClick={() => setIsExpanded(!isExpanded)}>
+                {isExpanded ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            }
+          />
+          
+          <CardContent sx={{ flex: 1 }}>
+            {/* Test Case Selection */}
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>Test Case</InputLabel>
+                <Select
+                  value={selectedTestCase}
+                  onChange={(e) => handleTestCaseSelect(e.target.value)}
+                >
+                  <MenuItem value="manual">Manual Input</MenuItem>
+                  {prompt.test_cases.map((testCase) => (
+                    <MenuItem key={testCase.name} value={testCase.name}>
+                      {testCase.name}
+                    </MenuItem>
                   ))}
-                </Box>
-              ) : (
-                <Alert severity="info">
-                  This prompt doesn't require any input variables. You can execute it directly.
-                </Alert>
-              )}
+                </Select>
+              </FormControl>
+            </Box>
 
-              {/* Prompt Preview */}
-              <Collapse in={isExpanded}>
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Compiled Prompt Preview:
+            {/* Input Variables */}
+            {hasInputVariables ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {inputVariables.map((variable) => (
+                  <TextField
+                    key={variable}
+                    fullWidth
+                    label={variable}
+                    value={inputValues[variable] || ''}
+                    onChange={(e) => handleInputChange(variable, e.target.value)}
+                    multiline
+                    rows={2}
+                    placeholder={`Enter value for ${variable}...`}
+                  />
+                ))}
+              </Box>
+            ) : (
+              <Alert severity="info">
+                This prompt doesn't require any input variables. You can execute it directly.
+              </Alert>
+            )}
+
+            {/* Prompt Preview */}
+            <Collapse in={isExpanded}>
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Compiled Prompt Preview:
+                </Typography>
+                <Paper sx={{ p: 2, backgroundColor: theme.palette.grey[50] }}>
+                  <Typography
+                    component="pre"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'pre-wrap',
+                      maxHeight: 200,
+                      overflow: 'auto',
+                    }}
+                  >
+                    {prompt.messages
+                      .sort((a, b) => (a.priority || 1) - (b.priority || 1))
+                      .map(msg => {
+                        let content = msg.content;
+                        Object.entries(inputValues).forEach(([key, value]) => {
+                          content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+                        });
+                        return `${msg.role.toUpperCase()}: ${content}`;
+                      })
+                      .join('\n\n')}
+
                   </Typography>
-                  <Paper sx={{ p: 2, backgroundColor: theme.palette.grey[50] }}>
-                    <Typography
-                      component="pre"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.75rem',
-                        whiteSpace: 'pre-wrap',
-                        maxHeight: 200,
-                        overflow: 'auto',
-                      }}
-                    >
-                      {prompt.messages
-                        .sort((a, b) => (a.priority || 1) - (b.priority || 1))
-                        .map(msg => {
-                          let content = msg.content;
-                          Object.entries(inputValues).forEach(([key, value]) => {
-                            content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
-                          });
-                          return `${msg.role.toUpperCase()}: ${content}`;
-                        })
-                        .join('\n\n')}
-
-                    </Typography>
-                  </Paper>
-                </Box>
-              </Collapse>
-            </CardContent>
-          </Card>
-        </Grid>
+                </Paper>
+              </Box>
+            </Collapse>
+          </CardContent>
+        </Card>
 
         {/* Right Panel - Results and History */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Tabs
-              value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
-            >
-              <Tab icon={<DataObject />} label="Current Result" />
-              <Tab icon={<History />} label="History" />
-            </Tabs>
+        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab icon={<DataObject />} label="Current Result" />
+            <Tab icon={<History />} label="History" />
+          </Tabs>
 
-            {/* Current Result Tab */}
-            <TabPanel value={activeTab} index={0}>
-              <Box sx={{ p: 2 }}>
-                {isExecuting && (
-                  <Box sx={{ mb: 2 }}>
-                    <LinearProgress />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Executing prompt...
+          {/* Current Result Tab */}
+          <TabPanel value={activeTab} index={0}>
+            <Box sx={{ p: 2 }}>
+              {isExecuting && (
+                <Box sx={{ mb: 2 }}>
+                  <LinearProgress />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Executing prompt...
+                  </Typography>
+                </Box>
+              )}
+
+              {currentExecution ? (
+                <Box>
+                  {/* Execution Status */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    {getStatusIcon(currentExecution.status)}
+                    <Typography variant="h6" sx={{ ml: 1 }}>
+                      {currentExecution.status === 'success' ? 'Success' : 'Error'}
                     </Typography>
                   </Box>
-                )}
 
-                {currentExecution ? (
-                  <Box>
-                    {/* Execution Status */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      {getStatusIcon(currentExecution.status)}
-                      <Typography variant="h6" sx={{ ml: 1 }}>
-                        {currentExecution.status === 'success' ? 'Success' : 'Error'}
+                  {/* Metadata */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr' }, gap: 2, mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Timer fontSize="small" sx={{ mr: 1 }} />
+                      <Typography variant="body2">
+                        {formatExecutionTime(currentExecution.metadata.execution_time)}
                       </Typography>
                     </Box>
-
-                    {/* Metadata */}
-                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                      <Grid item xs={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Timer fontSize="small" sx={{ mr: 1 }} />
-                          <Typography variant="body2">
-                            {formatExecutionTime(currentExecution.metadata.execution_time)}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Memory fontSize="small" sx={{ mr: 1 }} />
-                          <Typography variant="body2">
-                            {currentExecution.metadata.token_count} tokens
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-
-                    {/* Output */}
-                    <Typography variant="subtitle2" gutterBottom>
-                      Output:
-                    </Typography>
-                    <Paper sx={{ p: 2, backgroundColor: theme.palette.grey[50] }}>
-                      {currentExecution.status === 'error' ? (
-                        <Alert severity="error">
-                          {currentExecution.error}
-                        </Alert>
-                      ) : (
-                        <Typography
-                          sx={{
-                            whiteSpace: 'pre-wrap',
-                            maxHeight: 300,
-                            overflow: 'auto',
-                          }}
-                        >
-                          {currentExecution.output}
-                        </Typography>
-                      )}
-                    </Paper>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Memory fontSize="small" sx={{ mr: 1 }} />
+                      <Typography variant="body2">
+                        {currentExecution.metadata.token_count} tokens
+                      </Typography>
+                    </Box>
                   </Box>
-                ) : (
-                  <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-                    Execute the prompt to see results here.
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
 
-            {/* History Tab */}
-            <TabPanel value={activeTab} index={1}>
-              <Box sx={{ p: 2 }}>
-                {executionHistory.length > 0 ? (
-                  <TableContainer sx={{ maxHeight: 400 }}>
-                    <Table stickyHeader size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Time</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Duration</TableCell>
-                          <TableCell>Tokens</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {executionHistory.map((execution) => (
-                          <TableRow
-                            key={execution.id}
-                            hover
-                            onClick={() => setCurrentExecution(execution)}
-                            sx={{ cursor: 'pointer' }}
-                          >
-                            <TableCell>
-                              {execution.timestamp.toLocaleTimeString()}
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getStatusIcon(execution.status)}
-                                <Typography variant="body2" sx={{ ml: 1 }}>
-                                  {execution.status}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              {formatExecutionTime(execution.metadata.execution_time)}
-                            </TableCell>
-                            <TableCell>
-                              {execution.metadata.token_count}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-                    No execution history yet.
+                  {/* Output */}
+                  <Typography variant="subtitle2" gutterBottom>
+                    Output:
                   </Typography>
-                )}
-              </Box>
-            </TabPanel>
-          </Card>
-        </Grid>
-      </Grid>
+                  <Paper sx={{ p: 2, backgroundColor: theme.palette.grey[50] }}>
+                    {currentExecution.status === 'error' ? (
+                      <Alert severity="error">
+                        {currentExecution.error}
+                      </Alert>
+                    ) : (
+                      <Typography
+                        sx={{
+                          whiteSpace: 'pre-wrap',
+                          maxHeight: 300,
+                          overflow: 'auto',
+                        }}
+                      >
+                        {currentExecution.output}
+                      </Typography>
+                    )}
+                  </Paper>
+                </Box>
+              ) : (
+                <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+                  Execute the prompt to see results here.
+                </Typography>
+              )}
+            </Box>
+          </TabPanel>
+
+          {/* History Tab */}
+          <TabPanel value={activeTab} index={1}>
+            <Box sx={{ p: 2 }}>
+              {executionHistory.length > 0 ? (
+                <TableContainer sx={{ maxHeight: 400 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Time</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Duration</TableCell>
+                        <TableCell>Tokens</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {executionHistory.map((execution) => (
+                        <TableRow
+                          key={execution.id}
+                          hover
+                          onClick={() => setCurrentExecution(execution)}
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          <TableCell>
+                            {execution.timestamp.toLocaleTimeString()}
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              {getStatusIcon(execution.status)}
+                              <Typography variant="body2" sx={{ ml: 1 }}>
+                                {execution.status}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            {formatExecutionTime(execution.metadata.execution_time)}
+                          </TableCell>
+                          <TableCell>
+                            {execution.metadata.token_count}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+                  No execution history yet.
+                </Typography>
+              )}
+            </Box>
+          </TabPanel>
+        </Card>
+      </Box>
     </Box>
   );
 };

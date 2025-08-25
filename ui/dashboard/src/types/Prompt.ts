@@ -26,6 +26,7 @@ export interface TestResult {
 }
 
 export interface PromptVersion {
+  id: string;
   version: string;
   created_at: string;
   created_by: string;
@@ -35,6 +36,10 @@ export interface PromptVersion {
   status?: string;
   author?: string;
   commit_ref?: string;
+  commit_message?: string;
+  tags: string[];
+  parent_version_id?: string;
+  branch_name?: string;
 }
 
 export interface Prompt {

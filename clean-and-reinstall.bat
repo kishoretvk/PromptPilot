@@ -1,0 +1,9 @@
+@echo off
+echo Cleaning UI dashboard node_modules...
+rmdir /s /q "ui\dashboard\node_modules"
+echo Cleaning UI dashboard build directory...
+rmdir /s /q "ui\dashboard\build"
+echo Installing dependencies...
+cd ui\dashboard
+npm install --legacy-peer-deps
+echo Build process completed.

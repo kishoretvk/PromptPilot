@@ -296,9 +296,9 @@ const MonitoringDashboard: React.FC = () => {
         </Box>
 
         {/* System Health Overview */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
           {healthCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Box key={index}>
               <Card sx={{ height: '100%' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -329,9 +329,9 @@ const MonitoringDashboard: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         {/* Navigation Tabs */}
         <Paper 
@@ -367,9 +367,9 @@ const MonitoringDashboard: React.FC = () => {
 
         {/* Tab Content */}
         <TabPanel value={activeTab} index={0}>
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
             {/* Active Alerts */}
-            <Grid item xs={12} md={6}>
+            <Box>
               <Card>
                 <CardHeader
                   title="Active Alerts"
@@ -426,10 +426,10 @@ const MonitoringDashboard: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* Alert Distribution */}
-            <Grid item xs={12} md={6}>
+            <Box>
               <Card>
                 <CardHeader
                   title="Alert Distribution"
@@ -458,8 +458,8 @@ const MonitoringDashboard: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </TabPanel>
 
         <TabPanel value={activeTab} index={1}>
@@ -526,8 +526,8 @@ const MonitoringDashboard: React.FC = () => {
         </TabPanel>
 
         <TabPanel value={activeTab} index={2}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
+          <Box>
+            <Box>
               <Card>
                 <CardHeader
                   title="Performance Metrics"
@@ -556,13 +556,13 @@ const MonitoringDashboard: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </TabPanel>
 
         <TabPanel value={activeTab} index={3}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
+          <Box>
+            <Box>
               <Card>
                 <CardHeader
                   title="Resource Usage"
@@ -592,8 +592,8 @@ const MonitoringDashboard: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </TabPanel>
       </Box>
     </Container>

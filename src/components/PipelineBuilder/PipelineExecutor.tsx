@@ -225,9 +225,9 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
 
   return (
     <Box sx={{ p: 3, height: '100%', overflow: 'auto' }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 3 }}>
         {/* Input Configuration */}
-        <Grid item xs={12} md={4}>
+        <Box>
           <Card>
             <CardHeader
               title="Input Data"
@@ -264,10 +264,10 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Execution Progress */}
-        <Grid item xs={12} md={8}>
+        <Box>
           <Card sx={{ height: 'fit-content' }}>
             <CardHeader
               title="Execution Progress"
@@ -389,11 +389,11 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Final Output */}
         {executionResult && executionResult.finalOutput && (
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: '1 / -1' }}>
             <Card>
               <CardHeader
                 title="Pipeline Output"
@@ -425,9 +425,9 @@ const PipelineExecutor: React.FC<PipelineExecutorProps> = ({
                 </Paper>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         )}
-      </Grid>
+      </Box>
     </Box>
   );
 };

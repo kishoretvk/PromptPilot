@@ -1,0 +1,6 @@
+@echo off
+echo Cleaning build directory...
+rmdir /s /q build
+echo Cleaning node_modules directory...
+rmdir /s /q node_modules
+echo Cleaning completed.

@@ -199,9 +199,9 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
         {/* Latency Trends */}
-        <Grid item xs={12} lg={8}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Response Latency"
@@ -225,10 +225,10 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Key Metrics */}
-        <Grid item xs={12} lg={4}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 1' } }}>
           <Card sx={{ height: '100%' }}>
             <CardHeader title="Performance Overview" />
             <CardContent>
@@ -302,10 +302,10 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Throughput */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Throughput"
@@ -329,10 +329,10 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Error Rate */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 1' } }}>
           <Card>
             <CardHeader
               title="Error Rate"
@@ -357,19 +357,19 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Provider Performance Comparison */}
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <Card>
             <CardHeader
               title="Provider Performance Comparison"
               subheader="Performance metrics across different LLM providers"
             />
             <CardContent>
-              <Grid container spacing={2}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
                 {providerPerformance.map((provider) => (
-                  <Grid item xs={12} sm={6} md={3} key={provider.name}>
+                  <Box key={provider.name}>
                     <Paper
                       sx={{
                         p: 2,
@@ -421,15 +421,15 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                         </Box>
                       </Box>
                     </Paper>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Performance Distribution */}
-        <Grid item xs={12}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <Card>
             <CardHeader
               title="Latency Distribution"
@@ -479,8 +479,8 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 };

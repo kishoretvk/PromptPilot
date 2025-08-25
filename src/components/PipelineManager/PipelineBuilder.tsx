@@ -460,9 +460,9 @@ const PipelineBuilder: React.FC = () => {
         </Box>
       </Box>
       
-      <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 3fr' }, gap: 2, flex: 1, minHeight: 0 }}>
         {/* Node Palette */}
-        <Grid item xs={12} md={3}>
+        <Box>
           <Paper elevation={0} sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
               <Typography variant="h6">Node Palette</Typography>
@@ -484,8 +484,8 @@ const PipelineBuilder: React.FC = () => {
                   Drag and drop nodes onto the canvas
                 </Typography>
                 
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box>
                     <Box
                       draggable
                       onDragStart={(event) => onDragStart(event, 'prompt')}
@@ -510,9 +510,9 @@ const PipelineBuilder: React.FC = () => {
                         AI prompt processing node
                       </Typography>
                     </Box>
-                  </Grid>
+                  </Box>
                   
-                  <Grid item xs={12}>
+                  <Box>
                     <Box
                       draggable
                       onDragStart={(event) => onDragStart(event, 'api')}
@@ -537,9 +537,9 @@ const PipelineBuilder: React.FC = () => {
                         External API integration
                       </Typography>
                     </Box>
-                  </Grid>
+                  </Box>
                   
-                  <Grid item xs={12}>
+                  <Box>
                     <Box
                       draggable
                       onDragStart={(event) => onDragStart(event, 'data')}
@@ -564,9 +564,9 @@ const PipelineBuilder: React.FC = () => {
                         Data processing and manipulation
                       </Typography>
                     </Box>
-                  </Grid>
+                  </Box>
                   
-                  <Grid item xs={12}>
+                  <Box>
                     <Box
                       draggable
                       onDragStart={(event) => onDragStart(event, 'transform')}
@@ -591,9 +591,9 @@ const PipelineBuilder: React.FC = () => {
                         Data transformation and formatting
                       </Typography>
                     </Box>
-                  </Grid>
+                  </Box>
                   
-                  <Grid item xs={12}>
+                  <Box>
                     <Box
                       draggable
                       onDragStart={(event) => onDragStart(event, 'output')}
@@ -618,8 +618,8 @@ const PipelineBuilder: React.FC = () => {
                         Final output and result storage
                       </Typography>
                     </Box>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </Box>
             </TabPanel>
             
@@ -670,10 +670,10 @@ const PipelineBuilder: React.FC = () => {
               </Box>
             </TabPanel>
           </Paper>
-        </Grid>
+        </Box>
         
         {/* Canvas */}
-        <Grid item xs={12} md={9}>
+        <Box>
           <Paper 
             elevation={0} 
             ref={reactFlowWrapper} 
@@ -712,8 +712,8 @@ const PipelineBuilder: React.FC = () => {
               <Background variant="dots" gap={12} size={1} />
             </ReactFlow>
           </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
       
       {/* Node Configuration Dialog */}
       <Dialog 
