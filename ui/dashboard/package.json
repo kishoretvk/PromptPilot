@@ -8,7 +8,7 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "react-scripts start",
     "start:prod": "cross-env REACT_APP_ENV=production craco start",
     "build": "craco build",
     "build:dev": "cross-env REACT_APP_ENV=development craco build",

@@ -128,7 +128,7 @@ services:
   frontend:
     build:
       context: ./ui/dashboard
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.simple
       target: production
       args:
         REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8000}
@@ -259,7 +259,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.21.0.0/16
 
 # ================================
 # Volumes

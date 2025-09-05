@@ -1,13 +1,14 @@
+import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { usePrompts, useCreatePrompt, useUpdatePrompt, useDeletePrompt } from '../usePrompts';
 import { promptService } from '../../services/PromptService';
 
 // Mock the prompt service
-vi.mock('../../services/PromptService');
+jest.mock('../../services/PromptService');
 
-const mockPromptService = vi.mocked(promptService);
+const mockPromptService = promptService as jest.Mocked<typeof promptService>;
 
 // Test wrapper for React Query
 const createWrapper = () => {
@@ -22,14 +23,16 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
 };
 
 describe('usePrompts Hook', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('usePrompts', () => {
@@ -294,7 +297,7 @@ describe('usePrompts Hook', () => {
   describe('Cache Management', () => {
     it('should invalidate queries after successful creation', async () => {
       const queryClient = new QueryClient();
-      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
       const createRequest = {
         name: 'New Prompt',
@@ -334,7 +337,7 @@ describe('usePrompts Hook', () => {
 
     it('should update cache after successful update', async () => {
       const queryClient = new QueryClient();
-      const setQueryDataSpy = vi.spyOn(queryClient, 'setQueryData');
+      const setQueryDataSpy = jest.spyOn(queryClient, 'setQueryData');
 
       const updateRequest = {
         name: 'Updated Prompt',

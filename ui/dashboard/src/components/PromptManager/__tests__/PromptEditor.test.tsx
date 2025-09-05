@@ -41,12 +41,14 @@ const mockPrompt: Prompt = {
   task_type: 'text_generation',
   tags: ['test'],
   version_info: {
+    id: 'v1',
+    prompt_id: '1',
     version: '1.0.0',
+    content_snapshot: {},
     created_at: '2024-01-01T00:00:00Z',
     created_by: 'test-user',
     is_active: true,
-    status: 'DRAFT',
-    author: 'Test User',
+    tags: ['test'],
   },
   messages: [
     {

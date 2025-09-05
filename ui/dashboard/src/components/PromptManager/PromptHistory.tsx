@@ -66,8 +66,8 @@ const PromptHistory: React.FC = () => {
   const [filter, setFilter] = useState({ user: '', dateRange: '' });
   
   const { data: versions, isLoading, error } = usePromptVersions(id || '');
-  const { data: versionDetails } = usePromptVersion(id || '', selectedVersion?.version || 0);
-  const restoreMutation = useRestorePromptVersion(id || '');
+  const { data: versionDetails } = usePromptVersion(id || '', selectedVersion?.id || '');
+  const restoreMutation = useRestorePromptVersion();
   
   useEffect(() => {
     if (versions && versions.length > 0 && !selectedVersion) {
@@ -104,7 +104,7 @@ const PromptHistory: React.FC = () => {
   const confirmRestore = () => {
     if (selectedVersion) {
       restoreMutation.mutate(
-        { version: selectedVersion.version, reason: restoreReason },
+        { promptId: id || '', versionId: selectedVersion?.id || '' },
         {
           onSuccess: () => {
             setOpenRestoreDialog(false);
@@ -241,11 +241,13 @@ const PromptHistory: React.FC = () => {
                           <Typography variant="subtitle2">
                             Version {version.version}
                           </Typography>
-                          <Chip 
-                            label={version.status} 
-                            size="small" 
-                            color={getStatusColor(version.status)}
-                          />
+                          {version.is_active && (
+                            <Chip 
+                              label="Active" 
+                              size="small" 
+                              color="success"
+                            />
+                          )}
                         </Box>
                       }
                       secondary={
@@ -340,7 +342,7 @@ const PromptHistory: React.FC = () => {
                     <NotesIcon /> Notes
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {selectedVersion.notes || 'No notes provided for this version.'}
+                    {selectedVersion.changelog || 'No notes provided for this version.'}
                   </Typography>
                 </Box>
                 
@@ -362,7 +364,7 @@ const PromptHistory: React.FC = () => {
                       maxHeight: 300
                     }}
                   >
-                    {selectedVersion.content}
+                    {selectedVersion.content_snapshot ? JSON.stringify(selectedVersion.content_snapshot, null, 2) : 'No content available'}
                   </Paper>
                 </Box>
                 
@@ -374,22 +376,22 @@ const PromptHistory: React.FC = () => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2">
-                        <strong>Model:</strong> {selectedVersion.model}
+                        <strong>Model:</strong> {selectedVersion.content_snapshot?.model_name || 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2">
-                        <strong>Temperature:</strong> {selectedVersion.temperature}
+                        <strong>Temperature:</strong> {selectedVersion.content_snapshot?.parameters?.temperature || 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2">
-                        <strong>Max Tokens:</strong> {selectedVersion.max_tokens}
+                        <strong>Max Tokens:</strong> {selectedVersion.content_snapshot?.parameters?.max_tokens || 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2">
-                        <strong>Top P:</strong> {selectedVersion.top_p}
+                        <strong>Top P:</strong> {selectedVersion.content_snapshot?.parameters?.top_p || 'N/A'}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -423,8 +425,8 @@ const PromptHistory: React.FC = () => {
         <DialogContent>
           {comparison.version1 && comparison.version2 && (
             <DiffViewer 
-              oldContent={comparison.version1.content}
-              newContent={comparison.version2.content}
+              oldContent={JSON.stringify(comparison.version1.content_snapshot, null, 2)}
+              newContent={JSON.stringify(comparison.version2.content_snapshot, null, 2)}
               oldTitle={`Version ${comparison.version1.version}`}
               newTitle={`Version ${comparison.version2.version}`}
             />

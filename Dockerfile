@@ -25,9 +25,9 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt .
+COPY requirements-simple.txt .
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-simple.txt
 
 # ================================
 # Stage 2: Production Runtime
@@ -73,7 +73,7 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Default command
-CMD ["python", "-m", "uvicorn", "api.rest:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["python", "-m", "uvicorn", "api.rest_simple:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 
 # ================================
 # Labels for metadata

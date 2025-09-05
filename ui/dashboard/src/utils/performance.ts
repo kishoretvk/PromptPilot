@@ -1,5 +1,5 @@
 // Performance Monitoring Utilities
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 
 export interface PerformanceMetric {
   name: string;
@@ -21,11 +21,11 @@ export class PerformanceMonitor {
 
   private initializeVitalsTracking() {
     // Track Core Web Vitals
-    getCLS(this.handleMetric.bind(this));
-    getFID(this.handleMetric.bind(this));
-    getFCP(this.handleMetric.bind(this));
-    getLCP(this.handleMetric.bind(this));
-    getTTFB(this.handleMetric.bind(this));
+    onCLS(this.handleMetric.bind(this));
+    onINP(this.handleMetric.bind(this));
+    onFCP(this.handleMetric.bind(this));
+    onLCP(this.handleMetric.bind(this));
+    onTTFB(this.handleMetric.bind(this));
   }
 
   private initializeCustomMetrics() {
@@ -143,7 +143,7 @@ export class PerformanceMonitor {
   private checkThresholds(metric: PerformanceMetric) {
     const thresholds = {
       CLS: { good: 0.1, poor: 0.25 },
-      FID: { good: 100, poor: 300 },
+      INP: { good: 200, poor: 500 },
       FCP: { good: 1800, poor: 3000 },
       LCP: { good: 2500, poor: 4000 },
       TTFB: { good: 800, poor: 1800 },

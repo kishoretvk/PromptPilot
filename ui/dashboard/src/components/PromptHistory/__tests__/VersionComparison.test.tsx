@@ -196,6 +196,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -219,6 +220,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -245,6 +247,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -271,6 +274,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -294,6 +298,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -315,6 +320,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -334,6 +340,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );
@@ -350,6 +357,7 @@ describe('VersionComparison', () => {
         versionA={mockVersionA}
         versionB={mockVersionB}
         differences={mockDifferences}
+        summary={mockSummary}
         onBack={mockOnBack}
       />
     );

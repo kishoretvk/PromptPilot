@@ -94,6 +94,7 @@ interface ResponsiveGridProps {
   lg?: number | 'auto';
   xl?: number | 'auto';
   sx?: any;
+  component?: React.ElementType;
 }
 
 export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
@@ -107,6 +108,7 @@ export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   lg,
   xl,
   sx,
+  component = 'div',
 }) => {
   const { isMobile } = useResponsive();
   
@@ -114,18 +116,39 @@ export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
     ? spacing 
     : { xs: isMobile ? 1 : spacing, sm: spacing, md: spacing, lg: spacing, xl: spacing };
 
+  // For container grids
+  if (container) {
+    const containerProps: any = {
+      container: true,
+      spacing: responsiveSpacing,
+      sx,
+      component,
+    };
+    
+    return (
+      <Grid {...containerProps}>
+        {children}
+      </Grid>
+    );
+  }
+  
+  // For item grids (use the item prop and breakpoint props)
+  // Fix: In MUI v7, we need to properly handle the props for item grids
+  const itemProps: any = {
+    item: true,
+    sx,
+    component,
+  };
+  
+  // Only add breakpoint props if they are defined
+  if (xs !== undefined) itemProps.xs = xs;
+  if (sm !== undefined) itemProps.sm = sm;
+  if (md !== undefined) itemProps.md = md;
+  if (lg !== undefined) itemProps.lg = lg;
+  if (xl !== undefined) itemProps.xl = xl;
+  
   return (
-    <Grid
-      container={container}
-      item={item}
-      spacing={responsiveSpacing}
-      xs={xs}
-      sm={sm}
-      md={md}
-      lg={lg}
-      xl={xl}
-      sx={sx}
-    >
+    <Grid {...itemProps}>
       {children}
     </Grid>
   );

@@ -272,6 +272,7 @@ const PromptHistory: React.FC<PromptHistoryProps> = ({
         versionA={comparisonData.version_a}
         versionB={comparisonData.version_b}
         differences={comparisonData.differences}
+        summary={comparisonData.summary}
         onBack={() => setShowComparison(false)}
       />
     );

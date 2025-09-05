@@ -69,8 +69,8 @@ describe('ErrorBoundary', () => {
   describe('when an error occurs', () => {
     it('should catch and display error', () => {
       renderWithProviders(
-        <ErrorBoundary componentName=\"TestComponent\">
-          <ThrowError errorMessage=\"Test error message\" />
+        <ErrorBoundary componentName="TestComponent">
+          <ThrowError errorMessage="Test error message" />
         </ErrorBoundary>
       );
 
@@ -96,7 +96,7 @@ describe('ErrorBoundary', () => {
       process.env.NODE_ENV = 'development';
 
       renderWithProviders(
-        <ErrorBoundary componentName=\"TestComponent\">
+        <ErrorBoundary componentName="TestComponent">
           <ThrowError />
         </ErrorBoundary>
       );
@@ -110,7 +110,7 @@ describe('ErrorBoundary', () => {
     it('should handle ChunkLoadError as warning', () => {
       renderWithProviders(
         <ErrorBoundary>
-          <ThrowError errorMessage=\"ChunkLoadError: Loading chunk failed\" />
+          <ThrowError errorMessage="ChunkLoadError: Loading chunk failed" />
         </ErrorBoundary>
       );
 
@@ -124,7 +124,7 @@ describe('ErrorBoundary', () => {
     it('should handle network errors appropriately', () => {
       renderWithProviders(
         <ErrorBoundary>
-          <ThrowError errorMessage=\"Network Error: Failed to fetch\" />
+          <ThrowError errorMessage="Network Error: Failed to fetch" />
         </ErrorBoundary>
       );
 
@@ -171,7 +171,7 @@ describe('ErrorBoundary', () => {
           shouldThrow = false; // Stop throwing after first attempt
           throw new Error('Retryable error');
         }
-        return <div data-testid=\"success-component\">Success!</div>;
+        return <div data-testid="success-component">Success!</div>;
       };
 
       renderWithProviders(
@@ -262,8 +262,8 @@ describe('ErrorBoundary', () => {
       const user = userEvent.setup();
       
       renderWithProviders(
-        <ErrorBoundary componentName=\"TestComponent\">
-          <ThrowError errorMessage=\"Detailed test error\" />
+        <ErrorBoundary componentName="TestComponent">
+          <ThrowError errorMessage="Detailed test error" />
         </ErrorBoundary>
       );
 
@@ -305,7 +305,7 @@ describe('ErrorBoundary', () => {
 
   describe('custom fallback', () => {
     it('should render custom fallback when provided', () => {
-      const CustomFallback = () => <div data-testid=\"custom-fallback\">Custom Error UI</div>;
+      const CustomFallback = () => <div data-testid="custom-fallback">Custom Error UI</div>;
       
       renderWithProviders(
         <ErrorBoundary fallback={<CustomFallback />}>
@@ -324,7 +324,7 @@ describe('ErrorBoundary', () => {
       
       renderWithProviders(
         <ErrorBoundary onError={onError}>
-          <ThrowError errorMessage=\"Callback test error\" />
+          <ThrowError errorMessage="Callback test error" />
         </ErrorBoundary>
       );
 

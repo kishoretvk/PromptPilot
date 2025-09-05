@@ -106,7 +106,5 @@ module.exports = {
     compress: true,
     // Optimize for faster rebuilds
     hot: true,
-    // Reduce info logging
-    stats: 'minimal',
   },
 };

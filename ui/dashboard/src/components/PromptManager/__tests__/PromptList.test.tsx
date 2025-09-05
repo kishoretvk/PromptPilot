@@ -3,13 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { PromptList } from '../PromptList';
 import { theme } from '../../../theme';
 import { usePrompts } from '../../../hooks/usePrompts';
 
 // Mock the hooks
-vi.mock('../../../hooks/usePrompts');
+jest.mock('../../../hooks/usePrompts');
 
 // Mock data
 const mockPrompts = {
@@ -75,10 +74,10 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 describe('PromptList Component', () => {
-  const mockUsePrompts = vi.mocked(usePrompts);
+  const mockUsePrompts = jest.mocked(usePrompts);
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('renders loading state correctly', () => {
@@ -89,7 +88,7 @@ describe('PromptList Component', () => {
       isFetching: true,
       isPending: true,
       isError: false,
-      refetch: vi.fn(),
+      refetch: jest.fn(),
     } as any);
 
     render(
@@ -109,7 +108,7 @@ describe('PromptList Component', () => {
       isFetching: false,
       isPending: false,
       isError: false,
-      refetch: vi.fn(),
+      refetch: jest.fn(),
     } as any);
 
     render(
@@ -145,7 +144,7 @@ describe('PromptList Component', () => {
       isFetching: false,
       isPending: false,
       isError: true,
-      refetch: vi.fn(),
+      refetch: jest.fn(),
     } as any);
 
     render(
@@ -165,7 +164,7 @@ describe('PromptList Component', () => {
       isFetching: false,
       isPending: false,
       isError: false,
-      refetch: vi.fn(),
+      refetch: jest.fn(),
     } as any);
 
     render(
@@ -178,7 +177,7 @@ describe('PromptList Component', () => {
   });
 
   it('handles search functionality', async () => {
-    const mockRefetch = vi.fn();
+    const mockRefetch = jest.fn();
     mockUsePrompts.mockReturnValue({
       data: mockPrompts,
       isLoading: false,

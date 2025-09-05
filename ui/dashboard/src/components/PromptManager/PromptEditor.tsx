@@ -220,10 +220,20 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
         tags: formData.tags!,
         developer_notes: formData.developer_notes,
         version_info: prompt?.version_info || {
+          id: `version_${Date.now()}`,
+          prompt_id: prompt?.id || `prompt_${Date.now()}`,
           version: '1.0.0',
+          content_snapshot: {
+            messages: formData.messages || [],
+            input_variables: formData.input_variables || {},
+            model_provider: formData.model_provider || '',
+            model_name: formData.model_name || '',
+            parameters: formData.parameters || {}
+          },
           created_by: 'Current User',
           created_at: new Date().toISOString(),
           is_active: true,
+          tags: [],
         },
         messages: formData.messages!,
         input_variables: formData.input_variables!,

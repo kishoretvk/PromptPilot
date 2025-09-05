@@ -35,11 +35,13 @@ import {
   Edit,
 } from '@mui/icons-material';
 import ReactDiffViewer from 'react-diff-viewer';
+import { VersionComparisonResponse } from '../../types/Prompt';
 
 interface VersionComparisonProps {
   versionA: any;
   versionB: any;
   differences: any[];
+  summary: VersionComparisonResponse['summary'];
   onBack: () => void;
 }
 
@@ -47,6 +49,7 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
   versionA,
   versionB,
   differences,
+  summary,
   onBack,
 }) => {
   const theme = useTheme();
@@ -57,8 +60,8 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
     return JSON.stringify(content, null, 2);
   };
 
-  const oldContent = formatContentForDiff(versionA?.content || {});
-  const newContent = formatContentForDiff(versionB?.content || {});
+  const oldContent = formatContentForDiff(versionA?.content_snapshot || {});
+  const newContent = formatContentForDiff(versionB?.content_snapshot || {});
 
   const toggleFieldExpansion = (field: string) => {
     setExpandedFields(prev => ({
@@ -89,19 +92,13 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
     ? differences 
     : differences.filter(diff => diff.type === filter);
 
-  const fieldStatistics = differences && typeof differences === 'object' && 'summary' in differences 
-    ? differences.summary?.field_statistics || {
-        messages: { added: 0, modified: 0, removed: 0 },
-        parameters: { added: 0, modified: 0, removed: 0 },
-        input_variables: { added: 0, modified: 0, removed: 0 },
-        other_fields: { added: 0, modified: 0, removed: 0 }
-      }
-    : {
-        messages: { added: 0, modified: 0, removed: 0 },
-        parameters: { added: 0, modified: 0, removed: 0 },
-        input_variables: { added: 0, modified: 0, removed: 0 },
-        other_fields: { added: 0, modified: 0, removed: 0 }
-      };
+  // Fix: Access field_statistics from the summary prop
+  const fieldStatistics = summary?.field_statistics || {
+    messages: { added: 0, modified: 0, removed: 0 },
+    parameters: { added: 0, modified: 0, removed: 0 },
+    input_variables: { added: 0, modified: 0, removed: 0 },
+    other_fields: { added: 0, modified: 0, removed: 0 }
+  };
 
   return (
     <Box sx={{ py: 3 }}>
@@ -144,7 +141,7 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                 <Person sx={{ fontSize: 16 }} />
                 <Typography variant="caption">
-                  {versionA?.content?.created_by || 'Unknown'}
+                  {versionA?.created_by || 'Unknown'}
                 </Typography>
                 <Schedule sx={{ fontSize: 16, ml: 1 }} />
                 <Typography variant="caption">
@@ -177,7 +174,7 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                 <Person sx={{ fontSize: 16 }} />
                 <Typography variant="caption">
-                  {versionB?.content?.created_by || 'Unknown'}
+                  {versionB?.created_by || 'Unknown'}
                 </Typography>
                 <Schedule sx={{ fontSize: 16, ml: 1 }} />
                 <Typography variant="caption">
@@ -281,275 +278,184 @@ const VersionComparison: React.FC<VersionComparisonProps> = ({
                 </Select>
               </FormControl>
             </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+
+            {/* Differences List */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {filteredDifferences.map((diff, index) => (
-                <Tooltip key={index} title={`${diff.type}: ${diff.field}`}>
-                  <Chip 
-                    label={diff.field} 
-                    size="small" 
-                    color={
-                      diff.type === 'modified' ? 'warning' : 
-                      diff.type === 'added' ? 'success' : 'error'
-                    }
-                    variant="outlined"
-                    onClick={() => toggleFieldExpansion(diff.field)}
-                    icon={getDiffIcon(diff.type)}
-                  />
-                </Tooltip>
+                <Paper key={index} sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    {getDiffIcon(diff.type)}
+                    <Typography variant="subtitle2" sx={{ ml: 1 }}>
+                      {diff.field} ({diff.type})
+                    </Typography>
+                  </Box>
+                  
+                  {diff.diff ? (
+                    <ReactDiffViewer
+                      oldValue={diff.version1 ? JSON.stringify(diff.version1, null, 2) : ''}
+                      newValue={diff.version2 ? JSON.stringify(diff.version2, null, 2) : ''}
+                      splitView={true}
+                      disableWordDiff={false}
+                      useDarkTheme={theme.palette.mode === 'dark'}
+                      styles={{
+                        variables: {
+                          dark: {
+                            diffViewerBackground: theme.palette.grey[900],
+                            diffViewerColor: theme.palette.common.white,
+                            addedBackground: theme.palette.success.dark,
+                            addedColor: theme.palette.common.white,
+                            removedBackground: theme.palette.error.dark,
+                            removedColor: theme.palette.common.white,
+                            wordAddedBackground: theme.palette.success.light,
+                            wordRemovedBackground: theme.palette.error.light,
+                            addedGutterBackground: theme.palette.success.main,
+                            removedGutterBackground: theme.palette.error.main,
+                            gutterBackground: theme.palette.grey[800],
+                            gutterBackgroundDark: theme.palette.grey[900],
+                            highlightBackground: theme.palette.warning.dark,
+                            highlightGutterBackground: theme.palette.warning.main,
+                            codeFoldGutterBackground: theme.palette.grey[800],
+                            codeFoldBackground: theme.palette.grey[900],
+                            emptyLineBackground: theme.palette.grey[900],
+                            gutterColor: theme.palette.grey[300],
+                            addedGutterColor: theme.palette.common.white,
+                            removedGutterColor: theme.palette.common.white,
+                            codeFoldContentColor: theme.palette.grey[300],
+                            diffViewerTitleBackground: theme.palette.grey[800],
+                            diffViewerTitleColor: theme.palette.common.white,
+                            diffViewerTitleBorderColor: theme.palette.grey[700],
+                          },
+                          light: {
+                            diffViewerBackground: theme.palette.common.white,
+                            diffViewerColor: theme.palette.common.black,
+                            addedBackground: theme.palette.success.light,
+                            addedColor: theme.palette.common.black,
+                            removedBackground: theme.palette.error.light,
+                            removedColor: theme.palette.common.black,
+                            wordAddedBackground: theme.palette.success.light,
+                            wordRemovedBackground: theme.palette.error.light,
+                            addedGutterBackground: theme.palette.success.main,
+                            removedGutterBackground: theme.palette.error.main,
+                            gutterBackground: theme.palette.grey[100],
+                            gutterBackgroundDark: theme.palette.grey[200],
+                            highlightBackground: theme.palette.warning.light,
+                            highlightGutterBackground: theme.palette.warning.main,
+                            codeFoldGutterBackground: theme.palette.grey[100],
+                            codeFoldBackground: theme.palette.grey[200],
+                            emptyLineBackground: theme.palette.grey[50],
+                            gutterColor: theme.palette.grey[700],
+                            addedGutterColor: theme.palette.common.white,
+                            removedGutterColor: theme.palette.common.white,
+                            codeFoldContentColor: theme.palette.grey[700],
+                            diffViewerTitleBackground: theme.palette.grey[100],
+                            diffViewerTitleColor: theme.palette.common.black,
+                            diffViewerTitleBorderColor: theme.palette.grey[300],
+                          }
+                        }
+                      }}
+                    />
+                  ) : (
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="caption" color="text.secondary">Version {versionA?.version}</Typography>
+                        <Paper variant="outlined" sx={{ p: 1, mt: 1, bgcolor: getDiffColor('removed') }}>
+                          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {JSON.stringify(diff.version1, null, 2)}
+                          </pre>
+                        </Paper>
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="caption" color="text.secondary">Version {versionB?.version}</Typography>
+                        <Paper variant="outlined" sx={{ p: 1, mt: 1, bgcolor: getDiffColor('added') }}>
+                          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {JSON.stringify(diff.version2, null, 2)}
+                          </pre>
+                        </Paper>
+                      </Box>
+                    </Box>
+                  )}
+                </Paper>
               ))}
             </Box>
           </Box>
         )}
+
+        {differences.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="text.secondary">
+              No differences found between these versions.
+            </Typography>
+          </Box>
+        )}
       </Paper>
 
-      {/* Field-Level Differences */}
-      {filteredDifferences.length > 0 && (
-        <Paper sx={{ mb: 4, p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Field-Level Differences
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          
-          {filteredDifferences.map((diff, index) => (
-            <Accordion 
-              key={index} 
-              expanded={expandedFields[diff.field] || false}
-              onChange={() => toggleFieldExpansion(diff.field)}
-              sx={{ mb: 1 }}
-            >
-              <AccordionSummary 
-                expandIcon={<ExpandMore />}
-                sx={{ 
-                  bgcolor: getDiffColor(diff.type),
-                  '&:hover': { bgcolor: theme.palette.action.hover }
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {getDiffIcon(diff.type)}
-                  <Typography>{diff.field}</Typography>
-                  <Chip 
-                    label={diff.type} 
-                    size="small" 
-                    color={
-                      diff.type === 'modified' ? 'warning' : 
-                      diff.type === 'added' ? 'success' : 'error'
-                    }
-                    variant="outlined"
-                  />
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                {diff.field === 'messages' && diff.diff ? (
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Message Changes:
-                    </Typography>
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Index</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Details</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {diff.diff.map((msgDiff: any, msgIndex: number) => (
-                            <TableRow key={msgIndex}>
-                              <TableCell>{msgDiff.index}</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={msgDiff.type} 
-                                  size="small" 
-                                  color={
-                                    msgDiff.type === 'modified' ? 'warning' : 
-                                    msgDiff.type === 'added' ? 'success' : 'error'
-                                  }
-                                  variant="outlined"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                {msgDiff.content_diff ? (
-                                  <Box sx={{ mt: 1 }}>
-                                    <ReactDiffViewer
-                                      oldValue={msgDiff.version1?.content || ''}
-                                      newValue={msgDiff.version2?.content || ''}
-                                      splitView={true}
-                                      useDarkTheme={theme.palette.mode === 'dark'}
-                                      styles={{
-                                        diffContainer: {
-                                          pre: {
-                                            lineHeight: '1.4',
-                                            fontSize: '0.8rem',
-                                          },
-                                        },
-                                      }}
-                                    />
-                                  </Box>
-                                ) : (
-                                  <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
-                                    {JSON.stringify({ version1: msgDiff.version1, version2: msgDiff.version2 }, null, 2)}
-                                  </pre>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-                ) : diff.field === 'parameters' && diff.diff ? (
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Parameter Changes:
-                    </Typography>
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Key</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Version 1</TableCell>
-                            <TableCell>Version 2</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {diff.diff.map((paramDiff: any, paramIndex: number) => (
-                            <TableRow key={paramIndex}>
-                              <TableCell>{paramDiff.key}</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={paramDiff.type} 
-                                  size="small" 
-                                  color={
-                                    paramDiff.type === 'modified' ? 'warning' : 
-                                    paramDiff.type === 'added' ? 'success' : 'error'
-                                  }
-                                  variant="outlined"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
-                                  {JSON.stringify(paramDiff.version1, null, 2)}
-                                </pre>
-                              </TableCell>
-                              <TableCell>
-                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
-                                  {JSON.stringify(paramDiff.version2, null, 2)}
-                                </pre>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-                ) : diff.field === 'input_variables' && diff.diff ? (
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Input Variable Changes:
-                    </Typography>
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Key</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Version 1</TableCell>
-                            <TableCell>Version 2</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {diff.diff.map((varDiff: any, varIndex: number) => (
-                            <TableRow key={varIndex}>
-                              <TableCell>{varDiff.key}</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={varDiff.type} 
-                                  size="small" 
-                                  color={
-                                    varDiff.type === 'modified' ? 'warning' : 
-                                    varDiff.type === 'added' ? 'success' : 'error'
-                                  }
-                                  variant="outlined"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
-                                  {JSON.stringify(varDiff.version1, null, 2)}
-                                </pre>
-                              </TableCell>
-                              <TableCell>
-                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
-                                  {JSON.stringify(varDiff.version2, null, 2)}
-                                </pre>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-                ) : diff.diff && Array.isArray(diff.diff) ? (
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Text Diff:
-                    </Typography>
-                    <ReactDiffViewer
-                      oldValue={diff.diff.filter(line => line.startsWith('-') || line.startsWith(' ')).join('')}
-                      newValue={diff.diff.filter(line => line.startsWith('+') || line.startsWith(' ')).join('')}
-                      splitView={true}
-                      useDarkTheme={theme.palette.mode === 'dark'}
-                    />
-                  </Box>
-                ) : (
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Version {versionA?.version}:
-                      </Typography>
-                      <pre style={{ whiteSpace: 'pre-wrap', backgroundColor: theme.palette.grey[100], padding: '8px', borderRadius: '4px' }}>
-                        {JSON.stringify(diff.version1, null, 2)}
-                      </pre>
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Version {versionB?.version}:
-                      </Typography>
-                      <pre style={{ whiteSpace: 'pre-wrap', backgroundColor: theme.palette.grey[100], padding: '8px', borderRadius: '4px' }}>
-                        {JSON.stringify(diff.version2, null, 2)}
-                      </pre>
-                    </Box>
-                  </Box>
-                )}
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Paper>
-      )}
-
-      {/* Detailed Diff Viewer */}
+      {/* Full Content Diff */}
       <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Full Content Comparison
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Code sx={{ mr: 1 }} />
+          <Typography variant="h6">Full Content Comparison</Typography>
+        </Box>
         <ReactDiffViewer
           oldValue={oldContent}
           newValue={newContent}
           splitView={true}
+          disableWordDiff={false}
           useDarkTheme={theme.palette.mode === 'dark'}
           styles={{
-            diffContainer: {
-              pre: {
-                lineHeight: '1.5',
+            variables: {
+              dark: {
+                diffViewerBackground: theme.palette.grey[900],
+                diffViewerColor: theme.palette.common.white,
+                addedBackground: theme.palette.success.dark,
+                addedColor: theme.palette.common.white,
+                removedBackground: theme.palette.error.dark,
+                removedColor: theme.palette.common.white,
+                wordAddedBackground: theme.palette.success.light,
+                wordRemovedBackground: theme.palette.error.light,
+                addedGutterBackground: theme.palette.success.main,
+                removedGutterBackground: theme.palette.error.main,
+                gutterBackground: theme.palette.grey[800],
+                gutterBackgroundDark: theme.palette.grey[900],
+                highlightBackground: theme.palette.warning.dark,
+                highlightGutterBackground: theme.palette.warning.main,
+                codeFoldGutterBackground: theme.palette.grey[800],
+                codeFoldBackground: theme.palette.grey[900],
+                emptyLineBackground: theme.palette.grey[900],
+                gutterColor: theme.palette.grey[300],
+                addedGutterColor: theme.palette.common.white,
+                removedGutterColor: theme.palette.common.white,
+                codeFoldContentColor: theme.palette.grey[300],
+                diffViewerTitleBackground: theme.palette.grey[800],
+                diffViewerTitleColor: theme.palette.common.white,
+                diffViewerTitleBorderColor: theme.palette.grey[700],
               },
-            },
-            line: {
-              '&:hover': {
-                backgroundColor: theme.palette.action.hover,
-              },
-            },
+              light: {
+                diffViewerBackground: theme.palette.common.white,
+                diffViewerColor: theme.palette.common.black,
+                addedBackground: theme.palette.success.light,
+                addedColor: theme.palette.common.black,
+                removedBackground: theme.palette.error.light,
+                removedColor: theme.palette.common.black,
+                wordAddedBackground: theme.palette.success.light,
+                wordRemovedBackground: theme.palette.error.light,
+                addedGutterBackground: theme.palette.success.main,
+                removedGutterBackground: theme.palette.error.main,
+                gutterBackground: theme.palette.grey[100],
+                gutterBackgroundDark: theme.palette.grey[200],
+                highlightBackground: theme.palette.warning.light,
+                highlightGutterBackground: theme.palette.warning.main,
+                codeFoldGutterBackground: theme.palette.grey[100],
+                codeFoldBackground: theme.palette.grey[200],
+                emptyLineBackground: theme.palette.grey[50],
+                gutterColor: theme.palette.grey[700],
+                addedGutterColor: theme.palette.common.white,
+                removedGutterColor: theme.palette.common.white,
+                codeFoldContentColor: theme.palette.grey[700],
+                diffViewerTitleBackground: theme.palette.grey[100],
+                diffViewerTitleColor: theme.palette.common.black,
+                diffViewerTitleBorderColor: theme.palette.grey[300],
+              }
+            }
           }}
         />
       </Paper>

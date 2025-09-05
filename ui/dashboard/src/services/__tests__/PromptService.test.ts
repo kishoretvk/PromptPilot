@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { promptService } from '../PromptService';
 import { apiClient } from '../api';
 import { CreatePromptRequest, UpdatePromptRequest, TestPromptRequest } from '../../types';
 
 // Mock the API client
-vi.mock('../api');
+jest.mock('../api');
 
-const mockApiClient = vi.mocked(apiClient);
+const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
 describe('PromptService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('getPrompts', () => {

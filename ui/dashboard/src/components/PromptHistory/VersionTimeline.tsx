@@ -256,7 +256,7 @@ const VersionTimeline: React.FC<VersionTimelineProps> = ({
                             e.stopPropagation();
                             onBranchVersion(version);
                           }}>
-                            <Branch />
+                            <ForkRight />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Merge">

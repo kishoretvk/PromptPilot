@@ -1,41 +1,52 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Container,
   Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardHeader,
-  Button,
-  Chip,
-  IconButton,
   Tabs,
   Tab,
-  CircularProgress,
-  Alert,
-  Paper,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
+  Button,
   useTheme,
   useMediaQuery,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Divider,
+  Paper,
+  CardHeader,
+  IconButton
 } from '@mui/material';
 import {
+  Check as CheckIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
-  CheckCircle as CheckIcon,
   Info as InfoIcon,
-  Refresh as RefreshIcon,
-  Timeline as TimelineIcon,
   Speed as SpeedIcon,
   Memory as MemoryIcon,
-  Storage as StorageIcon,
   People as PeopleIcon,
-  AttachMoney as CostIcon,
+  Refresh as RefreshIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingFlat as TrendingFlatIcon,
+  CheckCircle as CheckCircleIcon,
+  Timeline as TimelineIcon,
   Notifications as NotificationsIcon,
-  FilterList as FilterIcon,
-  ArrowUpward as UpIcon,
-  ArrowDownward as DownIcon,
+  Storage as StorageIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon
 } from '@mui/icons-material';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -48,8 +59,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { Doughnut, Line } from 'react-chartjs-2';
 import { format, subHours, subDays } from 'date-fns';
-import { useMonitoringData, useAlerts, useSystemHealth } from '../../hooks';
+import { useMonitoringData, useAlerts, useSystemHealth } from '../hooks';
 import { Alert as AlertType, SystemHealth } from '../../types/Monitoring';
 import apiClient from '../../services/api';
 
@@ -321,7 +333,7 @@ const MonitoringDashboard: React.FC = () => {
                   </Box>
                   {card.trend && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                      {card.trend > 0 ? <UpIcon color="error" /> : <DownIcon color="success" />}
+                      {card.trend > 0 ? <ArrowUpwardIcon color="error" /> : <ArrowDownwardIcon color="success" />}
                       <Typography variant="body2" color={card.trend > 0 ? 'error.main' : 'success.main'}>
                         {Math.abs(card.trend)}% {card.trend > 0 ? 'increase' : 'decrease'}
                       </Typography>
@@ -406,7 +418,7 @@ const MonitoringDashboard: React.FC = () => {
                               <Typography variant="subtitle2">{alert.title}</Typography>
                             </Box>
                             <Typography variant="caption" color="text.secondary">
-                              {format(new Date(alert.triggered_at), 'HH:mm')}
+                              {format(new Date(alert.timestamp), 'MMM dd, HH:mm')}
                             </Typography>
                           </Box>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

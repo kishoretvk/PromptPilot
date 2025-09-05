@@ -47,6 +47,16 @@ export const usePromptVersions = (promptId: string, enabled = true) => {
   });
 };
 
+// Hook for fetching a specific prompt version
+export const usePromptVersion = (promptId: string, versionId: string, enabled = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.prompts.detail(promptId), 'version', versionId],
+    queryFn: () => promptService.getPromptByVersion(promptId, versionId),
+    enabled: enabled && !!promptId && !!versionId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
 // Helper functions for mutations
 const createPrompt = async (prompt: CreatePromptRequest): Promise<Prompt> => {
   return await promptService.createPrompt(prompt);
@@ -58,6 +68,7 @@ const updatePrompt = async (params: { id: string; data: UpdatePromptRequest }): 
 
 // Hook for creating a new prompt
 export const useCreatePrompt = () => {
+  const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: createPrompt,
@@ -76,6 +87,7 @@ export const useCreatePrompt = () => {
 
 // Hook for updating a prompt
 export const useUpdatePrompt = () => {
+  const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: updatePrompt,
@@ -120,7 +132,7 @@ export const usePromptComparison = (
   const { enabled = true } = options;
   
   return useQuery({
-    queryKey: queryKeys.prompts.comparison(promptId, version1Id, version2Id),
+    queryKey: [...queryKeys.prompts.detail(promptId), 'comparison', version1Id, version2Id],
     queryFn: () => promptService.compareVersions(promptId, version1Id, version2Id),
     enabled: enabled && !!promptId && !!version1Id && !!version2Id,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -241,7 +253,7 @@ export const useTagPromptVersion = () => {
     onSuccess: (data) => {
       // Invalidate versions to reflect the new tag
       queryClient.invalidateQueries({
-        queryKey: queryKeys.prompts.versions(data.promptId),
+        queryKey: queryKeys.prompts.versions(data.prompt_id),
       });
     },
   });

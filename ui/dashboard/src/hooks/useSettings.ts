@@ -102,6 +102,8 @@ const updateSecuritySettings = async (settings: SecuritySettings): Promise<Secur
 
 // Hook for updating theme settings
 export const useUpdateThemeSettings = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: updateThemeSettings,
     onSuccess: (data) => {
@@ -126,6 +128,8 @@ export const useUpdateNotificationSettings = () => {
 
 // Hook for updating security settings
 export const useUpdateSecuritySettings = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: updateSecuritySettings,
     onSuccess: (data) => {
@@ -174,6 +178,8 @@ export const useDeleteAPIKey = () => {
 
 // Hook for testing API key
 export const useTestAPIKey = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: (id: string) => settingsService.testAPIKey(id),
   });
@@ -218,6 +224,8 @@ export const useDeleteIntegration = () => {
 
 // Hook for testing integration
 export const useTestIntegration = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: (id: string) => settingsService.testIntegration(id),
   });

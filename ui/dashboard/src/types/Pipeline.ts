@@ -14,16 +14,33 @@ export interface PipelineStep {
   };
 }
 
+export interface PipelineNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: Record<string, any>;
+}
+
+export interface PipelineEdge {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+}
+
 export interface Pipeline {
   id: string;
   name: string;
   description: string;
   steps: PipelineStep[];
+  nodes?: PipelineNode[];
+  edges?: PipelineEdge[];
   error_strategy: 'fail_fast' | 'continue' | 'retry';
   created_at: string;
   updated_at: string;
   version: string;
   tags: string[];
+  status?: string;
 }
 
 export interface CreatePipelineRequest {

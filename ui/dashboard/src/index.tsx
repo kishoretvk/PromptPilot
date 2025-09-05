@@ -8,6 +8,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import App from './App';
 import { lightPromptPilotTheme } from './theme/theme';
 import reportWebVitals from './reportWebVitals';
+import type { Metric } from 'web-vitals';
 import ErrorFallback from './components/common/ErrorFallback';
 // import 'react-toastify/dist/ReactToastify.css';
 import './index.css';
@@ -93,7 +94,7 @@ root.render(
 );
 
 // Performance monitoring
-reportWebVitals((metric) => {
+reportWebVitals((metric: Metric) => {
   // Log performance metrics
   if (process.env.NODE_ENV === 'development') {
     console.log('Web Vitals:', metric);

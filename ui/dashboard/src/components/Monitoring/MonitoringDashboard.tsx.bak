@@ -1,41 +1,41 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
-  Container,
   Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardHeader,
-  Button,
-  Chip,
-  IconButton,
   Tabs,
   Tab,
-  CircularProgress,
-  Alert,
-  Paper,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
+  Button,
   useTheme,
   useMediaQuery,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Divider,
 } from '@mui/material';
 import {
+  Check as CheckIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
-  CheckCircle as CheckIcon,
-  Info as InfoIcon,
-  Refresh as RefreshIcon,
-  Timeline as TimelineIcon,
   Speed as SpeedIcon,
   Memory as MemoryIcon,
-  Storage as StorageIcon,
   People as PeopleIcon,
-  AttachMoney as CostIcon,
-  Notifications as NotificationsIcon,
-  FilterList as FilterIcon,
-  ArrowUpward as UpIcon,
-  ArrowDownward as DownIcon,
+  Refresh as RefreshIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingFlat as TrendingFlatIcon,
 } from '@mui/icons-material';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -49,9 +49,9 @@ import {
   Legend,
 } from 'chart.js';
 import { format, subHours, subDays } from 'date-fns';
-import { useMonitoringData, useAlerts, useSystemHealth } from '../../hooks';
-import { Alert as AlertType, SystemHealth } from '../../types/Monitoring';
-import apiClient from '../../services/api';
+import { useMonitoringData, useAlerts, useSystemHealth } from '../hooks/useMonitoring';
+import { Alert as AlertType, SystemHealth } from '../types/Monitoring';
+import apiClient from '../services/api';
 
 // Register Chart.js components
 ChartJS.register(

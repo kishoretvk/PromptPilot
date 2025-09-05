@@ -3,7 +3,6 @@ import {
   SystemHealth,
   Alert,
   MonitoringData,
-  AlertRule,
 } from '../types/Monitoring';
 
 class MonitoringService {
@@ -37,41 +36,6 @@ class MonitoringService {
       return response.data;
     } catch (error) {
       throw new Error(`Failed to fetch alerts: ${error}`);
-    }
-  }
-
-  async getAlertRules(): Promise<AlertRule[]> {
-    try {
-      const response = await apiClient.get<AlertRule[]>(`${this.basePath}/alert-rules`);
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to fetch alert rules: ${error}`);
-    }
-  }
-
-  async createAlertRule(rule: Partial<AlertRule>): Promise<AlertRule> {
-    try {
-      const response = await apiClient.post<AlertRule>(`${this.basePath}/alert-rules`, rule);
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to create alert rule: ${error}`);
-    }
-  }
-
-  async updateAlertRule(id: string, rule: Partial<AlertRule>): Promise<AlertRule> {
-    try {
-      const response = await apiClient.put<AlertRule>(`${this.basePath}/alert-rules/${id}`, rule);
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to update alert rule: ${error}`);
-    }
-  }
-
-  async deleteAlertRule(id: string): Promise<void> {
-    try {
-      await apiClient.delete(`${this.basePath}/alert-rules/${id}`);
-    } catch (error) {
-      throw new Error(`Failed to delete alert rule: ${error}`);
     }
   }
 
