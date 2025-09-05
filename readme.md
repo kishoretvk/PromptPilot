@@ -87,16 +87,22 @@ chmod +x setup-linux.sh
 ## 📊 Demo & Screenshots
 
 ### Prompt Manager
-![Prompt Manager](docs/screenshots/prompt-manager.png)
+![Prompt Manager](docs/screenshots/HomePage.png)
 *Create, edit, and test prompts with a rich text editor*
 
 ### Pipeline Builder
-![Pipeline Builder](docs/screenshots/pipeline-builder.png)
+![Pipeline Builder](docs/screenshots/PromptBuilder.png)
 *Visual workflow editor for building complex LLM pipelines*
 
 ### Analytics Dashboard
-![Analytics Dashboard](docs/screenshots/analytics-dashboard.png)
+![Analytics Dashboard](docs/screenshots/AnalyticsDashboard.png)
 *Comprehensive analytics for monitoring performance and costs*
+
+### Pormpt History
+![Pormpt History](docs/screenshots/promptHistroy.png)
+*Comprehensive  prompt tracking for versioning and historys*
+
+
 
 ## 🛠️ Architecture
 
