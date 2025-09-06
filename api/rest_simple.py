@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, BackgroundTasks, Depends
+from fastapi import FastAPI, HTTPException, Query, BackgroundTasks, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List, Optional
@@ -70,6 +70,23 @@ async def health_check():
         "version": "1.0.0",
         "database": "connected" if db_status else "disconnected"
     }
+
+# Frontend error logging endpoint
+@app.post("/api/logs/frontend-error", tags=["Logging"])
+async def log_frontend_error(
+    error_data: dict,
+    request: Request
+):
+    """Log frontend errors for monitoring"""
+    logger.error(
+        "Frontend error logged",
+        error_message=error_data.get("message"),
+        error_stack=error_data.get("stack"),
+        error_component=error_data.get("component"),
+        user_agent=request.headers.get("user-agent"),
+        url=str(request.url)
+    )
+    return {"status": "logged"}
 
 # Prompt Management Endpoints
 @app.get("/api/v1/prompts", response_model=PaginatedResponse[PromptResponse], tags=["Prompts"])

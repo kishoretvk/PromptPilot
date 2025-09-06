@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useCallback } from 'react';
+import React, { Suspense, useState, useCallback, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -36,6 +36,7 @@ import {
 import { ErrorBoundary } from 'react-error-boundary';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { QueryClientProvider, QueryClient, useQuery } from '@tanstack/react-query';
+import { useThemeSettings } from './hooks/useSettings';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 // import { toast } from 'react-toastify';
 import ErrorFallback from './components/common/ErrorFallback';
@@ -311,29 +312,56 @@ function AppLayout() {
   );
 }
 
-// Theme setup
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#3498db',
-    },
-  },
-});
-
 const queryClient = new QueryClient();
 
-function App() {
+// Inner app reads theme settings via react-query and builds MUI theme dynamically
+function InnerApp() {
+  const { data: themeSettings } = useThemeSettings();
+  const storedMode = typeof window !== 'undefined' ? (localStorage.getItem('pp_theme_mode') ?? 'light') : 'light';
+  const rawMode = themeSettings?.mode || storedMode;
+
+  // Handle 'auto' mode by detecting system preference
+  const mode = rawMode === 'auto'
+    ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : rawMode as 'light' | 'dark';
+
+  const primary = themeSettings?.primary_color || '#3498db';
+  const secondary = themeSettings?.secondary_color || '#dc004e';
+
+  useEffect(() => {
+    if (themeSettings?.mode && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('pp_theme_mode', themeSettings.mode);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [themeSettings]);
+
+  const theme = useMemo(() => createTheme({
+    palette: {
+      mode,
+      primary: { main: primary },
+      secondary: { main: secondary },
+    },
+  }), [mode, primary, secondary]);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <AppLayout />
-        </Router>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      <Router>
+        <AppLayout />
+      </Router>
     </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <InnerApp />
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

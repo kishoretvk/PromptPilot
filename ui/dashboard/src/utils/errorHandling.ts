@@ -128,7 +128,8 @@ class ErrorHandler {
     try {
       // Only send important errors to backend to avoid spam
       if (errorLog.level === 'error' || errorLog.error.status && errorLog.error.status >= 500) {
-        await fetch('/api/logs/frontend-error', {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+        await fetch(`${apiUrl}/api/logs/frontend-error`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

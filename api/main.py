@@ -384,6 +384,23 @@ async def test_prompt(
     
     return result
 
+# Frontend error logging endpoint
+@app.post("/api/logs/frontend-error", tags=["Logging"])
+async def log_frontend_error(
+    error_data: dict,
+    request: Request
+):
+    """Log frontend errors for monitoring"""
+    logger.error(
+        "Frontend error logged",
+        error_message=error_data.get("message"),
+        error_stack=error_data.get("stack"),
+        error_component=error_data.get("component"),
+        user_agent=request.headers.get("user-agent"),
+        url=str(request.url)
+    )
+    return {"status": "logged"}
+
 # Settings endpoints (continuing from rest_simple.py pattern)
 @app.get("/api/v1/settings", response_model=SettingsResponse, tags=["Settings"])
 async def get_settings(current_user = Depends(get_current_user)):
@@ -401,6 +418,44 @@ async def update_settings(
     settings_store.update(settings_data)
     logger.info("Settings updated successfully")
     return settings_store
+
+# Theme settings endpoints
+@app.get("/api/v1/settings/theme", tags=["Settings"])
+async def get_theme_settings(current_user = Depends(get_current_user)):
+    """Get theme settings"""
+    logger.info("Fetching theme settings", user_id=current_user.id)
+    return settings_store.get("theme", {"mode": "light", "primary_color": "#1976d2"})
+
+@app.put("/api/v1/settings/theme", tags=["Settings"])
+async def update_theme_settings(
+    theme_data: dict,
+    current_user = Depends(get_current_user)
+):
+    """Update theme settings"""
+    logger.info("Updating theme settings", user_id=current_user.id)
+    settings_store["theme"] = theme_data
+    logger.info("Theme settings updated successfully")
+    return theme_data
+
+# API Keys endpoints
+@app.get("/api/v1/settings/api-keys", tags=["Settings"])
+async def get_api_keys(current_user = Depends(get_current_user)):
+    """Get API keys"""
+    logger.info("Fetching API keys", user_id=current_user.id)
+    return settings_store.get("api_keys", [])
+
+# LLM Providers endpoints
+@app.get("/api/v1/settings/providers/llm", tags=["Settings"])
+async def get_llm_providers(current_user = Depends(get_current_user)):
+    """Get LLM providers"""
+    logger.info("Fetching LLM providers", user_id=current_user.id)
+    return {
+        "providers": [
+            {"name": "OpenAI", "status": "configured", "models": ["gpt-3.5-turbo", "gpt-4"]},
+            {"name": "Anthropic", "status": "not_configured", "models": ["claude-3-sonnet"]},
+            {"name": "HuggingFace", "status": "not_configured", "models": []}
+        ]
+    }
 
 # Additional endpoints for analytics
 @app.get("/api/v1/analytics/usage", tags=["Analytics"])
