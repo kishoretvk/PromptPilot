@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Query, BackgroundTasks, Depends, Req
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from api.routes import ollama
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -115,6 +116,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# Register Ollama routes
+app.include_router(ollama.router)
 
 # Add middleware
 app.add_middleware(LoggingMiddleware)
