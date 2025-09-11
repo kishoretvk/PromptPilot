@@ -10,15 +10,159 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from pydantic import BaseModel
-from models import Prompt, PromptVersion, User, Execution, Pipeline
-from schemas import PromptCreate, PromptUpdate, PromptResponse, ExecutionCreate
-from database import get_db
-from config import settings
-from utils.logger import get_logger
-from utils.security import hash_password, verify_password
-from exceptions import PromptNotFoundError, UserNotFoundError, ValidationError
+from api.database.models import Prompt, PromptVersion, User, PromptExecution, PipelineExecution, Pipeline
+from api.schemas import CreatePromptRequest, UpdatePromptRequest, PromptResponse, TestPromptRequest, TestResultResponse
+
+# Define missing Pydantic models inline
+from pydantic import BaseModel
+from typing import Optional, List
+
+class PromptCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    messages: List[dict]
+    parameters: Optional[dict] = None
+    model_name: Optional[str] = None
+    model_provider: Optional[str] = None
+    tags: Optional[List[str]] = None
+    task_type: Optional[str] = None
+
+class PromptUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    messages: Optional[List[dict]] = None
+    parameters: Optional[dict] = None
+    model_name: Optional[str] = None
+    model_provider: Optional[str] = None
+    tags: Optional[List[str]] = None
+    task_type: Optional[str] = None
+
+class PaginatedResponse(BaseModel):
+    items: List[PromptResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
+    has_next: bool
+    has_prev: bool
+
+class Execution(BaseModel):
+    id: str
+    prompt_id: str
+    input_data: dict
+    status: str
+    model_provider: Optional[str] = None
+    model_name: Optional[str] = None
+    model_parameters: Optional[dict] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    execution_time: Optional[float] = None
+    cost: Optional[float] = None
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
+    error_message: Optional[str] = None
+
+class BaseService:
+    """Base service class"""
+    pass
+
+class Setting(BaseModel):
+    id: str
+    key: str
+    value: Any
+    description: Optional[str] = None
+    category: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+from api.database.config import get_db
+from api.config import settings
+import logging
+
+def get_logger(name: str):
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
 
 logger = get_logger(__name__)
+# Define exception classes inline
+class PromptNotFoundError(Exception):
+    """Raised when a prompt is not found"""
+    pass
+
+class UserNotFoundError(Exception):
+    """Raised when a user is not found"""
+    pass
+
+class ValidationError(Exception):
+    """Raised when validation fails"""
+    pass
+
+class LLMProviderError(Exception):
+    """Raised when LLM provider encounters an error"""
+    pass
+
+# Define security functions inline
+import bcrypt
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt"""
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+logger = get_logger(__name__)
+
+# Define LLMService class inline before PromptService
+class LLMService:
+    """Service for LLM provider integrations"""
+
+    def __init__(self):
+        self.providers = {}
+
+    async def execute_prompt(self, prompt, variables: Dict[str, Any], parameters: Dict[str, Any]):
+        """Execute prompt with LLM provider"""
+
+        # Compile prompt with variables
+        compiled_messages = []
+        for msg in prompt.messages:
+            content = msg['content']
+            for var, value in variables.items():
+                content = content.replace(f"{{{var}}}", str(value))
+            compiled_messages.append({
+                'role': msg['role'],
+                'content': content
+            })
+
+        # Get provider
+        provider = self.get_provider(prompt.model_provider)
+        if not provider:
+            raise LLMProviderError(f"Provider {prompt.model_provider} not available")
+
+        # Execute with provider
+        result = await provider.execute(
+            model=prompt.model_name,
+            messages=compiled_messages,
+            parameters=parameters
+        )
+
+        return result
+
+    def get_provider(self, provider_name: str):
+        """Get LLM provider instance"""
+        # Implementation would return appropriate provider
+        # (OpenAI, Anthropic, etc.)
+        return None
 
 class PromptService:
     """Service for prompt management operations"""
@@ -769,13 +913,13 @@ class SettingsService(BaseService):
 
 class LLMService:
     """Service for LLM provider integrations"""
-    
+
     def __init__(self):
         self.providers = {}
-    
+
     async def execute_prompt(self, prompt, variables: Dict[str, Any], parameters: Dict[str, Any]):
         """Execute prompt with LLM provider"""
-        
+
         # Compile prompt with variables
         compiled_messages = []
         for msg in prompt.messages:
@@ -786,21 +930,62 @@ class LLMService:
                 'role': msg['role'],
                 'content': content
             })
-        
+
         # Get provider
         provider = self.get_provider(prompt.model_provider)
         if not provider:
             raise LLMProviderError(f"Provider {prompt.model_provider} not available")
-        
+
         # Execute with provider
         result = await provider.execute(
             model=prompt.model_name,
             messages=compiled_messages,
             parameters=parameters
         )
-        
+
         return result
-    
+
+    def get_provider(self, provider_name: str):
+        """Get LLM provider instance"""
+        # Implementation would return appropriate provider
+        # (OpenAI, Anthropic, etc.)
+        return None
+
+# Define LLMService class inline
+class LLMService:
+    """Service for LLM provider integrations"""
+
+    def __init__(self):
+        self.providers = {}
+
+    async def execute_prompt(self, prompt, variables: Dict[str, Any], parameters: Dict[str, Any]):
+        """Execute prompt with LLM provider"""
+
+        # Compile prompt with variables
+        compiled_messages = []
+        for msg in prompt.messages:
+            content = msg['content']
+            for var, value in variables.items():
+                content = content.replace(f"{{{var}}}", str(value))
+            compiled_messages.append({
+                'role': msg['role'],
+                'content': content
+            })
+
+        # Get provider
+        provider = self.get_provider(prompt.model_provider)
+        if not provider:
+            raise LLMProviderError(f"Provider {prompt.model_provider} not available")
+
+        # Execute with provider
+        result = await provider.execute(
+            model=prompt.model_name,
+            messages=compiled_messages,
+            parameters=parameters
+        )
+
+        return result
+
     def get_provider(self, provider_name: str):
         """Get LLM provider instance"""
         # Implementation would return appropriate provider

@@ -1,11 +1,21 @@
 from fastapi import APIRouter, HTTPException, Body
-from api.ollama_client import (
-    list_ollama_models,
-    pull_ollama_model,
-    generate_with_ollama,
-    list_running_ollama_models,
-    chat_with_ollama,
-)
+try:
+    from api.ollama_client import (
+        list_ollama_models,
+        pull_ollama_model,
+        generate_with_ollama,
+        list_running_ollama_models,
+        chat_with_ollama,
+    )
+except ImportError:
+    # Fallback for relative imports
+    from ..ollama_client import (
+        list_ollama_models,
+        pull_ollama_model,
+        generate_with_ollama,
+        list_running_ollama_models,
+        chat_with_ollama,
+    )
 
 router = APIRouter(prefix="/api/v1/ollama", tags=["Ollama"])
 

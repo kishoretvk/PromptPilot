@@ -7,8 +7,7 @@ from sqlalchemy import (
     Column, Integer, String, Text, DateTime, Boolean, JSON, 
     ForeignKey, Float, Enum, UniqueConstraint, Index
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import declarative_base, relationship, Session
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 import uuid
 import enum
@@ -448,7 +447,7 @@ class AuditLog(Base):
     # Change details
     old_values = Column(JSONB, nullable=True)
     new_values = Column(JSONB, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    audit_metadata = Column(JSONB, nullable=True)  # Renamed from 'metadata'
     
     # Timing
     timestamp = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), index=True)

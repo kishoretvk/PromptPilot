@@ -14,7 +14,7 @@ from sqlalchemy.pool import StaticPool
 from api.rest import app
 from api.database.config import get_db
 from api.database.models import Base
-from api.services.storage_service import StorageService
+from api.services import StorageService
 
 # Test database URL (using SQLite for tests)
 TEST_DATABASE_URL = "sqlite:///./test.db"

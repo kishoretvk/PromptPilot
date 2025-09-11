@@ -1,8 +1,7 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any, Union, Generic, TypeVar
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, validator
 
 # Enums
 class PromptStatusEnum(str, Enum):
@@ -82,14 +81,15 @@ class CreatePromptRequest(BaseModel):
     task_type: str = Field(..., min_length=1, max_length=100)
     tags: List[str] = Field(default_factory=list)
     developer_notes: Optional[str]
-    messages: List[MessageSchema] = Field(..., min_items=1)
+    messages: List[MessageSchema] = Field(..., min_length=1)
     input_variables: Dict[str, Any] = Field(default_factory=dict)
     model_provider: str = Field(..., min_length=1)
     model_name: str = Field(..., min_length=1)
     parameters: Dict[str, Any] = Field(default_factory=dict)
     test_cases: List[TestCaseSchema] = Field(default_factory=list)
 
-    @validator('tags')
+    @field_validator('tags')
+    @classmethod
     def validate_tags(cls, v):
         if len(v) > 10:
             raise ValueError('Maximum 10 tags allowed')

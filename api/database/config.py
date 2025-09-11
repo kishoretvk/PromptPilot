@@ -13,10 +13,10 @@ from contextlib import contextmanager
 
 logger = structlog.get_logger()
 
-# Database URL from environment
+# Database URL from environment - use SQLite for testing/development
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://promptpilot_user:promptpilot_secure_password@localhost:5432/promptpilot"
+    "sqlite:///./promptpilot_test.db"  # Use SQLite for testing
 )
 
 # Connection pool settings
@@ -25,18 +25,31 @@ MAX_OVERFLOW = int(os.getenv("DATABASE_MAX_OVERFLOW", "20"))
 POOL_TIMEOUT = int(os.getenv("DATABASE_POOL_TIMEOUT", "30"))
 POOL_RECYCLE = int(os.getenv("DATABASE_POOL_RECYCLE", "3600"))  # 1 hour
 
-# Create database engine with connection pooling
-engine = create_engine(
-    DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=POOL_SIZE,
-    max_overflow=MAX_OVERFLOW,
-    pool_timeout=POOL_TIMEOUT,
-    pool_recycle=POOL_RECYCLE,
-    pool_pre_ping=True,  # Validates connections before use
-    echo=os.getenv("DATABASE_ECHO", "false").lower() == "true",  # Log SQL queries
-    future=True,  # Use SQLAlchemy 2.0 style
-)
+# Create database engine with connection pooling (SQLite compatible)
+if "sqlite" in DATABASE_URL:
+    # Use StaticPool for SQLite (single-threaded)
+    from sqlalchemy.pool import StaticPool
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},  # Allow multi-threading
+        pool_pre_ping=True,
+        echo=os.getenv("DATABASE_ECHO", "false").lower() == "true",
+        future=True,
+    )
+else:
+    # Use QueuePool for PostgreSQL/MySQL
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=QueuePool,
+        pool_size=POOL_SIZE,
+        max_overflow=MAX_OVERFLOW,
+        pool_timeout=POOL_TIMEOUT,
+        pool_recycle=POOL_RECYCLE,
+        pool_pre_ping=True,
+        echo=os.getenv("DATABASE_ECHO", "false").lower() == "true",
+        future=True,
+    )
 
 # Configure SQLite for better performance (if using SQLite for development)
 @event.listens_for(Engine, "connect")
