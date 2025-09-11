@@ -4,11 +4,13 @@
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from sqlalchemy import (
-    Column, Integer, String, Text, DateTime, Boolean, JSON, 
+    Column, Integer, String, Text, DateTime, Boolean, JSON,
     ForeignKey, Float, Enum, UniqueConstraint, Index
 )
 from sqlalchemy.orm import declarative_base, relationship, Session
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
+# Use JSON for SQLite compatibility instead of JSONB
+from sqlalchemy import JSON
 import uuid
 import enum
 
@@ -83,7 +85,7 @@ class APIKey(Base):
     name = Column(String(255), nullable=False)
     key_hash = Column(String(255), unique=True, nullable=False, index=True)
     key_prefix = Column(String(10), nullable=False)  # First few chars for display
-    permissions = Column(JSONB, nullable=False, default=[])
+    permissions = Column(JSON, nullable=False, default=[])
     is_active = Column(Boolean, default=True, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=True)
     last_used = Column(DateTime(timezone=True), nullable=True)
@@ -103,8 +105,8 @@ class LLMProvider(Base):
     provider_type = Column(String(50), nullable=False)  # openai, anthropic, ollama, etc.
     base_url = Column(String(500), nullable=True)
     api_key_encrypted = Column(Text, nullable=True)  # Encrypted API key
-    models = Column(JSONB, nullable=False, default=[])
-    configuration = Column(JSONB, nullable=False, default={})
+    models = Column(JSON, nullable=False, default=[])
+    configuration = Column(JSON, nullable=False, default={})
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
@@ -125,26 +127,26 @@ class Prompt(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     task_type = Column(String(100), nullable=False, index=True)
-    tags = Column(JSONB, nullable=False, default=[])
+    tags = Column(JSON, nullable=False, default=[])
     developer_notes = Column(Text, nullable=True)
-    
+
     # Version information
     version = Column(String(50), nullable=False, default="1.0.0")
     status = Column(Enum(PromptStatus), default=PromptStatus.DRAFT, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    
+
     # Content
-    messages = Column(JSONB, nullable=False, default=[])
-    input_variables = Column(JSONB, nullable=False, default={})
-    
+    messages = Column(JSON, nullable=False, default=[])
+    input_variables = Column(JSON, nullable=False, default={})
+
     # Model configuration
     provider_id = Column(UUID(as_uuid=True), ForeignKey("llm_providers.id"), nullable=True)
     model_name = Column(String(100), nullable=True)
-    parameters = Column(JSONB, nullable=False, default={})
-    
+    parameters = Column(JSON, nullable=False, default={})
+
     # Testing and evaluation
-    test_cases = Column(JSONB, nullable=False, default=[])
-    evaluation_metrics = Column(JSONB, nullable=False, default={})
+    test_cases = Column(JSON, nullable=False, default=[])
+    evaluation_metrics = Column(JSON, nullable=False, default={})
     
     # Metadata
     creator_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
@@ -177,7 +179,7 @@ class PromptVersion(Base):
     changes_summary = Column(Text, nullable=True)
     
     # Snapshot of prompt at this version
-    content_snapshot = Column(JSONB, nullable=False)
+    content_snapshot = Column(JSON, nullable=False)
     
     # Metadata
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
@@ -186,7 +188,7 @@ class PromptVersion(Base):
     # Version relationships
     parent_version_id = Column(UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=True)
     is_active = Column(Boolean, default=False)
-    tags = Column(JSONB, nullable=False, default=[])
+    tags = Column(JSON, nullable=False, default=[])
     
     # Merge tracking
     merged_from_version_id = Column(UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=True)
@@ -195,10 +197,10 @@ class PromptVersion(Base):
     # Relationships
     prompt = relationship("Prompt", back_populates="versions")
     created_by_user = relationship("User", foreign_keys=[created_by])
-    parent_version = relationship("PromptVersion", remote_side=[id], back_populates="child_versions")
-    child_versions = relationship("PromptVersion", back_populates="parent_version")
-    merged_from_version = relationship("PromptVersion", remote_side=[id], back_populates="merged_to_versions")
-    merged_to_versions = relationship("PromptVersion", back_populates="merged_from_version")
+    parent_version = relationship("PromptVersion", remote_side=[id], back_populates="child_versions", foreign_keys=[parent_version_id])
+    child_versions = relationship("PromptVersion", back_populates="parent_version", foreign_keys=[parent_version_id])
+    merged_from_version = relationship("PromptVersion", remote_side=[id], back_populates="merged_to_versions", foreign_keys=[merged_from_version_id])
+    merged_to_versions = relationship("PromptVersion", back_populates="merged_from_version", foreign_keys=[merged_from_version_id])
     
     __table_args__ = (
         UniqueConstraint('prompt_id', 'version', name='uq_prompt_version'),
@@ -252,8 +254,8 @@ class PipelineStep(Base):
     
     # Step configuration
     prompt_id = Column(UUID(as_uuid=True), ForeignKey("prompts.id"), nullable=True)
-    configuration = Column(JSONB, nullable=False, default={})
-    position = Column(JSONB, nullable=False, default={})  # UI position
+    configuration = Column(JSON, nullable=False, default={})
+    position = Column(JSON, nullable=False, default={})  # UI position
     
     # Metadata
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
@@ -282,7 +284,7 @@ class PipelineConnection(Base):
     connection_type = Column(String(50), default="data_flow", nullable=False)
     
     # Connection configuration
-    configuration = Column(JSONB, nullable=False, default={})
+    configuration = Column(JSON, nullable=False, default={})
     
     # Relationships
     pipeline = relationship("Pipeline", back_populates="connections")
@@ -304,8 +306,8 @@ class PipelineExecution(Base):
     
     # Execution details
     status = Column(Enum(PipelineStatus), default=PipelineStatus.RUNNING, nullable=False)
-    input_data = Column(JSONB, nullable=True)
-    output_data = Column(JSONB, nullable=True)
+    input_data = Column(JSON, nullable=True)
+    output_data = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
     
     # Timing
@@ -342,8 +344,8 @@ class StepExecution(Base):
     
     # Execution details
     status = Column(String(50), nullable=False, default="pending")  # pending, running, completed, failed
-    input_data = Column(JSONB, nullable=True)
-    output_data = Column(JSONB, nullable=True)
+    input_data = Column(JSON, nullable=True)
+    output_data = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
     
     # Timing
@@ -375,14 +377,14 @@ class PromptExecution(Base):
     executor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
     # Execution details
-    input_variables = Column(JSONB, nullable=False, default={})
+    input_variables = Column(JSON, nullable=False, default={})
     response = Column(Text, nullable=True)
     status = Column(String(50), nullable=False, default="completed")  # completed, failed, timeout
     error_message = Column(Text, nullable=True)
     
     # Model information
     model_name = Column(String(100), nullable=True)
-    model_parameters = Column(JSONB, nullable=False, default={})
+    model_parameters = Column(JSON, nullable=False, default={})
     
     # Metrics
     tokens_used = Column(Integer, nullable=False, default=0)
@@ -412,7 +414,7 @@ class Setting(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     category = Column(String(100), nullable=False, index=True)
     key = Column(String(255), nullable=False)
-    value = Column(JSONB, nullable=True)
+    value = Column(JSON, nullable=True)
     description = Column(Text, nullable=True)
     is_sensitive = Column(Boolean, default=False, nullable=False)  # For passwords, API keys
     
@@ -445,9 +447,9 @@ class AuditLog(Base):
     request_id = Column(String(100), nullable=True, index=True)
     
     # Change details
-    old_values = Column(JSONB, nullable=True)
-    new_values = Column(JSONB, nullable=True)
-    audit_metadata = Column(JSONB, nullable=True)  # Renamed from 'metadata'
+    old_values = Column(JSON, nullable=True)
+    new_values = Column(JSON, nullable=True)
+    audit_metadata = Column(JSON, nullable=True)  # Renamed from 'metadata'
     
     # Timing
     timestamp = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), index=True)
@@ -473,7 +475,7 @@ class UsageMetric(Base):
     unit = Column(String(50), nullable=True)  # tokens, seconds, requests, etc.
     
     # Dimensions
-    dimensions = Column(JSONB, nullable=False, default={})  # provider, model, etc.
+    dimensions = Column(JSON, nullable=False, default={})  # provider, model, etc.
     
     # Timing (for aggregation)
     date = Column(DateTime(timezone=True), nullable=False, index=True)

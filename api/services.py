@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from pydantic import BaseModel
-from api.database.models import Prompt, PromptVersion, User, PromptExecution, PipelineExecution, Pipeline
+from api.database.models import Prompt, PromptVersion, User, PromptExecution, PipelineExecution, Pipeline, PromptStatus
 from api.schemas import CreatePromptRequest, UpdatePromptRequest, PromptResponse, TestPromptRequest, TestResultResponse
 
 # Define missing Pydantic models inline
@@ -166,21 +166,93 @@ class LLMService:
 
 class PromptService:
     """Service for prompt management operations"""
-    
-    def __init__(self, db: AsyncSession):
+
+    def __init__(self, db):
         self.db = db
-    
+
     async def create_prompt(self, prompt_data: PromptCreate, user_id: str) -> PromptResponse:
         """Create a new prompt with initial version"""
-        # Implementation here...
-        pass
-    
+        try:
+            # Create new prompt
+            prompt_id = str(uuid.uuid4())
+            prompt = Prompt(
+                id=uuid.uuid4(),
+                name=prompt_data.name,
+                description=prompt_data.description,
+                task_type=prompt_data.task_type or "text_generation",
+                tags=prompt_data.tags or [],
+                developer_notes="",
+                version="1.0.0",
+                status=PromptStatus.ACTIVE,
+                messages=prompt_data.messages,
+                input_variables={},
+                model_provider=prompt_data.model_provider or "ollama",
+                model_name=prompt_data.model_name or "llama2",
+                parameters=prompt_data.parameters or {
+                    "temperature": 0.7,
+                    "max_tokens": 2048,
+                    "top_p": 1.0
+                },
+                test_cases=[],
+                evaluation_metrics={},
+                creator_id=user_id,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+
+            self.db.add(prompt)
+            self.db.commit()
+            self.db.refresh(prompt)
+
+            # Create initial version
+            await self.create_version(prompt.id, "1.0.0", "Initial version", user_id)
+
+            logger.info(f"Created prompt {prompt.id} by user {user_id}")
+            return PromptResponse.from_orm(prompt)
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to create prompt: {e}")
+            raise
+
     async def get_prompt(self, prompt_id: str) -> Optional[PromptResponse]:
         """Get prompt by ID"""
-        prompt = self.db.query(Prompt).filter(Prompt.id == prompt_id).first()
-        if not prompt:
-            return None
-        return PromptResponse.from_orm(prompt)
+        try:
+            from api.database.models import Prompt as PromptModel
+            prompt = self.db.query(PromptModel).filter(PromptModel.id == prompt_id).first()
+            if not prompt:
+                return None
+
+            # Convert to response format
+            return PromptResponse(
+                id=prompt.id,
+                name=prompt.name,
+                description=prompt.description,
+                task_type=prompt.task_type,
+                tags=prompt.tags,
+                developer_notes=prompt.developer_notes,
+                version_info={
+                    "id": str(uuid.uuid4()),
+                    "prompt_id": prompt.id,
+                    "version": prompt.version,
+                    "created_by": prompt.creator_id,
+                    "created_at": prompt.created_at.isoformat(),
+                    "is_active": True,
+                    "tags": []
+                },
+                messages=prompt.messages,
+                input_variables=prompt.input_variables,
+                model_provider=prompt.model_provider,
+                model_name=prompt.model_name,
+                parameters=prompt.parameters,
+                test_cases=prompt.test_cases,
+                evaluation_metrics=prompt.evaluation_metrics,
+                created_at=prompt.created_at.isoformat(),
+                updated_at=prompt.updated_at.isoformat()
+            )
+        except Exception as e:
+            logger.error(f"Failed to get prompt {prompt_id}: {e}")
+            raise
     
     async def get_prompts(self, page: int = 1, limit: int = 10, search: str = None, 
                          tags: List[str] = None, task_type: str = None) -> PaginatedResponse:
@@ -745,6 +817,24 @@ class PromptService:
                 return f"{current_version}.1"
         except (ValueError, IndexError):
             return "1.0.1"
+
+    def log_action(self, user_id: str, action: str, resource_type: str, resource_id: str, metadata: dict = None):
+        """Log user action for audit trail"""
+        try:
+            from api.database.models import AuditLog
+            audit_log = AuditLog(
+                user_id=user_id,
+                action=action,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                audit_metadata=metadata or {},
+                timestamp=datetime.utcnow()
+            )
+            self.db.add(audit_log)
+            self.db.commit()
+        except Exception as e:
+            logger.error(f"Failed to log action: {e}")
+            # Don't raise - logging failure shouldn't break main operation
     
     async def get_prompt_version(self, prompt_id: str, version_id: str) -> Optional[PromptResponse]:
         """Get a specific version of a prompt"""
