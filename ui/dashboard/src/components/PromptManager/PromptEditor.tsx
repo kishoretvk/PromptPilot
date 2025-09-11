@@ -82,8 +82,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     developer_notes: '',
     messages: [],
     input_variables: {},
-    model_provider: 'openai',
-    model_name: 'gpt-3.5-turbo',
+    model_provider: 'ollama',
+    model_name: 'llama2',
     parameters: {
       temperature: 0.7,
       max_tokens: 2048,
@@ -503,6 +503,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     <MenuItem value="anthropic">Anthropic</MenuItem>
                     <MenuItem value="google">Google</MenuItem>
                     <MenuItem value="azure">Azure OpenAI</MenuItem>
+                    <MenuItem value="ollama">Ollama</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
