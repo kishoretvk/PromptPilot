@@ -15,7 +15,7 @@ import {
 } from '../types/Settings';
 
 class SettingsService {
-  private basePath = '/settings';
+  private basePath = '/api/v1/settings';
 
   // General Settings
   async getSettings(): Promise<Settings> {

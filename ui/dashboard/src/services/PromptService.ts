@@ -10,7 +10,7 @@ import {
 } from '../types';
 
 class PromptService {
-  private basePath = '/prompts';
+  private basePath = '/api/v1/prompts';
 
   async getPrompts(page = 1, limit = 10, search?: string, tags?: string[]): Promise<PaginatedResponse<Prompt>> {
     const params: any = { page, limit };
