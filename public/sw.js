@@ -1,34 +1,44 @@
 // Service Worker for PromptPilot Dashboard
+
 const CACHE_NAME = 'promptpilot-v1.0.0';
 const STATIC_CACHE = 'promptpilot-static-v1.0.0';
 const API_CACHE = 'promptpilot-api-v1.0.0';
 
-// Resources to cache immediately
+// Resources to cache immediately (avoid hard-coded hashed bundle filenames)
 const STATIC_RESOURCES = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
+  '/index.html',
   '/manifest.json',
   '/favicon.ico'
 ];
 
-// API endpoints to cache with different strategies
-const API_ENDPOINTS = [
-  '/api/prompts',
-  '/api/pipelines', 
-  '/api/analytics',
-  '/api/settings'
-];
-
+// Do NOT pre-cache API endpoints; use network-first for /api/*
+ 
 // Install event - cache static resources
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('Service Worker: Caching static resources');
-        return cache.addAll(STATIC_RESOURCES);
+      .then(async (cache) => {
+        console.log('Service Worker: Caching static resources (best-effort)');
+        // Attempt to addAll but don't fail installation if some resources 404
+        try {
+          await cache.addAll(STATIC_RESOURCES);
+        } catch (err) {
+          console.warn('Service Worker: Some static resources failed to cache, continuing install', err);
+          // Fallback: fetch each resource and cache successful responses
+          await Promise.all(STATIC_RESOURCES.map(async (path) => {
+            try {
+              const resp = await fetch(path);
+              if (resp && resp.ok) {
+                await cache.put(path, resp.clone());
+              }
+            } catch (e) {
+              // ignore individual failures
+            }
+          }));
+        }
       })
       .then(() => {
         console.log('Service Worker: Skip waiting');
