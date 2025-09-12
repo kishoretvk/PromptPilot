@@ -7,7 +7,7 @@ import {
 } from '../types';
 
 class AnalyticsService {
-  private basePath = '/analytics';
+  private basePath = '/api/v1/analytics';
 
   async getUsageMetrics(filters?: AnalyticsFilter): Promise<UsageMetrics> {
     try {

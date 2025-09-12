@@ -51,7 +51,7 @@ import {
 } from 'chart.js';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { format, subDays, subMonths } from 'date-fns';
-import { useDashboardData, useUsageMetrics, usePerformanceData, useCostData } from '../../hooks/useAnalytics';
+import { useUsageMetrics, usePerformanceData, useCostData } from '../../hooks/useAnalytics';
 import { UsageMetrics, PerformanceData, CostData } from '../../types/Analytics';
 
 // Register Chart.js components
@@ -107,12 +107,7 @@ const AnalyticsDashboard: React.FC = () => {
     end: format(new Date(), 'yyyy-MM-dd')
   });
   
-  // Use individual hooks instead of trying to destructure from useAnalytics()
-  const { 
-    data: dashboardData, 
-    isLoading: analyticsLoading, 
-    refetch: refetchAnalytics 
-  } = useDashboardData(timeRange);
+  // Use individual hooks for analytics data
   const { data: usageMetrics, isLoading: usageLoading } = useUsageMetrics(timeRange);
   const { data: performanceData, isLoading: performanceLoading } = usePerformanceData(timeRange);
   const { data: costData, isLoading: costLoading } = useCostData(timeRange);
@@ -293,9 +288,12 @@ const AnalyticsDashboard: React.FC = () => {
             </FormControl>
             
             <Tooltip title="Refresh Data">
-              <IconButton 
-                onClick={() => refetchAnalytics()}
-                disabled={analyticsLoading}
+              <IconButton
+                onClick={() => {
+                  // Refresh all data by invalidating queries
+                  window.location.reload();
+                }}
+                disabled={usageLoading || performanceLoading || costLoading}
               >
                 <RefreshIcon />
               </IconButton>
@@ -428,24 +426,9 @@ const AnalyticsDashboard: React.FC = () => {
                 subheader="Most frequently executed prompts"
               />
               <CardContent>
-                {analyticsLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
-                    <CircularProgress />
-                  </Box>
-                ) : (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {dashboardData?.top_prompts?.slice(0, 5).map((prompt: any, index: number) => (
-                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2" noWrap sx={{ maxWidth: '70%' }}>
-                          {prompt.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {prompt.executions.toLocaleString()}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                  <Typography color="text.secondary">Data not available</Typography>
+                </Box>
               </CardContent>
             </Card>
           </Box>
@@ -476,27 +459,9 @@ const AnalyticsDashboard: React.FC = () => {
                 subheader="Common error types and frequencies"
               />
               <CardContent>
-                {analyticsLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
-                    <CircularProgress />
-                  </Box>
-                ) : (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {dashboardData?.error_analysis?.slice(0, 5).map((error: any, index: number) => (
-                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ErrorIcon sx={{ color: 'error.main', fontSize: 'small' }} />
-                          <Typography variant="body2" noWrap sx={{ maxWidth: '70%' }}>
-                            {error.type}
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {error.count.toLocaleString()}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                  <Typography color="text.secondary">Data not available</Typography>
+                </Box>
               </CardContent>
             </Card>
           </Box>

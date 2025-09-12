@@ -217,11 +217,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     };
 
     try {
-      if (pipelineId) {
-        await pipelineOperations.update({ id: pipelineId, data: pipelineData });
-      } else {
-        await pipelineOperations.create(pipelineData);
-      }
+      // Temporarily disabled - pipeline endpoints not available in current backend
+      console.log('Pipeline save temporarily disabled - backend endpoints not available');
+      alert('Pipeline functionality is temporarily disabled. Backend needs to be restarted to enable pipeline operations.');
+      return;
+
+      // Uncomment when backend is restarted:
+      // if (pipelineId) {
+      //   await pipelineOperations.update({ id: pipelineId, data: pipelineData });
+      // } else {
+      //   await pipelineOperations.create(pipelineData);
+      // }
     } catch (error) {
       console.error('Failed to save pipeline:', error);
     }
@@ -256,8 +262,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
               variant="outlined"
               startIcon={<SaveIcon />}
               onClick={handleSavePipeline}
+              disabled
             >
-              Save
+              Save (Disabled)
             </Button>
             
             <Button

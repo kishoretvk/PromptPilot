@@ -121,16 +121,9 @@ app = FastAPI(
 app.include_router(ollama.router)
 
 # Add middleware
-app.add_middleware(LoggingMiddleware)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -140,6 +133,8 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["localhost", "127.0.0.1", "*.promptpilot.dev"]
 )
+
+app.add_middleware(LoggingMiddleware)
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
@@ -484,6 +479,400 @@ async def get_usage_metrics(
             {"date": "2024-01-03", "executions": 45},
         ]
     }
+
+# Analytics endpoints that UI expects (without /api/v1 prefix for compatibility)
+@app.get("/analytics/usage", tags=["Analytics"])
+async def get_analytics_usage(
+    start_date: str = Query(None),
+    end_date: str = Query(None),
+    current_user = Depends(get_current_user)
+):
+    """Get usage analytics data"""
+    logger.info("Fetching analytics usage", user_id=current_user.id, start_date=start_date, end_date=end_date)
+    return {
+        "total_executions": 150,
+        "unique_users": 5,
+        "total_cost": 12.34,
+        "avg_response_time": 1.23,
+        "data": [
+            {"date": "2025-08-13", "executions": 20, "cost": 1.23},
+            {"date": "2025-08-14", "executions": 35, "cost": 2.45},
+            {"date": "2025-09-12", "executions": 45, "cost": 3.67},
+        ]
+    }
+
+@app.get("/analytics/dashboard", tags=["Analytics"])
+async def get_analytics_dashboard(
+    time_range: str = Query("30d"),
+    current_user = Depends(get_current_user)
+):
+    """Get dashboard analytics data"""
+    logger.info("Fetching analytics dashboard", user_id=current_user.id, time_range=time_range)
+    return {
+        "total_prompts": len(prompts_store),
+        "active_prompts": len([p for p in prompts_store.values() if p["status"] == "published"]),
+        "total_executions": 150,
+        "success_rate": 96.5,
+        "avg_cost_per_execution": 0.082,
+        "top_prompts": [
+            {"name": "Sample Prompt", "executions": 25, "success_rate": 96.0}
+        ]
+    }
+
+@app.get("/analytics/costs", tags=["Analytics"])
+async def get_analytics_costs(
+    time_range: str = Query("30d"),
+    current_user = Depends(get_current_user)
+):
+    """Get cost analytics data"""
+    logger.info("Fetching analytics costs", user_id=current_user.id, time_range=time_range)
+    return {
+        "total_cost": 12.34,
+        "cost_by_provider": {
+            "openai": 10.23,
+            "anthropic": 2.11
+        },
+        "cost_trend": [
+            {"date": "2025-08-13", "cost": 1.23},
+            {"date": "2025-08-14", "cost": 2.45},
+            {"date": "2025-09-12", "cost": 3.67},
+        ],
+        "avg_cost_per_execution": 0.082
+    }
+
+@app.get("/analytics/performance", tags=["Analytics"])
+async def get_analytics_performance(
+    time_range: str = Query("30d"),
+    current_user = Depends(get_current_user)
+):
+    """Get performance analytics data"""
+    logger.info("Fetching analytics performance", user_id=current_user.id, time_range=time_range)
+    return {
+        "avg_response_time": 1.23,
+        "p95_response_time": 2.45,
+        "success_rate": 96.5,
+        "error_rate": 3.5,
+        "performance_trend": [
+            {"date": "2025-08-13", "avg_time": 1.1, "success_rate": 98.0},
+            {"date": "2025-08-14", "avg_time": 1.2, "success_rate": 97.0},
+            {"date": "2025-09-12", "avg_time": 1.3, "success_rate": 96.0},
+        ]
+    }
+
+# In-memory storage for pipelines
+pipelines_store = {}
+pipeline_executions_store = {}
+
+# Pipeline Management Endpoints
+@app.get("/pipelines", tags=["Pipelines"])
+async def get_pipelines(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    search: Optional[str] = None,
+    tags: Optional[List[str]] = Query(None),
+    current_user = Depends(get_current_user)
+):
+    """Get paginated list of pipelines"""
+    logger.info("Fetching pipelines", user_id=current_user.id, page=page, limit=limit)
+
+    # Filter pipelines based on search criteria
+    filtered_pipelines = []
+    for pipeline in pipelines_store.values():
+        if search and search.lower() not in pipeline["name"].lower():
+            continue
+        if tags and not any(tag in pipeline["tags"] for tag in tags):
+            continue
+        filtered_pipelines.append(pipeline)
+
+    # Pagination
+    total = len(filtered_pipelines)
+    start = (page - 1) * limit
+    end = start + limit
+    items = filtered_pipelines[start:end]
+
+    logger.info("Pipelines fetched", total=total, returned=len(items))
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "per_page": limit,
+        "total_pages": (total + limit - 1) // limit,
+        "has_next": end < total,
+        "has_prev": page > 1
+    }
+
+@app.get("/pipelines/{pipeline_id}", tags=["Pipelines"])
+async def get_pipeline(
+    pipeline_id: str,
+    current_user = Depends(get_current_user)
+):
+    """Get specific pipeline by ID"""
+    logger.info("Fetching pipeline", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    if pipeline_id not in pipelines_store:
+        logger.warning("Pipeline not found", pipeline_id=pipeline_id)
+        raise HTTPException(status_code=404, detail=f"Pipeline {pipeline_id} not found")
+
+    logger.info("Pipeline fetched successfully", pipeline_id=pipeline_id)
+    return pipelines_store[pipeline_id]
+
+@app.post("/pipelines", response_model=dict, status_code=201, tags=["Pipelines"])
+async def create_pipeline(
+    pipeline_data: dict,
+    background_tasks: BackgroundTasks,
+    current_user = Depends(get_current_user)
+):
+    """Create a new pipeline"""
+    logger.info("Creating pipeline", user_id=current_user.id, pipeline_name=pipeline_data.get("name"))
+
+    pipeline_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+
+    new_pipeline = {
+        "id": pipeline_id,
+        "name": pipeline_data.get("name", "New Pipeline"),
+        "description": pipeline_data.get("description", ""),
+        "steps": pipeline_data.get("steps", []),
+        "error_strategy": pipeline_data.get("error_strategy", "fail_fast"),
+        "tags": pipeline_data.get("tags", []),
+        "status": "draft",
+        "version": "1.0.0",
+        "owner_id": current_user.id,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        "execution_count": 0,
+        "success_rate": 0.0
+    }
+
+    pipelines_store[pipeline_id] = new_pipeline
+
+    logger.info("Pipeline created successfully", pipeline_id=pipeline_id)
+
+    return new_pipeline
+
+@app.put("/pipelines/{pipeline_id}", tags=["Pipelines"])
+async def update_pipeline(
+    pipeline_id: str,
+    pipeline_data: dict,
+    current_user = Depends(get_current_user)
+):
+    """Update pipeline"""
+    logger.info("Updating pipeline", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    if pipeline_id not in pipelines_store:
+        raise HTTPException(status_code=404, detail=f"Pipeline {pipeline_id} not found")
+
+    pipeline = pipelines_store[pipeline_id]
+    pipeline.update(pipeline_data)
+    pipeline["updated_at"] = datetime.utcnow().isoformat()
+
+    logger.info("Pipeline updated successfully", pipeline_id=pipeline_id)
+    return pipeline
+
+@app.delete("/pipelines/{pipeline_id}", tags=["Pipelines"])
+async def delete_pipeline(
+    pipeline_id: str,
+    current_user = Depends(get_current_user)
+):
+    """Delete pipeline"""
+    logger.info("Deleting pipeline", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    if pipeline_id not in pipelines_store:
+        raise HTTPException(status_code=404, detail=f"Pipeline {pipeline_id} not found")
+
+    del pipelines_store[pipeline_id]
+    logger.info("Pipeline deleted successfully", pipeline_id=pipeline_id)
+    return {"message": "Pipeline deleted successfully"}
+
+@app.post("/pipelines/{pipeline_id}/duplicate", tags=["Pipelines"])
+async def duplicate_pipeline(
+    pipeline_id: str,
+    data: dict = None,
+    current_user = Depends(get_current_user)
+):
+    """Duplicate pipeline"""
+    logger.info("Duplicating pipeline", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    if pipeline_id not in pipelines_store:
+        raise HTTPException(status_code=404, detail=f"Pipeline {pipeline_id} not found")
+
+    original = pipelines_store[pipeline_id]
+    new_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+
+    duplicated = original.copy()
+    duplicated.update({
+        "id": new_id,
+        "name": data.get("name", f"{original['name']} (Copy)"),
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        "execution_count": 0,
+        "success_rate": 0.0
+    })
+
+    pipelines_store[new_id] = duplicated
+
+    logger.info("Pipeline duplicated successfully", original_id=pipeline_id, new_id=new_id)
+    return duplicated
+
+@app.post("/pipelines/{pipeline_id}/execute", tags=["Pipelines"])
+async def execute_pipeline(
+    pipeline_id: str,
+    execution_data: dict,
+    background_tasks: BackgroundTasks,
+    current_user = Depends(get_current_user)
+):
+    """Execute pipeline"""
+    logger.info("Executing pipeline", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    if pipeline_id not in pipelines_store:
+        raise HTTPException(status_code=404, detail=f"Pipeline {pipeline_id} not found")
+
+    execution_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+
+    execution = {
+        "pipeline_id": pipeline_id,
+        "execution_id": execution_id,
+        "status": "running",
+        "start_time": now.isoformat(),
+        "input_data": execution_data.get("input", {}),
+        "step_results": []
+    }
+
+    pipeline_executions_store[execution_id] = execution
+
+    # Mock execution completion
+    background_tasks.add_task(mock_pipeline_execution, execution_id)
+
+    logger.info("Pipeline execution started", pipeline_id=pipeline_id, execution_id=execution_id)
+    return execution
+
+@app.get("/pipelines/{pipeline_id}/executions", tags=["Pipelines"])
+async def get_pipeline_executions(
+    pipeline_id: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    current_user = Depends(get_current_user)
+):
+    """Get pipeline execution history"""
+    logger.info("Fetching pipeline executions", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    executions = [e for e in pipeline_executions_store.values() if e["pipeline_id"] == pipeline_id]
+
+    # Pagination
+    total = len(executions)
+    start = (page - 1) * limit
+    end = start + limit
+    items = executions[start:end]
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "per_page": limit,
+        "total_pages": (total + limit - 1) // limit,
+        "has_next": end < total,
+        "has_prev": page > 1
+    }
+
+@app.post("/pipelines/{pipeline_id}/test", tags=["Pipelines"])
+async def test_pipeline(
+    pipeline_id: str,
+    test_data: dict,
+    current_user = Depends(get_current_user)
+):
+    """Test pipeline execution"""
+    logger.info("Testing pipeline", user_id=current_user.id, pipeline_id=pipeline_id)
+
+    if pipeline_id not in pipelines_store:
+        raise HTTPException(status_code=404, detail=f"Pipeline {pipeline_id} not found")
+
+    # Mock test result
+    return {
+        "pipeline_id": pipeline_id,
+        "execution_id": str(uuid.uuid4()),
+        "status": "completed",
+        "start_time": datetime.utcnow().isoformat(),
+        "end_time": datetime.utcnow().isoformat(),
+        "input_data": test_data.get("input", {}),
+        "output_data": {"result": "Mock pipeline test result"},
+        "step_results": [
+            {
+                "step_id": "step1",
+                "status": "completed",
+                "start_time": datetime.utcnow().isoformat(),
+                "end_time": datetime.utcnow().isoformat(),
+                "input_data": {},
+                "output_data": {"result": "Step 1 completed"}
+            }
+        ],
+        "total_cost": 0.01
+    }
+
+@app.post("/pipelines/validate", tags=["Pipelines"])
+async def validate_pipeline(
+    pipeline_data: dict,
+    current_user = Depends(get_current_user)
+):
+    """Validate pipeline configuration"""
+    logger.info("Validating pipeline", user_id=current_user.id)
+
+    # Mock validation
+    return {
+        "is_valid": True,
+        "errors": [],
+        "warnings": []
+    }
+
+@app.get("/pipelines/tags", tags=["Pipelines"])
+async def get_pipeline_tags(current_user = Depends(get_current_user)):
+    """Get all pipeline tags"""
+    logger.info("Fetching pipeline tags", user_id=current_user.id)
+
+    all_tags = set()
+    for pipeline in pipelines_store.values():
+        all_tags.update(pipeline.get("tags", []))
+
+    return list(all_tags)
+
+@app.get("/pipelines/step-types", tags=["Pipelines"])
+async def get_step_types(current_user = Depends(get_current_user)):
+    """Get available pipeline step types"""
+    logger.info("Fetching step types", user_id=current_user.id)
+
+    return [
+        {"type": "prompt", "name": "Prompt Execution", "description": "Execute a prompt"},
+        {"type": "transform", "name": "Data Transform", "description": "Transform data"},
+        {"type": "condition", "name": "Conditional Logic", "description": "Conditional execution"},
+        {"type": "loop", "name": "Loop", "description": "Repeat execution"},
+        {"type": "parallel", "name": "Parallel Execution", "description": "Execute steps in parallel"}
+    ]
+
+def mock_pipeline_execution(execution_id: str):
+    """Mock pipeline execution completion"""
+    import time
+    time.sleep(2)  # Simulate execution time
+
+    if execution_id in pipeline_executions_store:
+        execution = pipeline_executions_store[execution_id]
+        execution.update({
+            "status": "completed",
+            "end_time": datetime.utcnow().isoformat(),
+            "output_data": {"result": "Mock pipeline execution completed"},
+            "step_results": [
+                {
+                    "step_id": "step1",
+                    "status": "completed",
+                    "start_time": datetime.utcnow().isoformat(),
+                    "end_time": datetime.utcnow().isoformat(),
+                    "input_data": {},
+                    "output_data": {"result": "Step 1 completed"}
+                }
+            ],
+            "total_cost": 0.02
+        })
 
 # Startup and shutdown events
 @app.on_event("startup")
