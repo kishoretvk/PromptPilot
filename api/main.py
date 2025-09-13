@@ -444,6 +444,49 @@ async def update_theme_settings(
     logger.info("Theme settings updated successfully")
     return theme_data
 
+# Notification Settings endpoints
+@app.get("/api/v1/settings/notifications", tags=["Settings"])
+async def get_notification_settings(current_user = Depends(get_current_user)):
+    """Get notification settings"""
+    logger.info("Fetching notification settings", user_id=current_user.id)
+    return settings_store.get("notifications", {"email_notifications": True})
+
+@app.put("/api/v1/settings/notifications", tags=["Settings"])
+async def update_notification_settings(
+    notification_data: dict,
+    current_user = Depends(get_current_user)
+):
+    """Update notification settings"""
+    logger.info("Updating notification settings", user_id=current_user.id)
+    settings_store["notifications"] = notification_data
+    logger.info("Notification settings updated successfully")
+    return notification_data
+
+# Security Settings endpoints
+@app.get("/api/v1/settings/security", tags=["Settings"])
+async def get_security_settings(current_user = Depends(get_current_user)):
+    """Get security settings"""
+    logger.info("Fetching security settings", user_id=current_user.id)
+    return settings_store.get("security", {"require_api_key": False})
+
+@app.put("/api/v1/settings/security", tags=["Settings"])
+async def update_security_settings(
+    security_data: dict,
+    current_user = Depends(get_current_user)
+):
+    """Update security settings"""
+    logger.info("Updating security settings", user_id=current_user.id)
+    settings_store["security"] = security_data
+    logger.info("Security settings updated successfully")
+    return security_data
+
+# Integrations endpoints
+@app.get("/api/v1/settings/integrations", tags=["Settings"])
+async def get_integrations(current_user = Depends(get_current_user)):
+    """Get integrations"""
+    logger.info("Fetching integrations", user_id=current_user.id)
+    return settings_store.get("integrations", [])
+
 # API Keys endpoints
 @app.get("/api/v1/settings/api-keys", tags=["Settings"])
 async def get_api_keys(current_user = Depends(get_current_user)):
