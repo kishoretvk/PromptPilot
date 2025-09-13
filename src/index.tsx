@@ -106,7 +106,9 @@ reportWebVitals((metric) => {
   }
 });
 
-// Service Worker registration for PWA capabilities
+// Service Worker registration for PWA capabilities - DISABLED
+// Temporarily disabled to prevent caching issues with dashboard app
+/*
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
@@ -118,3 +120,4 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       });
   });
 }
+*/

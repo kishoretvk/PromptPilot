@@ -6,10 +6,12 @@ const API_CACHE = 'promptpilot-api-v1.0.0';
 
 // Resources to cache immediately (avoid hard-coded hashed bundle filenames)
 const STATIC_RESOURCES = [
-  '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/logo192.png',
+  '/logo512.png',
+  '/robots.txt'
 ];
 
 // Do NOT pre-cache API endpoints; use network-first for /api/*
@@ -17,32 +19,34 @@ const STATIC_RESOURCES = [
 // Install event - cache static resources
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
-  
+
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(async (cache) => {
         console.log('Service Worker: Caching static resources (best-effort)');
-        // Attempt to addAll but don't fail installation if some resources 404
-        try {
-          await cache.addAll(STATIC_RESOURCES);
-        } catch (err) {
-          console.warn('Service Worker: Some static resources failed to cache, continuing install', err);
-          // Fallback: fetch each resource and cache successful responses
-          await Promise.all(STATIC_RESOURCES.map(async (path) => {
-            try {
-              const resp = await fetch(path);
-              if (resp && resp.ok) {
-                await cache.put(path, resp.clone());
-              }
-            } catch (e) {
-              // ignore individual failures
+        // Cache resources individually to avoid addAll failures
+        for (const path of STATIC_RESOURCES) {
+          try {
+            const response = await fetch(path);
+            if (response && response.ok) {
+              await cache.put(path, response.clone());
+              console.log('Service Worker: Cached', path);
+            } else {
+              console.warn('Service Worker: Failed to fetch', path, response?.status);
             }
-          }));
+          } catch (error) {
+            console.warn('Service Worker: Error caching', path, error);
+            // Continue with other resources
+          }
         }
       })
       .then(() => {
         console.log('Service Worker: Skip waiting');
         return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('Service Worker: Install failed', error);
+        // Don't fail installation, just log the error
       })
   );
 });
