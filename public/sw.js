@@ -107,27 +107,32 @@ self.addEventListener('fetch', (event) => {
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request);
-    
-    // Cache successful responses
-    if (networkResponse.ok) {
-      const cache = await caches.open(getCacheName(request));
-      cache.put(request, networkResponse.clone());
+
+    // Only cache successful responses (2xx status codes)
+    if (networkResponse.ok && networkResponse.status >= 200 && networkResponse.status < 300) {
+      try {
+        const cache = await caches.open(getCacheName(request));
+        cache.put(request, networkResponse.clone());
+      } catch (cacheError) {
+        console.warn('Service Worker: Failed to cache response:', cacheError);
+        // Don't fail the request if caching fails
+      }
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('Service Worker: Network failed, trying cache:', error);
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Return offline page or error response
     return new Response(
-      JSON.stringify({ 
-        error: 'Network unavailable', 
-        offline: true 
+      JSON.stringify({
+        error: 'Network unavailable',
+        offline: true
       }),
       {
         status: 503,

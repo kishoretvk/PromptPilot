@@ -234,7 +234,7 @@ async def metrics_info():
     }
 
 # Prompt Management Endpoints
-@app.get("/api/v1/prompts", response_model=PaginatedResponse[PromptResponse], tags=["Prompts"])
+@app.get("/api/v1/prompts", tags=["Prompts"])
 async def get_prompts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
@@ -245,7 +245,7 @@ async def get_prompts(
 ):
     """Get paginated list of prompts with filtering"""
     logger.info("Fetching prompts", user_id=current_user.id, page=page, limit=limit)
-    
+
     # Filter prompts based on search criteria
     filtered_prompts = []
     for prompt in prompts_store.values():
@@ -256,16 +256,16 @@ async def get_prompts(
         if task_type and prompt["task_type"] != task_type:
             continue
         filtered_prompts.append(prompt)
-    
+
     # Pagination
     total = len(filtered_prompts)
     start = (page - 1) * limit
     end = start + limit
     items = filtered_prompts[start:end]
-    
+
     logger.info("Prompts fetched", total=total, returned=len(items))
-    
-    return {
+
+    paginated_response = {
         "items": items,
         "total": total,
         "page": page,
@@ -274,6 +274,9 @@ async def get_prompts(
         "has_next": end < total,
         "has_prev": page > 1
     }
+
+    # Return wrapped in data property for frontend compatibility
+    return {"data": paginated_response}
 
 @app.get("/api/v1/prompts/{prompt_id}", response_model=PromptResponse, tags=["Prompts"])
 async def get_prompt(
@@ -458,6 +461,21 @@ async def get_llm_providers(current_user = Depends(get_current_user)):
             {"name": "OpenAI", "status": "configured", "models": ["gpt-3.5-turbo", "gpt-4"]},
             {"name": "Anthropic", "status": "not_configured", "models": ["claude-3-sonnet"]},
             {"name": "HuggingFace", "status": "not_configured", "models": []}
+        ]
+    }
+
+# Storage Providers endpoints
+@app.get("/api/v1/settings/providers/storage", tags=["Settings"])
+async def get_storage_providers(current_user = Depends(get_current_user)):
+    """Get storage providers"""
+    logger.info("Fetching storage providers", user_id=current_user.id)
+    return {
+        "providers": [
+            {"name": "Local File System", "status": "configured", "type": "filesystem"},
+            {"name": "Git", "status": "configured", "type": "git"},
+            {"name": "Database", "status": "configured", "type": "database"},
+            {"name": "S3", "status": "not_configured", "type": "s3"},
+            {"name": "Azure Blob", "status": "not_configured", "type": "azure"}
         ]
     }
 
