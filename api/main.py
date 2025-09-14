@@ -383,33 +383,92 @@ async def test_prompt(
         raise HTTPException(status_code=404, detail=f"Prompt {prompt_id} not found")
     
     start_time = time.time()
-    
-    # Mock test result
-    execution_time = 1.23
-    success = True
-    cost = 0.001
-    
+
+    # Attempt real execution via Ollama if available, otherwise fallback to a mock response
+    prompt = prompts_store[prompt_id]
+    execution_time = 0.0
+    success = False
+    cost = 0.0
+    tokens_used = 0
+    output = ""
+    error_message = None
+
+    try:
+        try:
+            # Prefer explicit import from package
+            from api.ollama_client import generate_with_ollama, chat_with_ollama
+        except Exception:
+            # Fallback if running in different import context
+            from ..ollama_client import generate_with_ollama, chat_with_ollama
+
+        # Compile messages and substitute input variables
+        messages = prompt.get("messages", []) or []
+        input_vars = test_data.input_variables or {}
+        compiled_messages = []
+        for m in sorted(messages, key=lambda x: x.get("priority", 0)):
+            content = m.get("content", "") or ""
+            for k, v in input_vars.items():
+                content = content.replace(f"{{{k}}}", str(v))
+            compiled_messages.append({"role": m.get("role", "user"), "content": content})
+
+        # Build a single prompt text if needed
+        prompt_text = "\n\n".join([f"{m['role'].upper()}: {m['content']}" for m in compiled_messages])
+
+        model_provider = prompt.get("model_provider", "ollama")
+        model_name = prompt.get("model_name") or ""
+        options = {
+            "temperature": prompt.get("parameters", {}).get("temperature", 0.7),
+            "max_tokens": prompt.get("parameters", {}).get("max_tokens", 2048)
+        }
+
+        if model_provider == "ollama" and model_name:
+            # Use chat if there are system/assistant roles, otherwise generate
+            roles = {m.get("role", "") for m in messages}
+            if roles & {"system", "assistant", "developer"}:
+                resp = chat_with_ollama(model_name, compiled_messages, options)
+            else:
+                resp = generate_with_ollama(model_name, prompt_text, options)
+
+            # Normalize common response shapes
+            if isinstance(resp, dict):
+                output = resp.get("response") or resp.get("output") or resp.get("message") or str(resp)
+                cost = resp.get("cost", 0.0)
+                tokens_used = resp.get("tokens", resp.get("tokens_used", 0)) or 0
+            else:
+                output = str(resp)
+            success = True
+        else:
+            # Backend configured for other providers or no model specified — return mock but compiled output
+            output = f"Mock output for prompt {prompt_id} with variables: {input_vars}"
+            success = True
+
+    except Exception as e:
+        error_message = str(e)
+        success = False
+        output = ""
+    finally:
+        execution_time = time.time() - start_time
+
     result = {
         "id": str(uuid.uuid4()),
-        "output": f"Mock output for prompt {prompt_id} with variables: {test_data.input_variables}",
+        "output": output,
         "execution_time": execution_time,
         "cost": cost,
         "success": success,
-        "error_message": None,
-        "tokens_used": 150,
+        "error_message": error_message,
+        "tokens_used": tokens_used,
         "created_at": datetime.utcnow().isoformat()
     }
-    
+
     # Record metrics
-    prompt = prompts_store[prompt_id]
     metrics_collector.record_prompt_execution(
         prompt_id=prompt_id,
         user_id=current_user.id,
-        provider=prompt["model_provider"],
+        provider=prompt.get("model_provider"),
         status="success" if success else "failure",
         duration=execution_time
     )
-    
+
     # Log business event
     BusinessEvent.log_prompt_execution(
         prompt_id=prompt_id,
@@ -418,9 +477,9 @@ async def test_prompt(
         success=success,
         cost=cost
     )
-    
+
     logger.info("Prompt test completed", prompt_id=prompt_id, success=success, duration=execution_time)
-    
+
     return result
 
 # Frontend error logging endpoint
