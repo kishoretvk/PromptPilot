@@ -101,6 +101,21 @@ class ErrorHandler {
       url: window.location.href
     };
 
+    // Suppress logging/reporting for expected 404 Not Found cases to avoid noise.
+    // Keep a development-only debug line so developers can still see the occurrence.
+    if (error.status === 404 || error.code === 'NOT_FOUND') {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Suppressed Application Error (404):', {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          context: errorLog.context,
+          timestamp: errorLog.timestamp
+        });
+      }
+      return;
+    }
+
     // Add to local log
     this.errorLogs.unshift(errorLog);
     if (this.errorLogs.length > this.maxLogSize) {
@@ -272,6 +287,20 @@ class ErrorHandler {
       );
     }
 
+    // Suppress noisy 404 "Not Found" errors from being treated as application errors.
+    // Let callers handle 404s when appropriate. In development keep a debug log.
+    if (appError.status === 404) {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Suppressed API 404 error (not reported):', {
+          message: appError.message,
+          code: appError.code,
+          status: appError.status,
+          context
+        });
+      }
+      return appError;
+    }
+
     this.logError(appError, 'error', context);
     return appError;
   }
@@ -309,6 +338,14 @@ export const withErrorHandling = <T extends (...args: any[]) => any>(
       // Handle promises
       if (result && typeof result.catch === 'function') {
         return result.catch((error: any) => {
+          // Suppress reporting for 404 responses — let callers decide how to handle Not Found
+          if (error?.response?.status === 404) {
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('withErrorHandling suppressed 404:', { url: error.config?.url, status: 404, context });
+            }
+            throw error;
+          }
+
           errorHandler.handleAPIError(error, context);
           throw error;
         });

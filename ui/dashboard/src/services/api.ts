@@ -93,19 +93,36 @@ class ApiClient {
       },
       async (error: AxiosError) => {
         const requestId = error.config?.headers?.['X-Request-ID'] as string;
-        
+
+        // Suppress noisy logs for 404 responses (handled by callers) and log them at debug level in dev
         if (process.env.NODE_ENV === 'development') {
-          console.error(`❌ API Error [${requestId}]:`, {
-            status: error.response?.status,
-            url: error.config?.url,
-            message: error.message,
-            data: error.response?.data
-          });
+          if (error.response?.status === 404) {
+            console.debug(`⚠️ API 404 [${requestId}]:`, {
+              status: error.response?.status,
+              url: error.config?.url,
+              message: error.message,
+              data: error.response?.data
+            });
+          } else {
+            console.error(`❌ API Error [${requestId}]:`, {
+              status: error.response?.status,
+              url: error.config?.url,
+              message: error.message,
+              data: error.response?.data
+            });
+          }
         }
 
-        // Handle the error with enhanced error handling
-        await this.handleApiError(error);
-        
+        // Only run global error handling for non-404 errors to avoid double-reporting of expected "not found" responses.
+        if (error.response?.status !== 404) {
+          await this.handleApiError(error);
+        } else {
+          // In development keep a concise debug entry
+          if (process.env.NODE_ENV === 'development') {
+            console.debug('Skipped global handleApiError for 404', { url: error.config?.url, status: 404 });
+          }
+        }
+
         return Promise.reject(error);
       }
     );
@@ -114,6 +131,15 @@ class ApiClient {
   private async handleApiError(error: AxiosError): Promise<void> {
     const status = error.response?.status;
     const data = error.response?.data as any;
+
+    // Treat 404 as non-fatal for many UI flows; let callers decide how to handle missing resources.
+    // In development, keep a debug log so it's visible when needed.
+    if (status === 404) {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('API 404 (suppressed):', { url: error.config?.url, status, data });
+      }
+      return;
+    }
     
     // Handle authentication errors
     if (status === 401) {
@@ -271,6 +297,11 @@ class ApiClient {
       if (retries > 0 && this.shouldRetry(error as AxiosError)) {
         await this.delay(1000 * (4 - retries)); // Exponential backoff
         return this.get<T>(url, params, { retries: retries - 1, context });
+      }
+
+      // Do not report 404s to the global error handler; let callers decide how to handle missing resources.
+      if ((error as AxiosError).response?.status === 404) {
+        return Promise.reject(error);
       }
       
       errorHandler.handleAPIError(error as AxiosError, context || {
