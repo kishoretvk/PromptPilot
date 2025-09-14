@@ -12,17 +12,17 @@ import uuid
 from datetime import datetime
 import uvicorn
 
-from schemas_simple import (
+from api.schemas_simple import (
     PaginatedResponse, PromptResponse, CreatePromptRequest, UpdatePromptRequest,
     TestPromptRequest, TestResultResponse, MessageResponse, SettingsResponse,
     PromptStatusEnum
 )
-from database_simple import get_db, init_db, test_db_connection, get_current_user
-from logging_config import (
+from api.database_simple import get_db, init_db, test_db_connection, get_current_user
+from api.logging_config import (
     get_logger, set_request_context, clear_request_context,
     SecurityEvent, BusinessEvent, PerformanceMonitor
 )
-from metrics import MetricsCollector
+from api.metrics import MetricsCollector
 
 # Initialize logging and metrics
 logger = get_logger(__name__)

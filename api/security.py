@@ -14,7 +14,7 @@ import re
 from ipaddress import ip_address, ip_network
 
 from logging_config import get_logger, SecurityEvent
-from metrics import MetricsCollector
+from api.metrics import MetricsCollector
 
 logger = get_logger(__name__)
 

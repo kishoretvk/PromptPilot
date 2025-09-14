@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from error_monitoring import ErrorSeverity, ErrorCategory
-from metrics import MetricsCollector
+from api.metrics import MetricsCollector
 
 logger = logging.getLogger(__name__)
 

@@ -146,7 +146,7 @@ Secrets are stored encrypted in `data/secrets.json`:
 
 ### Using Secrets
 ```python
-from api.secrets import get_secret, store_secret
+from api.secrets_manager import get_secret, store_secret
 
 # Store a secret
 store_secret("api_key", "sk-1234567890")
@@ -160,7 +160,7 @@ api_key = get_secret("api_key", "default-key")
 
 ### Migrating from Environment Variables
 ```python
-from api.secrets import migrate_env_to_secrets
+from api.secrets_manager import migrate_env_to_secrets
 
 # Migrate sensitive environment variables to secrets storage
 migrate_env_to_secrets()
@@ -315,7 +315,7 @@ Secrets are loaded on demand:
 
 ```python
 # Secrets not loaded yet
-from api.secrets import secrets_manager
+from api.secrets_manager import secrets_manager
 
 # Secrets loaded when first accessed
 value = secrets_manager.get_secret("key")

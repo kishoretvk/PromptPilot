@@ -33,7 +33,7 @@ from logging_config import (
     get_logger, set_request_context, clear_request_context,
     SecurityEvent, BusinessEvent, PerformanceMonitor
 )
-from metrics import MetricsCollector
+from api.metrics import MetricsCollector
 from security import (
     RateLimitMiddleware, SecurityMiddleware, InputValidationMiddleware,
     api_key_manager, get_current_user_or_api_key, require_scope,
