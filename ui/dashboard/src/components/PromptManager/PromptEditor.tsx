@@ -38,6 +38,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { Prompt, Message, TestCase } from '../../types';
 import { useCreatePrompt, useUpdatePrompt } from '../../hooks/usePrompts';
+import { settingsService } from '../../services/SettingsService';
 
 interface PromptEditorProps {
   prompt?: Prompt | null;
@@ -101,6 +102,33 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
 
   const createPromptMutation = useCreatePrompt();
   const updatePromptMutation = useUpdatePrompt();
+
+  // Ollama models fetched from backend for provider selection
+  const [ollamaModels, setOllamaModels] = useState<any[]>([]);
+  const [ollamaFetchError, setOllamaFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchOllamaModels() {
+      if (formData.model_provider !== 'ollama') return;
+      try {
+        setOllamaFetchError(null);
+        const models = await settingsService.getOllamaModels();
+        if (!mounted) return;
+        // Normalize to objects with name/id
+        const normalized = (models || []).map((m: any) =>
+          typeof m === 'string' ? { name: m } : (m?.name || m?.id ? m : { name: String(m) })
+        );
+        setOllamaModels(normalized);
+      } catch (err: any) {
+        if (!mounted) return;
+        setOllamaFetchError(err?.message || String(err));
+        setOllamaModels([]);
+      }
+    }
+    fetchOllamaModels();
+    return () => { mounted = false; };
+  }, [formData.model_provider]);
 
   useEffect(() => {
     if (prompt) {
@@ -509,13 +537,47 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
               </Grid>
               
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Model Name"
-                  value={formData.model_name}
-                  onChange={(e) => updateFormData('model_name', e.target.value)}
-                  disabled={isReadOnly}
-                />
+                {formData.model_provider === 'ollama' ? (
+                  <Autocomplete
+                    freeSolo
+                    options={ollamaModels}
+                    getOptionLabel={(opt: any) => (typeof opt === 'string' ? opt : opt.name || opt.id || '')}
+                    value={
+                      // try to find matching object or fallback to string
+                      (ollamaModels.find(m => (m.name || m.id) === formData.model_name) as any) || formData.model_name || null
+                    }
+                    onChange={(_, value) => {
+                      const modelName = typeof value === 'string' ? value : (value?.name || value?.id || '');
+                      updateFormData('model_name', modelName);
+                    }}
+                    onInputChange={(_, value) => updateFormData('model_name', value)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        label="Model Name (Ollama)"
+                        placeholder={ollamaModels.length ? 'Select a model' : 'Type a model name'}
+                        helperText={ollamaFetchError ? `Failed to fetch models: ${ollamaFetchError}` : undefined}
+                        disabled={isReadOnly}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props} key={(option as any).id || (option as any).name || option}>
+                        {(option as any).name || (option as any).id || option}
+                      </li>
+                    )}
+                    disabled={isReadOnly}
+                    sx={{ width: '100%' }}
+                  />
+                ) : (
+                  <TextField
+                    fullWidth
+                    label="Model Name"
+                    value={formData.model_name}
+                    onChange={(e) => updateFormData('model_name', e.target.value)}
+                    disabled={isReadOnly}
+                  />
+                )}
               </Grid>
               
               <Grid item xs={12}>

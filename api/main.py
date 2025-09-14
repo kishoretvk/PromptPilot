@@ -1075,8 +1075,8 @@ async def startup_event():
             {"role": "user", "content": "Hello, how are you?", "priority": 2}
         ],
         "input_variables": {"user_name": "string"},
-        "model_provider": "openai",
-        "model_name": "gpt-3.5-turbo",
+        "model_provider": "ollama",
+        "model_name": "mistral:latest",
         "parameters": {"temperature": 0.7, "max_tokens": 150},
         "status": "published",
         "version": "1.0.0",
