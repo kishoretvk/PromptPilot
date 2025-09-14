@@ -130,8 +130,16 @@ class PromptService {
   }
 
   async getTestHistory(id: string): Promise<any[]> {
-    const response = await apiClient.get<any[]>(`${this.basePath}/${id}/test-history`);
-    return response.data;
+    try {
+      const response = await apiClient.get<any[]>(`${this.basePath}/${id}/test-history`);
+      return response.data;
+    } catch (err: any) {
+      // If backend returns 404 (no history), treat as empty history instead of surfacing an error to the UI
+      if (err?.response?.status === 404) {
+        return [];
+      }
+      throw err;
+    }
   }
 
   async validatePrompt(prompt: Partial<Prompt>): Promise<{ isValid: boolean; errors: string[] }> {

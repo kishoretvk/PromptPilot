@@ -88,6 +88,8 @@ const PromptTester: React.FC<PromptTesterProps> = ({
   onEditPrompt,
   onResultsChange,
 }) => {
+  // Defensive: if prompt is ever undefined/null, bail out to avoid runtime errors
+  if (!prompt) return null;
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
@@ -102,8 +104,10 @@ const PromptTester: React.FC<PromptTesterProps> = ({
   // Extract input variables from prompt messages
   const inputVariables = React.useMemo(() => {
     const variables = new Set<string>();
-    prompt.messages.forEach(message => {
-      const matches = message.content.match(/\{(\w+)\}/g);
+    const messages = prompt.messages || [];
+    messages.forEach(message => {
+      const content = (message && message.content) ? message.content : '';
+      const matches = content.match(/\{(\w+)\}/g);
       if (matches) {
         matches.forEach(match => {
           const variable = match.slice(1, -1);
@@ -151,7 +155,8 @@ const PromptTester: React.FC<PromptTesterProps> = ({
       setInputValues(initialValues);
     } else {
       // Load test case data
-      const testCase = prompt.test_cases.find(tc => tc.name === selectedTestCase);
+      const testCases = prompt.test_cases || [];
+      const testCase = testCases.find(tc => tc.name === selectedTestCase);
       if (testCase) {
         const testInputs: Record<string, string> = {};
         Object.entries(testCase.inputs || testCase.input_variables || {}).forEach(([key, value]) => {
@@ -235,7 +240,7 @@ const PromptTester: React.FC<PromptTesterProps> = ({
   const runAllTestCases = useCallback(async () => {
     const results: TestResult[] = [];
     
-    for (const testCase of prompt.test_cases) {
+    for (const testCase of (prompt.test_cases || [])) {
       try {
         const result = await testPromptMutation.mutateAsync({
           id: prompt.id,
@@ -308,7 +313,7 @@ const PromptTester: React.FC<PromptTesterProps> = ({
             {isExecuting ? 'Running...' : 'Execute'}
           </Button>
           
-          {prompt.test_cases.length > 0 && (
+          {(prompt.test_cases || []).length > 0 && (
             <Button
               variant="outlined"
               startIcon={<Assessment />}
@@ -344,7 +349,7 @@ const PromptTester: React.FC<PromptTesterProps> = ({
                     onChange={(e) => handleTestCaseSelect(e.target.value)}
                   >
                     <MenuItem value="manual">Manual Input</MenuItem>
-                    {prompt.test_cases.map((testCase) => (
+                    {(prompt.test_cases || []).map((testCase) => (
                       <MenuItem key={testCase.name} value={testCase.name}>
                         {testCase.name}
                       </MenuItem>
@@ -392,14 +397,16 @@ const PromptTester: React.FC<PromptTesterProps> = ({
                         overflow: 'auto',
                       }}
                     >
-                      {prompt.messages
+                      {(prompt.messages || [])
+                        .slice()
                         .sort((a, b) => (a.priority || 1) - (b.priority || 1))
                         .map(msg => {
-                          let content = msg.content;
+                          const contentRaw = (msg && msg.content) ? msg.content : '';
+                          let content = contentRaw;
                           Object.entries(inputValues).forEach(([key, value]) => {
                             content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
                           });
-                          return `${msg.role.toUpperCase()}: ${content}`;
+                          return `${(msg && msg.role) ? msg.role.toUpperCase() : 'UNKNOWN'}: ${content}`;
                         })
                         .join('\n\n')}
 

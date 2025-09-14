@@ -132,6 +132,16 @@ class SettingsService {
     return response.data;
   }
 
+  /**
+   * Fetch live Ollama models from the backend.
+   * Returns an array of model objects as provided by the API: { models: [...] }.
+   */
+  async getOllamaModels(): Promise<any[]> {
+    const response = await apiClient.get<{ models: any[] }>(`/api/v1/ollama/models`);
+    // Backend returns { models: [...] } — normalize to an array
+    return (response.data && response.data.models) ? response.data.models : [];
+  }
+
   async getStorageBackends(): Promise<StorageBackend[]> {
     const response = await apiClient.get<StorageBackend[]>(`${this.basePath}/providers/storage`);
     return response.data;
