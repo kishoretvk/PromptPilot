@@ -262,7 +262,11 @@ class ApiClient {
     
     try {
       const response = await this.client.get<ApiResponse<T>>(url, { params });
-      return response.data;
+      // Normalize API response shape: accept both ApiResponse<T> and raw T
+      const normalized = (response.data && (response.data as any).data !== undefined)
+        ? response.data
+        : { data: response.data as unknown as T, status: 'success', timestamp: new Date().toISOString() } as ApiResponse<T>;
+      return normalized;
     } catch (error) {
       if (retries > 0 && this.shouldRetry(error as AxiosError)) {
         await this.delay(1000 * (4 - retries)); // Exponential backoff
@@ -282,7 +286,10 @@ class ApiClient {
     
     try {
       const response = await this.client.post<ApiResponse<T>>(url, data);
-      return response.data;
+      const normalized = (response.data && (response.data as any).data !== undefined)
+        ? response.data
+        : { data: response.data as unknown as T, status: 'success', timestamp: new Date().toISOString() } as ApiResponse<T>;
+      return normalized;
     } catch (error) {
       if (retries > 0 && this.shouldRetry(error as AxiosError)) {
         await this.delay(1000 * (4 - retries));
@@ -302,7 +309,10 @@ class ApiClient {
     
     try {
       const response = await this.client.put<ApiResponse<T>>(url, data);
-      return response.data;
+      const normalized = (response.data && (response.data as any).data !== undefined)
+        ? response.data
+        : { data: response.data as unknown as T, status: 'success', timestamp: new Date().toISOString() } as ApiResponse<T>;
+      return normalized;
     } catch (error) {
       if (retries > 0 && this.shouldRetry(error as AxiosError)) {
         await this.delay(1000 * (4 - retries));
@@ -322,7 +332,10 @@ class ApiClient {
     
     try {
       const response = await this.client.delete<ApiResponse<T>>(url);
-      return response.data;
+      const normalized = (response.data && (response.data as any).data !== undefined)
+        ? response.data
+        : { data: response.data as unknown as T, status: 'success', timestamp: new Date().toISOString() } as ApiResponse<T>;
+      return normalized;
     } catch (error) {
       if (retries > 0 && this.shouldRetry(error as AxiosError)) {
         await this.delay(1000 * (4 - retries));
@@ -342,7 +355,10 @@ class ApiClient {
     
     try {
       const response = await this.client.patch<ApiResponse<T>>(url, data);
-      return response.data;
+      const normalized = (response.data && (response.data as any).data !== undefined)
+        ? response.data
+        : { data: response.data as unknown as T, status: 'success', timestamp: new Date().toISOString() } as ApiResponse<T>;
+      return normalized;
     } catch (error) {
       if (retries > 0 && this.shouldRetry(error as AxiosError)) {
         await this.delay(1000 * (4 - retries));
@@ -378,7 +394,10 @@ class ApiClient {
           }
         },
       });
-      return response.data;
+      const normalized = (response.data && (response.data as any).data !== undefined)
+        ? response.data
+        : { data: response.data as unknown as T, status: 'success', timestamp: new Date().toISOString() } as ApiResponse<T>;
+      return normalized;
     } catch (error) {
       errorHandler.handleAPIError(error as AxiosError, context || {
         component: 'ApiClient',

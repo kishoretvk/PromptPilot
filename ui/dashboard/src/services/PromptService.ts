@@ -17,8 +17,8 @@ class PromptService {
     if (search) params.search = search;
     if (tags && tags.length > 0) params.tags = tags.join(',');
 
-    const response = await apiClient.get<{data: PaginatedResponse<Prompt>}>(this.basePath, params);
-    return response.data.data;
+    const response = await apiClient.get<PaginatedResponse<Prompt>>(this.basePath, params);
+    return response.data;
   }
 
   async getPrompt(id: string): Promise<Prompt> {

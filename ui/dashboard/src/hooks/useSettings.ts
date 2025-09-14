@@ -107,8 +107,31 @@ export const useUpdateThemeSettings = () => {
   return useMutation({
     mutationFn: updateThemeSettings,
     onSuccess: (data) => {
+      // Update the specific theme query so subscribers get the new value immediately
       queryClient.setQueryData([...queryKeys.settings.all, 'theme'], data);
+      // Also merge the theme into the top-level settings cache if present
+      queryClient.setQueryData(queryKeys.settings.all, (old: any) => ({
+        ...(old ?? {}),
+        theme: data,
+      }));
+      // Invalidate the theme query to ensure any other consumers refetch if needed
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.settings.all, 'theme'] });
+      // Keep existing invalidation helper for broader cache refresh
       cacheUtils.invalidateSettings();
+      // Persist selected mode to localStorage so InnerApp picks it up immediately
+      try {
+        if (typeof window !== 'undefined' && data?.mode) {
+          localStorage.setItem('pp_theme_mode', data.mode);
+          // notify other parts of the app that theme mode changed so they can re-render immediately
+          try {
+            window.dispatchEvent(new CustomEvent('pp_theme_mode_changed', { detail: data.mode }));
+          } catch (e) {
+            // ignore dispatch errors in older browsers/environments
+          }
+        }
+      } catch (e) {
+        // ignore localStorage errors
+      }
     },
   });
 };

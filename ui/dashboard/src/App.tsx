@@ -317,7 +317,30 @@ const queryClient = new QueryClient();
 // Inner app reads theme settings via react-query and builds MUI theme dynamically
 function InnerApp() {
   const { data: themeSettings } = useThemeSettings();
-  const storedMode = typeof window !== 'undefined' ? (localStorage.getItem('pp_theme_mode') ?? 'light') : 'light';
+  const [overrideMode, setOverrideMode] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('pp_theme_mode');
+  });
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      setOverrideMode(e?.detail ?? (typeof window !== 'undefined' ? localStorage.getItem('pp_theme_mode') : null));
+    };
+    try {
+      window.addEventListener('pp_theme_mode_changed', handler as EventListener);
+    } catch (e) {
+      // ignore
+    }
+    return () => {
+      try {
+        window.removeEventListener('pp_theme_mode_changed', handler as EventListener);
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
+  const storedMode = typeof window !== 'undefined' ? (overrideMode ?? (localStorage.getItem('pp_theme_mode') ?? 'light')) : 'light';
   const rawMode = themeSettings?.mode || storedMode;
 
   // Handle 'auto' mode by detecting system preference

@@ -337,6 +337,38 @@ async def create_prompt(
     
     return new_prompt
 
+@app.put("/api/v1/prompts/{prompt_id}", response_model=PromptResponse, tags=["Prompts"])
+async def update_prompt(
+    prompt_id: str,
+    prompt_data: UpdatePromptRequest,
+    current_user = Depends(get_current_user)
+):
+    """Update an existing prompt"""
+    logger.info("Updating prompt", user_id=current_user.id, prompt_id=prompt_id)
+
+    if prompt_id not in prompts_store:
+        logger.warning("Prompt not found for update", prompt_id=prompt_id)
+        raise HTTPException(status_code=404, detail=f"Prompt {prompt_id} not found")
+
+    prompt = prompts_store[prompt_id]
+    # Apply allowed updates (only overwrite fields provided)
+    prompt.update({
+        "name": prompt_data.name or prompt.get("name"),
+        "description": prompt_data.description or prompt.get("description"),
+        "task_type": prompt_data.task_type or prompt.get("task_type"),
+        "tags": prompt_data.tags or prompt.get("tags"),
+        "developer_notes": prompt_data.developer_notes or prompt.get("developer_notes"),
+        "messages": [m.dict() for m in prompt_data.messages] if prompt_data.messages is not None else prompt.get("messages"),
+        "input_variables": prompt_data.input_variables or prompt.get("input_variables"),
+        "model_provider": prompt_data.model_provider or prompt.get("model_provider"),
+        "model_name": prompt_data.model_name or prompt.get("model_name"),
+        "parameters": prompt_data.parameters or prompt.get("parameters"),
+        "updated_at": datetime.utcnow().isoformat()
+    })
+    prompts_store[prompt_id] = prompt
+    logger.info("Prompt updated successfully", prompt_id=prompt_id)
+    return prompt
+
 @app.post("/api/v1/prompts/{prompt_id}/test", response_model=TestResultResponse, tags=["Prompts"])
 async def test_prompt(
     prompt_id: str,
@@ -499,13 +531,33 @@ async def get_api_keys(current_user = Depends(get_current_user)):
 async def get_llm_providers(current_user = Depends(get_current_user)):
     """Get LLM providers"""
     logger.info("Fetching LLM providers", user_id=current_user.id)
-    return {
-        "providers": [
-            {"name": "OpenAI", "status": "configured", "models": ["gpt-3.5-turbo", "gpt-4"]},
-            {"name": "Anthropic", "status": "not_configured", "models": ["claude-3-sonnet"]},
-            {"name": "HuggingFace", "status": "not_configured", "models": []}
-        ]
-    }
+
+    providers = [
+        {"name": "OpenAI", "status": "configured", "models": ["gpt-3.5-turbo", "gpt-4"]},
+        {"name": "Anthropic", "status": "not_configured", "models": ["claude-3-sonnet"]},
+        {"name": "HuggingFace", "status": "not_configured", "models": []}
+    ]
+
+    # Try to include local Ollama if available
+    try:
+        from api.ollama_client import list_ollama_models
+        ollama_models = list_ollama_models()
+        providers.append({
+            "name": "Ollama (local)",
+            "status": "connected" if ollama_models else "connected (no-models)",
+            "models": [m.get("name") for m in ollama_models] if isinstance(ollama_models, list) else []
+        })
+        logger.info("Included Ollama provider", available_models=len(ollama_models))
+    except Exception as e:
+        providers.append({
+            "name": "Ollama (local)",
+            "status": "disconnected",
+            "error": str(e),
+            "models": []
+        })
+        logger.warning("Failed to include Ollama provider", error=str(e))
+
+    return {"providers": providers}
 
 # Storage Providers endpoints
 @app.get("/api/v1/settings/providers/storage", tags=["Settings"])

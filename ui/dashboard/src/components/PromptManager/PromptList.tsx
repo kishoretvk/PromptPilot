@@ -251,10 +251,10 @@ const PromptList: React.FC<PromptListProps> = ({
                   
                   <TableCell>
                     <Chip
-                      label={prompt.version_info.is_active ? 'Active' : 'Inactive'}
+                      label={prompt.version_info?.is_active ? 'Active' : 'Inactive'}
                       size="small"
                       sx={{
-                        backgroundColor: prompt.version_info.is_active ? theme.palette.success.main : theme.palette.grey[500],
+                        backgroundColor: (prompt.version_info?.is_active ?? false) ? theme.palette.success.main : theme.palette.grey[500],
                         color: theme.palette.common.white,
                         textTransform: 'capitalize',
                       }}
@@ -262,7 +262,7 @@ const PromptList: React.FC<PromptListProps> = ({
                   </TableCell>
                   
                   <TableCell>
-                    {prompt.version_info.is_active ? (
+                    {prompt.version_info?.is_active ? (
                       <Chip
                         label="Active"
                         size="small"
@@ -311,7 +311,7 @@ const PromptList: React.FC<PromptListProps> = ({
                         <Person fontSize="small" />
                       </Avatar>
                       <Typography variant="body2">
-                        {prompt.version_info.created_by || 'Unknown'}
+                        {prompt.version_info?.created_by || 'Unknown'}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -320,7 +320,7 @@ const PromptList: React.FC<PromptListProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Schedule fontSize="small" color="disabled" />
                       <Typography variant="body2" color="text.secondary">
-                        {formatDate(prompt.version_info.created_at)}
+                        {formatDate(prompt.version_info?.created_at || prompt.created_at || new Date().toISOString())}
                       </Typography>
                     </Box>
                   </TableCell>
