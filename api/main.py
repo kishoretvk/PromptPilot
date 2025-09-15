@@ -416,18 +416,40 @@ async def test_prompt(
 
         model_provider = prompt.get("model_provider", "ollama")
         model_name = prompt.get("model_name") or ""
+        # Build request options and allow overriding model timeout via test payload
+        # `test_data.model_parameters` can include provider-specific overrides (e.g. {"timeout": 120})
+        base_parameters = prompt.get("parameters", {}) or {}
         options = {
-            "temperature": prompt.get("parameters", {}).get("temperature", 0.7),
-            "max_tokens": prompt.get("parameters", {}).get("max_tokens", 2048)
+            "temperature": base_parameters.get("temperature", 0.7),
+            "max_tokens": base_parameters.get("max_tokens", 2048)
         }
+        # Merge any explicit model_parameters provided with the test request (do not overwrite existing keys unless provided)
+        if getattr(test_data, "model_parameters", None):
+            for k, v in (test_data.model_parameters or {}).items():
+                if k not in options:
+                    options[k] = v
+
+        # Determine per-request timeout (allow caller to request longer blocking behavior)
+        model_timeout = None
+        if getattr(test_data, "model_parameters", None):
+            try:
+                model_timeout = int((test_data.model_parameters or {}).get("timeout")) if (test_data.model_parameters or {}).get("timeout") is not None else None
+            except Exception:
+                model_timeout = None
 
         if model_provider == "ollama" and model_name:
             # Use chat if there are system/assistant roles, otherwise generate
             roles = {m.get("role", "") for m in messages}
             if roles & {"system", "assistant", "developer"}:
-                resp = chat_with_ollama(model_name, compiled_messages, options)
+                if model_timeout:
+                    resp = chat_with_ollama(model_name, compiled_messages, options, timeout=model_timeout)
+                else:
+                    resp = chat_with_ollama(model_name, compiled_messages, options)
             else:
-                resp = generate_with_ollama(model_name, prompt_text, options)
+                if model_timeout:
+                    resp = generate_with_ollama(model_name, prompt_text, options, timeout=model_timeout)
+                else:
+                    resp = generate_with_ollama(model_name, prompt_text, options)
 
             # Normalize common response shapes
             if isinstance(resp, dict):

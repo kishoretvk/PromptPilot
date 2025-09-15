@@ -76,10 +76,11 @@ def generate_with_ollama(model: str, prompt: str, options: dict = None, timeout:
         except Exception as e:
             logger.warning("Pull model attempt failed (continuing to poll): %s", e)
 
-        # Poll for the model to appear in running list (non-blocking warm-up)
-        # Use short per-request timeouts and a bounded total wait to avoid blocking the API thread.
+        # Poll for the model to appear in running list (blocking warm-up up to the configured timeout)
+        # Use short per-request timeouts but allow the total wait to be as long as the caller's timeout,
+        # since callers may expect the connection to remain open while the model loads.
         poll_timeout = 5
-        max_total_wait = min(30, timeout)  # don't wait longer than 30s by default
+        max_total_wait = timeout
         poll_attempts = max(1, int(max_total_wait / poll_timeout))
         for i in range(poll_attempts):
             try:
@@ -166,9 +167,9 @@ def chat_with_ollama(model: str, messages: list, options: dict = None, timeout: 
         except Exception as e:
             logger.warning("Pull model attempt for chat failed (continuing to poll): %s", e)
 
-        # Poll for model for chat with short per-request timeouts and bounded wait
+        # Poll for model for chat with short per-request timeouts and allow total wait up to caller timeout
         poll_timeout = 5
-        max_total_wait = min(30, timeout)
+        max_total_wait = timeout
         poll_attempts = max(1, int(max_total_wait / poll_timeout))
         for i in range(poll_attempts):
             try:
