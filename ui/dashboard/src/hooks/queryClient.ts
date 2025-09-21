@@ -86,7 +86,35 @@ export const queryKeys = {
     providers: () => [...queryKeys.settings.all, 'providers'] as const,
     system: () => [...queryKeys.settings.all, 'system'] as const,
   },
-  
+
+  // Validation
+  validation: {
+    all: ['validation'] as const,
+    validate: (content: string) => [...queryKeys.validation.all, 'validate', content] as const,
+    batch: (requests: any[]) => [...queryKeys.validation.all, 'batch', requests] as const,
+    rules: () => [...queryKeys.validation.all, 'rules'] as const,
+    stats: () => [...queryKeys.validation.all, 'stats'] as const,
+  },
+
+  // AI Refinement
+  aiRefinement: {
+    all: ['ai-refinement'] as const,
+    refine: (request: any) => [...queryKeys.aiRefinement.all, 'refine', request] as const,
+    analyze: (promptData: any) => [...queryKeys.aiRefinement.all, 'analyze', promptData] as const,
+    examples: (request: any) => [...queryKeys.aiRefinement.all, 'examples', request] as const,
+    providers: () => [...queryKeys.aiRefinement.all, 'providers'] as const,
+    usage: (provider?: string) => [...queryKeys.aiRefinement.all, 'usage', provider] as const,
+  },
+
+  // A/B Testing
+  abTesting: {
+    all: ['ab-testing'] as const,
+    start: (request: any) => [...queryKeys.abTesting.all, 'start', request] as const,
+    status: (testId: string) => [...queryKeys.abTesting.all, 'status', testId] as const,
+    results: (testId: string) => [...queryKeys.abTesting.all, 'results', testId] as const,
+    stop: (testId: string) => [...queryKeys.abTesting.all, 'stop', testId] as const,
+  },
+
   // System
   system: {
     health: ['system', 'health'] as const,
@@ -111,6 +139,14 @@ export const cacheUtils = {
   
   invalidateSettings: () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.settings.all });
+  },
+
+  invalidateValidation: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.validation.all });
+  },
+
+  invalidateAIRefinement: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.aiRefinement.all });
   },
   
   // Prefetch data

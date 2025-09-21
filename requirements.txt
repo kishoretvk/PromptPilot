@@ -122,11 +122,14 @@ docker==6.1.3
 # LLM Providers & AI Services
 openai==1.3.6
 anthropic==0.9.0
+google-generativeai==0.3.2
+ollama==0.1.8
 huggingface-hub==0.19.4
 transformers==4.36.2
 torch==2.1.1
 langchain==0.0.350
 langchain-openai==0.0.2
+statsmodels==0.14.0  # For statistical analysis in A/B testing
 # langchain-anthropic==0.0.4
 
 # Optional: Vector Database Support

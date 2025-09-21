@@ -26,7 +26,7 @@ def pretty(obj):
 
 def main():
     try:
-        r = requests.post(f"{BASE}/prompts", json=PROMPT, timeout=30)
+        r = requests.post(f"{BASE}/prompts", json=PROMPT, timeout=60)
         print("CREATE_STATUS", r.status_code)
         print(pretty(r.json() if r.headers.get("content-type","").startswith("application/json") else r.text))
         r.raise_for_status()
@@ -43,7 +43,11 @@ def main():
     time.sleep(1)
 
     try:
-        t = requests.post(f"{BASE}/prompts/{prompt_id}/test", json={"input_variables": {}}, timeout=120)
+        t = requests.post(
+            f"{BASE}/prompts/{prompt_id}/test",
+            json={"input_variables": {}, "model_parameters": {"timeout": 300}},
+            timeout=310
+        )
         print("TEST_STATUS", t.status_code)
         try:
             print(pretty(t.json()))

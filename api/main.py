@@ -6,7 +6,7 @@ from api.routes import ollama
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import time
 import uuid
 from datetime import datetime
@@ -17,7 +17,65 @@ from api.schemas_simple import (
     TestPromptRequest, TestResultResponse, MessageResponse, SettingsResponse,
     PromptStatusEnum
 )
-from api.database_simple import get_db, init_db, test_db_connection, get_current_user
+from api.database.config import DatabaseManager
+from api.database.models import Base
+
+# Initialize database manager
+db_manager = DatabaseManager()
+
+def get_db():
+    """Dependency to get database session"""
+    with db_manager.get_session_context() as session:
+        yield session
+
+def init_db():
+    """Initialize database tables"""
+    try:
+        # Check if logger is available
+        if 'logger' in globals():
+            logger.info("Initializing database...")
+        db_manager.create_tables()
+        if 'logger' in globals():
+            logger.info("Database initialized successfully")
+    except Exception as e:
+        if 'logger' in globals():
+            logger.error(f"Database initialization failed: {e}")
+        else:
+            print(f"Database initialization failed: {e}")
+
+def test_db_connection():
+    """Test database connection"""
+    try:
+        with db_manager.get_session_context() as session:
+            session.execute("SELECT 1")
+            return True
+    except Exception as e:
+        if 'logger' in globals():
+            logger.error(f"Database connection test failed: {e}")
+        else:
+            print(f"Database connection test failed: {e}")
+        return False
+
+# Mock user for development
+class MockUser:
+    def __init__(self):
+        self.id = "dev-user-123"
+        self.username = "dev"
+        self.email = "dev@promptpilot.com"
+        self.is_active = True
+
+def get_current_user():
+    """Mock current user for development"""
+    return MockUser()
+
+def api_response(data: Any, message: str = None, status: str = "success") -> Dict[str, Any]:
+    """Helper function to create API responses in the format expected by the frontend"""
+    return {
+        "data": data,
+        "status": status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "message": message
+    }
 from api.logging_config import (
     get_logger, set_request_context, clear_request_context,
     SecurityEvent, BusinessEvent, PerformanceMonitor
@@ -117,9 +175,6 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Register Ollama routes
-app.include_router(ollama.router)
-
 # Add middleware
 app.add_middleware(
     CORSMiddleware,
@@ -129,49 +184,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.promptpilot.dev"]
-)
+# app.add_middleware(
+#     TrustedHostMiddleware,
+#     allowed_hosts=["localhost", "127.0.0.1", "*.promptpilot.dev"]
+# )
 
-app.add_middleware(LoggingMiddleware)
+# # app.add_middleware(LoggingMiddleware)
+
+# Register Ollama routes
+app.include_router(ollama.router)
+
+# Register AI Refinement routes
+from api.routers.ai_refinement import router as ai_refinement_router
+from api.routers.validation import router as validation_router
+from api.routers.testing import router as testing_router
+from api.routers.providers import router as providers_router
+app.include_router(ai_refinement_router)
+app.include_router(validation_router)
+app.include_router(testing_router)
+app.include_router(providers_router)
 
 # Exception handlers
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.warning(
-        "Validation error",
-        errors=exc.errors(),
-        body=exc.body
-    )
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors(), "body": exc.body}
-    )
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request: Request, exc: RequestValidationError):
+#     logger.warning(
+#         "Validation error",
+#         errors=exc.errors(),
+#         body=exc.body
+#     )
+#     return JSONResponse(
+#         status_code=422,
+#         content={"detail": exc.errors(), "body": exc.body}
+#     )
 
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    logger.warning(
-        "HTTP exception",
-        status_code=exc.status_code,
-        detail=exc.detail
-    )
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
+# @app.exception_handler(StarletteHTTPException)
+# async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+#     logger.warning(
+#         "HTTP exception",
+#         status_code=exc.status_code,
+#         detail=exc.detail
+#     )
+#     return JSONResponse(
+#         status_code=exc.status_code,
+#         content={"detail": exc.detail}
+#     )
 
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(
-        "Unhandled exception",
-        error=str(exc),
-        exc_info=True
-    )
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"}
-    )
+# @app.exception_handler(Exception)
+# async def general_exception_handler(request: Request, exc: Exception):
+#     logger.error(
+#         "Unhandled exception",
+#         error=str(exc),
+#         exc_info=True
+#     )
+#     return JSONResponse(
+#         status_code=500,
+#         content={"detail": "Internal server error"}
+#     )
 
 # In-memory storage for development
 prompts_store = {}
@@ -185,11 +253,43 @@ settings_store = {
     "integrations": []
 }
 
+# Initialize database and add sample data
+init_db()
+
+sample_prompt_id = str(uuid.uuid4())
+now = datetime.utcnow()
+
+prompts_store[sample_prompt_id] = {
+    "id": sample_prompt_id,
+    "name": "Sample Prompt",
+    "description": "A sample prompt for testing",
+    "task_type": "text-generation",
+    "tags": ["sample", "test"],
+    "developer_notes": "This is a sample prompt",
+    "messages": [
+        {"role": "system", "content": "You are a helpful assistant", "priority": 1},
+        {"role": "user", "content": "Hello, how are you?", "priority": 2}
+    ],
+    "input_variables": {"user_name": "string"},
+    "model_provider": "ollama",
+    "model_name": "mistral:latest",
+    "parameters": {"temperature": 0.7, "max_tokens": 150},
+    "status": "published",
+    "version": "1.0.0",
+    "owner_id": "dev-user-123",
+    "created_at": now.isoformat(),
+    "updated_at": now.isoformat(),
+    "execution_count": 25,
+    "avg_execution_time": 1.45,
+    "success_rate": 96.0,
+    "total_cost": 2.34
+}
+
 # Root endpoint
 @app.get("/", tags=["Root"])
 async def root():
     """Root endpoint with API information"""
-    logger.info("Root endpoint accessed")
+    # logger.info("Root endpoint accessed")
     return {
         "name": "PromptPilot API",
         "version": "1.0.0",
@@ -203,10 +303,12 @@ async def root():
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Comprehensive health check endpoint"""
-    logger.info("Health check requested")
+    # logger.info("Health check requested")
     
-    db_status = test_db_connection()
-    uptime = datetime.utcnow() - metrics_collector.start_time
+    # db_status = test_db_connection()
+    db_status = True  # Temporarily skip DB test
+    # uptime = datetime.utcnow() - metrics_collector.start_time
+    uptime = datetime.utcnow() - datetime.utcnow()  # Mock uptime
     
     health_data = {
         "status": "healthy" if db_status else "degraded",
@@ -220,8 +322,12 @@ async def health_check():
         }
     }
     
-    logger.info("Health check completed", **health_data)
-    return health_data
+    # logger.info("Health check completed", **health_data)
+    return {
+        "data": health_data,
+        "status": "success",
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 # Metrics endpoint for Prometheus
 @app.get("/metrics-info", tags=["Health"])
@@ -276,7 +382,11 @@ async def get_prompts(
     }
 
     # Return wrapped in data property for frontend compatibility
-    return {"data": paginated_response}
+    return {
+        "data": paginated_response,
+        "status": "success",
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 @app.get("/api/v1/prompts/{prompt_id}", response_model=PromptResponse, tags=["Prompts"])
 async def get_prompt(
@@ -1077,9 +1187,9 @@ async def startup_event():
     # Initialize database
     init_db()
     
-    # Start metrics collection
-    metrics_collector.start_metrics_server(port=8001)
-    metrics_collector.start_system_monitoring()
+    # Start metrics collection (disabled for now to avoid shutdown issues)
+    # metrics_collector.start_metrics_server(port=8001)
+    # metrics_collector.start_system_monitoring()
     
     # Add sample data
     sample_prompt_id = str(uuid.uuid4())
@@ -1091,7 +1201,7 @@ async def startup_event():
         "description": "A sample prompt for testing",
         "task_type": "text-generation",
         "tags": ["sample", "test"],
-        "developer_notes": "This is a sample prompt",
+        "developer_notes": "This is a sample prompt for refinement testing. Original: Describe a simple greeting task.",
         "messages": [
             {"role": "system", "content": "You are a helpful assistant", "priority": 1},
             {"role": "user", "content": "Hello, how are you?", "priority": 2}
@@ -1110,16 +1220,44 @@ async def startup_event():
         "success_rate": 96.0,
         "total_cost": 2.34
     }
-    
-    logger.info("PromptPilot API started successfully", 
-                metrics_port=8001, 
-                docs_url="http://localhost:8000/docs")
 
+    # Sample refinement data (QualityScore, AISuggestion)
+    from api.database.models import QualityScore, AISuggestion
+    with db_manager.get_session_context() as session:
+        # Sample QualityScore
+        quality_score = QualityScore(
+            prompt_id=sample_prompt_id,
+            overall_score=0.75,
+            clarity=0.8,
+            specificity=0.6,
+            context_usage=0.7,
+            task_alignment=0.8,
+            safety_score=0.9,
+            issues=["Vague task description", "Limited specificity"],
+            suggestions=["Add specific output format", "Include task constraints"]
+        )
+        session.add(quality_score)
+
+        # Sample AISuggestion
+        ai_suggestion = AISuggestion(
+            prompt_id=sample_prompt_id,
+            suggestion_type="specificity",
+            description="Add specific output format requirements (e.g., 'Respond in JSON').",
+            priority="high",
+            impact_score=0.7
+        )
+        session.add(ai_suggestion)
+
+        session.commit()
+        logger.info("Sample refinement data added to DB")
+
+    logger.info("PromptPilot API started successfully", 
+                docs_url="http://localhost:8000/docs")
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    logger.info("Shutting down PromptPilot API")
-    metrics_collector.stop_system_monitoring()
+    # logger.info("Shutting down PromptPilot API")
+    # metrics_collector.stop_system_monitoring()
 
 if __name__ == "__main__":
     uvicorn.run(

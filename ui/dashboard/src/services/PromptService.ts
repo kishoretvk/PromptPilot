@@ -146,6 +146,12 @@ class PromptService {
     const response = await apiClient.post<{ isValid: boolean; errors: string[] }>(`${this.basePath}/validate`, prompt);
     return response.data;
   }
+
+  async optimizePrompt(id: string, description: string): Promise<any> {
+    const payload = { task_description: description, max_iterations: 2 };
+    const response = await apiClient.post<any>(`${this.basePath}/${id}/optimize`, payload);
+    return response.data;
+  }
 }
 
 export const promptService = new PromptService();

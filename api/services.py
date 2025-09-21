@@ -166,7 +166,7 @@ class LLMService:
 
 class PromptService:
     """Service for prompt management operations"""
-
+    
     def __init__(self, db):
         self.db = db
 
@@ -213,6 +213,43 @@ class PromptService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Failed to create prompt: {e}")
+            raise
+
+    async def apply_refinement(self, prompt_id: str, suggestion_id: str, user_id: str) -> PromptResponse:
+        """Apply AI suggestion to prompt and create new version"""
+        try:
+            # Fetch prompt
+            prompt = self.db.query(Prompt).filter(Prompt.id == prompt_id).first()
+            if not prompt:
+                raise PromptNotFoundError(f"Prompt {prompt_id} not found")
+
+            # Fetch suggestion
+            from api.database.models import AISuggestion as AISuggestionModel
+            suggestion = self.db.query(AISuggestionModel).filter(AISuggestionModel.id == suggestion_id).first()
+            if not suggestion:
+                raise ValueError(f"Suggestion {suggestion_id} not found")
+
+            # Apply suggestion (simple: append to developer_notes for demo)
+            if prompt.developer_notes:
+                prompt.developer_notes += f"\n\nApplied suggestion: {suggestion.description}"
+            else:
+                prompt.developer_notes = f"Applied suggestion: {suggestion.description}"
+
+            prompt.updated_at = datetime.utcnow()
+
+            self.db.commit()
+            self.db.refresh(prompt)
+
+            # Create new version
+            new_version = self.increment_version(prompt.version)
+            await self.create_version(prompt_id, new_version, f"Applied AI suggestion: {suggestion.description}", user_id)
+
+            logger.info(f"Applied refinement to prompt {prompt_id} by user {user_id}")
+            return PromptResponse.from_orm(prompt)
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to apply refinement to prompt {prompt_id}: {e}")
             raise
 
     async def get_prompt(self, prompt_id: str) -> Optional[PromptResponse]:

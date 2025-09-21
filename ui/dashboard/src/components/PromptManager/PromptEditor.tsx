@@ -34,11 +34,17 @@ import {
   Code,
   DataObject,
   Psychology,
+  AutoFixHigh as AIFixIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { Prompt, Message, TestCase } from '../../types';
 import { useCreatePrompt, useUpdatePrompt } from '../../hooks/usePrompts';
 import { settingsService } from '../../services/SettingsService';
+import { AIRefinementPanel } from '../AIRefinement/AIRefinementPanel';
+import { ABTestPanel } from '../AIRefinement/ABTestPanel';
+import { ExampleGenerationPanel } from '../AIRefinement/ExampleGenerationPanel';
+import { ProviderSelector } from '../AIRefinement/ProviderSelector';
+import { UsageDashboard } from '../AIRefinement/UsageDashboard';
 
 interface PromptEditorProps {
   prompt?: Prompt | null;
@@ -344,6 +350,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
           <Tab icon={<Psychology />} label="Messages" />
           <Tab icon={<Settings />} label="Parameters" />
           <Tab icon={<PlayArrow />} label="Test Cases" />
+          <Tab icon={<AIFixIcon />} label="AI Refinement" />
           <Tab icon={<Code />} label="Preview" />
         </Tabs>
 
@@ -714,7 +721,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
           </TabPanel>
 
           {/* Preview Tab */}
-          <TabPanel value={activeTab} index={4}>
+          <TabPanel value={activeTab} index={5}>
             <Paper sx={{ p: 3, backgroundColor: theme.palette.grey[50] }}>
               <Typography variant="h6" gutterBottom>
                 Prompt Preview
@@ -739,6 +746,45 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                 </Typography>
               )}
             </Paper>
+          </TabPanel>
+
+          {/* AI Refinement Tab */}
+          <TabPanel value={activeTab} index={4}>
+            <Box sx={{ height: '100%', overflow: 'auto' }}>
+              <AIRefinementPanel
+                promptData={{
+                  id: formData.id || `temp_${Date.now()}`,
+                  name: formData.name || '',
+                  description: formData.description || '',
+                  content: previewPrompt,
+                  messages: formData.messages || [],
+                  input_variables: formData.input_variables || {},
+                  model_provider: formData.model_provider || 'openai',
+                  model_name: formData.model_name || 'gpt-4',
+                  parameters: formData.parameters || {},
+                  tags: formData.tags || [],
+                  task_type: formData.task_type || 'text_generation',
+                }}
+                onRefinementComplete={(refinedPrompt) => {
+                  // Update the form with refined data
+                  if (refinedPrompt.messages) {
+                    updateFormData('messages', refinedPrompt.messages);
+                  }
+                  if (refinedPrompt.input_variables) {
+                    updateFormData('input_variables', refinedPrompt.input_variables);
+                  }
+                  if (refinedPrompt.parameters) {
+                    updateFormData('parameters', { ...formData.parameters, ...refinedPrompt.parameters });
+                  }
+                  // Switch to preview tab to show changes
+                  setActiveTab(5);
+                }}
+                onQualityUpdate={(qualityScore) => {
+                  // Could store quality score in form data or display it
+                  console.log('Quality updated:', qualityScore);
+                }}
+              />
+            </Box>
           </TabPanel>
         </Box>
       </Card>

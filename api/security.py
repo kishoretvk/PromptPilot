@@ -32,13 +32,22 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         client_ip = self.get_client_ip(request)
         user_id = request.headers.get("X-User-ID", "anonymous")
-        identifier = f"{client_ip}:{user_id}"
+        path = request.url.path
         
         current_time = time.time()
         
+        # Endpoint-specific limits
+        endpoint_limits = {
+            "/api/v1/prompts/{id}/optimize": {"requests_per_minute": 5, "burst_limit": 3}  # Limit optimization calls
+        }
+        
+        # Default limits if no specific
+        limits = endpoint_limits.get(path, {"requests_per_minute": self.requests_per_minute, "burst_limit": self.burst_limit})
+        identifier = f"{client_ip}:{user_id}:{path.replace('/', '_')}"  # Per-endpoint
+        
         # Check if IP is temporarily blocked
         if self.blocked_ips.get(client_ip, 0) > current_time:
-            logger.warning("Rate limit exceeded - IP blocked", ip=client_ip, user_id=user_id)
+            logger.warning("Rate limit exceeded - IP blocked", ip=client_ip, path=path)
             SecurityEvent.log_authorization_failure(
                 user_id=user_id,
                 resource="rate_limit",
@@ -56,10 +65,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             requests.popleft()
         
         # Check rate limits
-        if len(requests) >= self.requests_per_minute:
+        if len(requests) >= limits["requests_per_minute"]:
             # Block IP for 5 minutes
             self.blocked_ips[client_ip] = current_time + 300
-            logger.warning("Rate limit exceeded", ip=client_ip, user_id=user_id, requests_count=len(requests))
+            logger.warning("Rate limit exceeded on %s", path=path, ip=client_ip, user_id=user_id, requests_count=len(requests))
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Rate limit exceeded"}
@@ -69,8 +78,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         burst_window = current_time - 10  # 10 second window
         recent_requests = sum(1 for req_time in requests if req_time > burst_window)
         
-        if recent_requests >= self.burst_limit:
-            logger.warning("Burst limit exceeded", ip=client_ip, user_id=user_id, burst_count=recent_requests)
+        if recent_requests >= limits["burst_limit"]:
+            logger.warning("Burst limit exceeded on %s", path=path, ip=client_ip, user_id=user_id, burst_count=recent_requests)
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Burst limit exceeded"}

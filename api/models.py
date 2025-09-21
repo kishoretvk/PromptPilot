@@ -114,6 +114,9 @@ class Prompt(Base):
     test_cases = relationship("TestCase", back_populates="prompt")
     executions = relationship("Execution", back_populates="prompt")
     pipeline_steps = relationship("PipelineStep", back_populates="prompt")
+    quality_scores = relationship("QualityScore", back_populates="prompt")
+    ai_suggestions = relationship("AISuggestion", back_populates="prompt")
+    refinement_results = relationship("RefinementResult", back_populates="prompt")
     
     # Indexes
     __table_args__ = (
@@ -404,4 +407,188 @@ class SystemMetric(Base):
     # Indexes
     __table_args__ = (
         Index('ix_system_metrics_name_timestamp', 'metric_name', 'timestamp'),
+    )
+
+# AI Refinement Models
+class QualityScore(Base):
+    __tablename__ = "quality_scores"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    prompt_id = Column(String, ForeignKey("prompts.id"), nullable=False)
+    overall_score = Column(Float, nullable=False)
+    clarity = Column(Float, nullable=False)
+    specificity = Column(Float, nullable=False)
+    context_usage = Column(Float, nullable=False)
+    task_alignment = Column(Float, nullable=False)
+    safety_score = Column(Float, nullable=False)
+    issues = Column(JSON, default=list)
+    suggestions = Column(JSON, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    prompt = relationship("Prompt", back_populates="quality_scores")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_quality_scores_prompt_created', 'prompt_id', 'created_at'),
+    )
+
+class AISuggestion(Base):
+    __tablename__ = "ai_suggestions"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    prompt_id = Column(String, ForeignKey("prompts.id"), nullable=False)
+    suggestion_type = Column(String(100), nullable=False)
+    description = Column(Text, nullable=False)
+    priority = Column(String(20), nullable=False)
+    impact_score = Column(Float, nullable=False)
+    applied = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    prompt = relationship("Prompt", back_populates="ai_suggestions")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_ai_suggestions_prompt_type', 'prompt_id', 'suggestion_type'),
+    )
+
+class RefinementResult(Base):
+    __tablename__ = "refinement_results"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    prompt_id = Column(String, ForeignKey("prompts.id"), nullable=False)
+    original_prompt_data = Column(JSON, nullable=False)
+    refined_prompt_data = Column(JSON, nullable=False)
+    iterations = Column(Integer, nullable=False)
+    quality_improvement = Column(Float, nullable=False)
+    status = Column(String(50), nullable=False)
+    processing_time = Column(Float, nullable=False)
+    ab_test_triggered = Column(Boolean, default=False)
+    examples_generated = Column(Boolean, default=False)
+    error_message = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    prompt = relationship("Prompt", back_populates="refinement_results")
+    ab_tests = relationship("ABTest", back_populates="refinement_result")
+    examples = relationship("RefinementExample", back_populates="refinement_result")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_refinement_results_prompt_created', 'prompt_id', 'created_at'),
+    )
+
+class RefinementExample(Base):
+    __tablename__ = "refinement_examples"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    refinement_result_id = Column(String, ForeignKey("refinement_results.id"), nullable=False)
+    example_type = Column(String(100), nullable=False)
+    original_text = Column(Text, nullable=False)
+    refined_text = Column(Text, nullable=False)
+    improvement_description = Column(Text, nullable=False)
+    performance_impact = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    refinement_result = relationship("RefinementResult", back_populates="examples")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_refinement_examples_refinement_type', 'refinement_result_id', 'example_type'),
+    )
+
+# A/B Testing Models
+class ABTest(Base):
+    __tablename__ = "ab_tests"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    refinement_result_id = Column(String, ForeignKey("refinement_results.id"))
+    prompt_a_id = Column(String, ForeignKey("prompts.id"))
+    prompt_b_id = Column(String, ForeignKey("prompts.id"))
+    test_name = Column(String(255), nullable=False)
+    description = Column(Text)
+    status = Column(String(50), default="pending")
+    winner = Column(String(10))  # "A", "B", or "tie"
+    confidence_level = Column(Float)
+    effect_size = Column(Float)
+    execution_time = Column(Float)
+    statistical_analysis = Column(JSON)
+    recommendations = Column(JSON, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime)
+    
+    # Relationships
+    refinement_result = relationship("RefinementResult", back_populates="ab_tests")
+    prompt_a = relationship("Prompt", foreign_keys=[prompt_a_id])
+    prompt_b = relationship("Prompt", foreign_keys=[prompt_b_id])
+    test_cases = relationship("ABTestCase", back_populates="ab_test")
+    results = relationship("ABTestResult", back_populates="ab_test")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_ab_tests_created_status', 'created_at', 'status'),
+    )
+
+class ABTestCase(Base):
+    __tablename__ = "ab_test_cases"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    ab_test_id = Column(String, ForeignKey("ab_tests.id"), nullable=False)
+    input_text = Column(Text, nullable=False)
+    expected_criteria = Column(JSON)
+    category = Column(String(100))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    ab_test = relationship("ABTest", back_populates="test_cases")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_ab_test_cases_ab_test_category', 'ab_test_id', 'category'),
+    )
+
+class ABTestResult(Base):
+    __tablename__ = "ab_test_results"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    ab_test_id = Column(String, ForeignKey("ab_tests.id"), nullable=False)
+    test_case_id = Column(String, ForeignKey("ab_test_cases.id"), nullable=False)
+    prompt_version = Column(String(10), nullable=False)  # "A" or "B"
+    output = Column(Text, nullable=False)
+    processing_time = Column(Float, nullable=False)
+    quality_score = Column(Float)
+    custom_metrics = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    ab_test = relationship("ABTest", back_populates="results")
+    test_case = relationship("ABTestCase")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_ab_test_results_ab_test_version', 'ab_test_id', 'prompt_version'),
+    )
+
+class ValidationResult(Base):
+    __tablename__ = "validation_results"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    ab_test_id = Column(String, ForeignKey("ab_tests.id"), nullable=False)
+    is_significant_improvement = Column(Boolean, nullable=False)
+    improvement_percentage = Column(Float, nullable=False)
+    confidence_interval_lower = Column(Float, nullable=False)
+    confidence_interval_upper = Column(Float, nullable=False)
+    p_value = Column(Float, nullable=False)
+    effect_size = Column(Float, nullable=False)
+    sample_size = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    ab_test = relationship("ABTest")
+    
+    # Indexes
+    __table_args__ = (
+        Index('ix_validation_results_ab_test_created', 'ab_test_id', 'created_at'),
     )
