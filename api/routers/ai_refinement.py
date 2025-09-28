@@ -27,7 +27,7 @@ async def optimize_prompt(
     prompt_id: str,
     request_data: OptimizeRequest,
     db: Session = Depends(get_db),
-    background_tasks: BackgroundTasks,
+    background_tasks: BackgroundTasks = None,
     refinement_service = Depends(lambda: AutomatedRefinementService(
         model_provider_service=None,  # Placeholder, inject properly if available
         validation_service=None,  # Placeholder
