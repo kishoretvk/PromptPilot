@@ -38,6 +38,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { QueryClientProvider, QueryClient, useQuery } from '@tanstack/react-query';
 import { useThemeSettings } from './hooks/useSettings';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import RefineView from './components/RefineView';
 // import { toast } from 'react-toastify';
 import ErrorFallback from './components/common/ErrorFallback';
 
@@ -304,6 +305,10 @@ function AppLayout() {
                     element={<item.component />}
                   />
                 ))}
+                <Route
+                  path="/prompts/:id/refine"
+                  element={<RefineView />}
+                />
                 <Route
                   path="/prompts/:id/refine"
                   element={<RefineView />}
