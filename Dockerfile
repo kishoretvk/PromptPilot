@@ -76,6 +76,64 @@ EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "api.rest_simple:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 
 # ================================
+# Stage 3: Celery Worker
+# ================================
+FROM python:3.11-slim as celery-worker
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r promptpilot && useradd -r -g promptpilot promptpilot
+
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+
+COPY --chown=promptpilot:promptpilot . .
+
+RUN mkdir -p /app/logs /app/uploads /app/data \
+    && chown -R promptpilot:promptpilot /app
+
+USER promptpilot
+
+CMD ["celery", "-A", "tasks.celery", "worker", "--loglevel=info"]
+
+# ================================
+# Stage 4: Celery Beat
+# ================================
+FROM python:3.11-slim as celery-beat
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r promptpilot && useradd -r -g promptpilot promptpilot
+
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+
+COPY --chown=promptpilot:promptpilot . .
+
+RUN mkdir -p /app/logs /app/uploads /app/data \
+    && chown -R promptpilot:promptpilot /app
+
+USER promptpilot
+
+CMD ["celery", "-A", "tasks.celery", "beat", "--loglevel=info"]
+
+# ================================
 # Labels for metadata
 # ================================
 LABEL maintainer="PromptPilot Team"
