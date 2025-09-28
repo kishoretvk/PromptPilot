@@ -305,15 +305,8 @@ function AppLayout() {
                     element={<item.component />}
                   />
                 ))}
+                <Route path="/refine" element={<RefineView />} />
                 <Route path="/prompts/:id/refine" element={<RefineView />} />
-                <Route
-                  path="/prompts/:id/refine"
-                  element={<RefineView />}
-                />
-                <Route
-                  path="/prompts/:id/refine"
-                  element={<RefineView />}
-                />
               </Routes>
             </Suspense>
           </ErrorBoundary>

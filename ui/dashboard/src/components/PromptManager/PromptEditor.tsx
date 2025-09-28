@@ -45,6 +45,7 @@ import { ABTestPanel } from '../AIRefinement/ABTestPanel';
 import { ExampleGenerationPanel } from '../AIRefinement/ExampleGenerationPanel';
 import { ProviderSelector } from '../AIRefinement/ProviderSelector';
 import { UsageDashboard } from '../AIRefinement/UsageDashboard';
+import { promptService } from '../../services/PromptService';
 
 interface PromptEditorProps {
   prompt?: Prompt | null;
@@ -104,6 +105,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [optimizationResults, setOptimizationResults] = useState(null);
 
   // Read-only mode when editing certain prompts
   const isReadOnly = false; // Can be controlled by props or prompt status
@@ -413,6 +415,23 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   helperText={errors.description}
                   required
                 />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<AIFixIcon />}
+                  onClick={() => promptService.optimizePrompt(prompt?.id || '', formData.description || '').then(setOptimizationResults)}
+                  disabled={!prompt?.id || !formData.description?.trim()}
+                >
+                  Optimize
+                </Button>
+                {optimizationResults && (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    Optimization Results: {JSON.stringify(optimizationResults, null, 2)}
+                  </Alert>
+                )}
               </Grid>
               
               <Grid item xs={12}>

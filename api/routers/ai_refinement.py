@@ -61,3 +61,17 @@ async def optimize_prompt(
             "estimated_time": "30-60 seconds"
         }
     }
+
+
+from api.services.ai_refinement_service import auto_refine_prompt, run_ab_test
+import uuid
+
+
+@router.post("/optimize")
+async def optimize(body: dict):
+    return auto_refine_prompt(body['task_description'])
+
+
+@router.post("/ab-test")
+def ab_test(body: dict):
+    return run_ab_test(body['original'], body['refined'])

@@ -152,6 +152,10 @@ class PromptService {
     const response = await apiClient.post<any>(`${this.basePath}/${id}/optimize`, payload);
     return response.data;
   }
+
+  async runABTest(original: string, refined: string) {
+    return apiClient.post('/ab-test', { original, refined });
+  }
 }
 
 export const promptService = new PromptService();
