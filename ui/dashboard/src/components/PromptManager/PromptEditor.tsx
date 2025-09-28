@@ -102,6 +102,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   });
   const [previewPrompt, setPreviewPrompt] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [progress, setProgress] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Read-only mode when editing certain prompts
   const isReadOnly = false; // Can be controlled by props or prompt status
@@ -314,6 +316,16 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
             Preview
           </Button>
           
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AutoFixHigh />}
+            onClick={() => {}}
+            disabled={!formData.description?.trim()}
+          >
+            Optimize Prompt
+          </Button>
+
           <Button
             variant="contained"
             startIcon={<Save />}

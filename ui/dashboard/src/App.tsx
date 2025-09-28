@@ -48,6 +48,7 @@ const PipelineBuilder = React.lazy(() => import('./components/PipelineBuilder/Pi
 const AnalyticsDashboard = React.lazy(() => import('./components/Analytics/AnalyticsDashboard'));
 const SettingsIntegrations = React.lazy(() => import('./components/Settings/SettingsIntegrations'));
 const MonitoringDashboard = React.lazy(() => import('./components/MonitoringDashboard'));
+const RefineView = React.lazy(() => import('./components/PromptManager/RefineView'));
 
 // Navigation configuration
 interface NavigationItem {
@@ -303,6 +304,10 @@ function AppLayout() {
                     element={<item.component />}
                   />
                 ))}
+                <Route
+                  path="/prompts/:id/refine"
+                  element={<RefineView />}
+                />
               </Routes>
             </Suspense>
           </ErrorBoundary>
