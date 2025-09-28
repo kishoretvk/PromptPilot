@@ -38,7 +38,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { QueryClientProvider, QueryClient, useQuery } from '@tanstack/react-query';
 import { useThemeSettings } from './hooks/useSettings';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import RefineView from './components/RefineView';
 // import { toast } from 'react-toastify';
 import ErrorFallback from './components/common/ErrorFallback';
 
@@ -49,7 +48,7 @@ const PipelineBuilder = React.lazy(() => import('./components/PipelineBuilder/Pi
 const AnalyticsDashboard = React.lazy(() => import('./components/Analytics/AnalyticsDashboard'));
 const SettingsIntegrations = React.lazy(() => import('./components/Settings/SettingsIntegrations'));
 const MonitoringDashboard = React.lazy(() => import('./components/MonitoringDashboard'));
-const RefineView = React.lazy(() => import('./components/PromptManager/RefineView'));
+const LazyRefineView = React.lazy(() => import('./components/RefineView'));
 
 // Navigation configuration
 interface NavigationItem {
@@ -305,8 +304,8 @@ function AppLayout() {
                     element={<item.component />}
                   />
                 ))}
-                <Route path="/refine" element={<RefineView />} />
-                <Route path="/prompts/:id/refine" element={<RefineView />} />
+                <Route path="/refine" element={<LazyRefineView />} />
+                <Route path="/prompts/:id/refine" element={<LazyRefineView />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
