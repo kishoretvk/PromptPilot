@@ -40,7 +40,7 @@ import { useTheme } from '@mui/material/styles';
 import { Prompt, Message, TestCase } from '../../types';
 import { useCreatePrompt, useUpdatePrompt } from '../../hooks/usePrompts';
 import { settingsService } from '../../services/SettingsService';
-import { AIRefinementPanel } from '../AIRefinement/AIRefinementPanel';
+import AIRefinementPanel from '../AIRefinement/AIRefinementPanel';
 import { ABTestPanel } from '../AIRefinement/ABTestPanel';
 import { ExampleGenerationPanel } from '../AIRefinement/ExampleGenerationPanel';
 import { ProviderSelector } from '../AIRefinement/ProviderSelector';
@@ -299,7 +299,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     }
   };
 
-  const isLoading = createPromptMutation.isPending || updatePromptMutation.isPending;
+  // const isLoading = createPromptMutation.isPending || updatePromptMutation.isPending; // Use mutation status directly
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

@@ -134,7 +134,6 @@ class PromptService {
       const response = await apiClient.get<any[]>(`${this.basePath}/${id}/test-history`);
       return response.data;
     } catch (err: any) {
-      // If backend returns 404 (no history), treat as empty history instead of surfacing an error to the UI
       if (err?.response?.status === 404) {
         return [];
       }
@@ -150,6 +149,11 @@ class PromptService {
   async optimizePrompt(id: string, description: string): Promise<any> {
     const payload = { task_description: description, max_iterations: 2 };
     const response = await apiClient.post<any>(`${this.basePath}/${id}/optimize`, payload);
+    return response.data;
+  }
+
+  async getOptimizationResults(id: string): Promise<any> {
+    const response = await apiClient.get<any>(`${this.basePath}/${id}/optimization-results`);
     return response.data;
   }
 
