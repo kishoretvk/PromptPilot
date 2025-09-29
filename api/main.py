@@ -614,6 +614,20 @@ async def test_prompt(
 
     return result
 
+@app.get("/api/v1/prompts/{prompt_id}/test-history", tags=["Prompts"])
+async def get_test_history(
+    prompt_id: str,
+    current_user = Depends(get_current_user)
+):
+    """Get test history for a prompt"""
+    logger.info("Fetching test history", user_id=current_user.id, prompt_id=prompt_id)
+    
+    if prompt_id not in prompts_store:
+        raise HTTPException(status_code=404, detail=f"Prompt {prompt_id} not found")
+    
+    # Since no test_history model exists yet, return empty list
+    return []
+
 # Frontend error logging endpoint
 @app.post("/api/logs/frontend-error", tags=["Logging"])
 async def log_frontend_error(
