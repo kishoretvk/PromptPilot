@@ -810,7 +810,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                   // Switch to preview tab to show changes
                   setActiveTab(5);
                 }}
-                onQualityUpdate={(qualityScore) => {
+                  onQualityUpdate={(qualityScore: any) => {
                   // Could store quality score in form data or display it
                   console.log('Quality updated:', qualityScore);
                 }}
