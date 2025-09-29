@@ -1221,35 +1221,35 @@ async def startup_event():
         "total_cost": 2.34
     }
 
-    # Sample refinement data (QualityScore, AISuggestion)
-    from api.database.models import QualityScore, AISuggestion
-    with db_manager.get_session_context() as session:
-        # Sample QualityScore
-        quality_score = QualityScore(
-            prompt_id=sample_prompt_id,
-            overall_score=0.75,
-            clarity=0.8,
-            specificity=0.6,
-            context_usage=0.7,
-            task_alignment=0.8,
-            safety_score=0.9,
-            issues=["Vague task description", "Limited specificity"],
-            suggestions=["Add specific output format", "Include task constraints"]
-        )
-        session.add(quality_score)
+    # Sample refinement data (QualityScore, AISuggestion) - commented out due to type error
+    # from api.database.models import QualityScore, AISuggestion
+    # with db_manager.get_session_context() as session:
+    #     # Sample QualityScore
+    #     quality_score = QualityScore(
+    #         prompt_id=sample_prompt_id,
+    #         overall_score=0.75,
+    #         clarity=0.8,
+    #         specificity=0.6,
+    #         context_usage=0.7,
+    #         task_alignment=0.8,
+    #         safety_score=0.9,
+    #         issues=["Vague task description", "Limited specificity"],
+    #         suggestions=["Add specific output format", "Include task constraints"]
+    #     )
+    #     session.add(quality_score)
 
-        # Sample AISuggestion
-        ai_suggestion = AISuggestion(
-            prompt_id=sample_prompt_id,
-            suggestion_type="specificity",
-            description="Add specific output format requirements (e.g., 'Respond in JSON').",
-            priority="high",
-            impact_score=0.7
-        )
-        session.add(ai_suggestion)
+    #     # Sample AISuggestion
+    #     ai_suggestion = AISuggestion(
+    #         prompt_id=sample_prompt_id,
+    #         suggestion_type="specificity",
+    #         description="Add specific output format requirements (e.g., 'Respond in JSON').",
+    #         priority="high",
+    #         impact_score=0.7
+    #     )
+    #     session.add(ai_suggestion)
 
-        session.commit()
-        logger.info("Sample refinement data added to DB")
+    #     session.commit()
+    #     logger.info("Sample refinement data added to DB")
 
     logger.info("PromptPilot API started successfully", 
                 docs_url="http://localhost:8000/docs")

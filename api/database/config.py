@@ -345,3 +345,8 @@ class ConnectionMonitor:
 
 # Global connection monitor
 connection_monitor = ConnectionMonitor()
+
+
+from api.config import Settings
+
+settings = Settings()

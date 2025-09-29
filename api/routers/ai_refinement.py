@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from typing import Dict, List, Any
+from typing import Optional
 from pydantic import BaseModel
 
 from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks
 from typing import Dict, List, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.services.ai_refinement_service import AutomatedRefinementService
 from api.database.config import DatabaseManager
