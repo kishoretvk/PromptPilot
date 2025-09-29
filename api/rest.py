@@ -588,6 +588,22 @@ async def test_prompt(
     
     return result
 
+@app.get("/api/v1/prompts/{prompt_id}/test-history", response_model=List[dict], tags=["Prompts"])
+async def get_test_history(
+    prompt_id: str,
+    prompt_service: PromptService = Depends(get_prompt_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Get test history for a prompt"""
+    logger.info("Fetching test history", user_id=current_user.id, prompt_id=prompt_id)
+    
+    prompt = await prompt_service.get_prompt(prompt_id)
+    if not prompt:
+        raise PromptNotFoundError(f"Prompt {prompt_id} not found")
+    
+    # Since no test_history model exists yet, return empty list
+    return []
+
 # Prompt Version Management Endpoints
 @app.get("/api/v1/prompts/{prompt_id}/versions", response_model=List[PromptVersionSchema], tags=["Prompt Versions"])
 async def get_prompt_versions(
