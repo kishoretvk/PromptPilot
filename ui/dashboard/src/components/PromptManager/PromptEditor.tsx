@@ -34,7 +34,7 @@ import {
   Code,
   DataObject,
   Psychology,
-  AutoFixHigh as AIFixIcon,
+  AutoFixHigh,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { Prompt, Message, TestCase } from '../../types';
@@ -299,7 +299,6 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
     }
   };
 
-  // const isLoading = createPromptMutation.isPending || updatePromptMutation.isPending; // Use mutation status directly
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -332,9 +331,9 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
             variant="contained"
             startIcon={<Save />}
             onClick={handleSave}
-            disabled={isLoading}
+            disabled={createPromptMutation.isPending || updatePromptMutation.isPending}
           >
-            {isLoading ? 'Saving...' : (isCreating ? 'Create' : 'Save')}
+            {createPromptMutation.isPending || updatePromptMutation.isPending ? 'Saving...' : (isCreating ? 'Create' : 'Save')}
           </Button>
           
           <Button
@@ -364,7 +363,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
           <Tab icon={<Psychology />} label="Messages" />
           <Tab icon={<Settings />} label="Parameters" />
           <Tab icon={<PlayArrow />} label="Test Cases" />
-          <Tab icon={<AIFixIcon />} label="AI Refinement" />
+          <Tab icon={<AutoFixHigh />} label="AI Refinement" />
           <Tab icon={<Code />} label="Preview" />
         </Tabs>
 
@@ -421,7 +420,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                 <Button
                   variant="outlined"
                   color="primary"
-                  startIcon={<AIFixIcon />}
+                  startIcon={<AutoFixHigh />}
                   onClick={() => promptService.optimizePrompt(prompt?.id || '', formData.description || '').then(setOptimizationResults)}
                   disabled={!prompt?.id || !formData.description?.trim()}
                 >

@@ -22,7 +22,7 @@ const RefineView: React.FC = () => {
       }
     },
     onConnect: () => console.log('Connected to refinement progress'),
-    onError: (error) => console.error('WebSocket error:', error),
+  onError: (error: any) => console.error('WebSocket error:', error),
   };
   const { isConnected, status } = useWebSocket(wsOptions);
 
