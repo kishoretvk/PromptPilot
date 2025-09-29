@@ -104,8 +104,8 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
   const [previewPrompt, setPreviewPrompt] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [optimizationResults, setOptimizationResults] = useState(null);
+  // const [isLoading, setIsLoading] = useState(false); // Removed duplicate state
+  const [optimizationResults, setOptimizationResults] = useState<any>(null);
 
   // Read-only mode when editing certain prompts
   const isReadOnly = false; // Can be controlled by props or prompt status
